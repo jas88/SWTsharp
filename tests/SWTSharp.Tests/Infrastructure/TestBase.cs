@@ -10,14 +10,35 @@ namespace SWTSharp.Tests.Infrastructure;
 /// </summary>
 public abstract class TestBase : IDisposable
 {
-    protected Display Display { get; private set; }
-    protected IPlatform MockPlatform { get; private set; }
+    protected Display Display { get; private set; } = null!;
+    protected IPlatform MockPlatform { get; private set; } = null!;
     private bool _disposed;
+    private Thread? _uiThread;
+    private bool _eventLoopStarted;
 
     protected TestBase()
     {
-        // Initialize display on UI thread
-        Display = Display.Default;
+        // Start UI thread with event loop
+        var displayReady = new ManualResetEventSlim(false);
+        _uiThread = new Thread(() =>
+        {
+            // Initialize display on UI thread
+            Display = Display.Default;
+            displayReady.Set();
+
+            // Run event loop - process async actions but don't block
+            while (!_disposed)
+            {
+                Display.ReadAndDispatch();
+                Thread.Sleep(10);
+            }
+        });
+        _uiThread.IsBackground = true;
+        _uiThread.Start();
+
+        // Wait for display to be initialized
+        displayReady.Wait();
+        _eventLoopStarted = true;
 
         // Create mock platform for testing
         MockPlatform = Substitute.For<IPlatform>();
@@ -41,7 +62,12 @@ public abstract class TestBase : IDisposable
     /// </summary>
     protected Shell CreateTestShell()
     {
-        return new Shell(Display);
+        Shell? shell = null;
+        Display.SyncExec(() =>
+        {
+            shell = new Shell(Display);
+        });
+        return shell!;
     }
 
     /// <summary>
@@ -70,7 +96,7 @@ public abstract class TestBase : IDisposable
     {
         if (!_disposed)
         {
-            if (disposing)
+            if (disposing && _eventLoopStarted)
             {
                 // Cleanup display and shells on UI thread
                 Display?.SyncExec(() =>
@@ -82,9 +108,18 @@ public abstract class TestBase : IDisposable
                     }
                 });
 
+                // Signal event loop to exit
+                _disposed = true;
+
+                // Wait for UI thread to finish
+                _uiThread?.Join(1000);
+
                 Display?.Dispose();
             }
-            _disposed = true;
+            else
+            {
+                _disposed = true;
+            }
         }
     }
 }
