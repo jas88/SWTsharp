@@ -184,10 +184,10 @@ internal partial class Win32Platform : IPlatform
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(Kernel32, StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+    [LibraryImport(Kernel32, EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
     private static partial IntPtr GetModuleHandle(string? lpModuleName);
 #else
-    [DllImport(Kernel32, SetLastError = true)]
+    [DllImport(Kernel32, EntryPoint = "GetModuleHandleW", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr GetModuleHandle(string? lpModuleName);
 #endif
 
