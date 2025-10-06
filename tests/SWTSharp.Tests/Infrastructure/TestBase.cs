@@ -16,14 +16,14 @@ public abstract class TestBase : IDisposable
 
     protected TestBase()
     {
+        // Initialize display on UI thread
+        Display = Display.Default;
+
         // Create mock platform for testing
         MockPlatform = Substitute.For<IPlatform>();
 
         // Set up default mock behaviors
         SetupDefaultMockBehaviors();
-
-        // Initialize display for testing
-        Display = Display.Default;
     }
 
     /// <summary>
@@ -72,12 +72,15 @@ public abstract class TestBase : IDisposable
         {
             if (disposing)
             {
-                // Cleanup display and shells
-                var shells = Display.GetShells();
-                foreach (var shell in shells)
+                // Cleanup display and shells on UI thread
+                Display?.SyncExec(() =>
                 {
-                    shell?.Dispose();
-                }
+                    var shells = Display.GetShells();
+                    foreach (var shell in shells)
+                    {
+                        shell?.Dispose();
+                    }
+                });
 
                 Display?.Dispose();
             }

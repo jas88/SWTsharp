@@ -19,6 +19,7 @@ public class Display : IDisposable
     private Thread? _thread;
     private readonly List<Shell> _shells = new();
     private bool _running;
+    private readonly Queue<Action> _asyncActions = new Queue<Action>();
 
     /// <summary>
     /// Gets the default display for the application.
@@ -128,6 +129,7 @@ public class Display : IDisposable
     public bool ReadAndDispatch()
     {
         CheckDisplay();
+        ProcessAsyncActions();
         return SWTSharp.Platform.PlatformFactory.Instance.ProcessEvent();
     }
 
@@ -146,6 +148,105 @@ public class Display : IDisposable
     public void Wake()
     {
         SWTSharp.Platform.PlatformFactory.Instance.WakeEventLoop();
+    }
+
+    /// <summary>
+    /// Executes the specified action synchronously on the UI thread.
+    /// If called from the UI thread, executes immediately.
+    /// If called from another thread, blocks until execution completes.
+    /// </summary>
+    /// <param name="action">The action to execute on the UI thread</param>
+    /// <exception cref="ArgumentNullException">If action is null</exception>
+    public void SyncExec(Action action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action));
+
+        if (IsValidThread())
+        {
+            // Already on UI thread, execute immediately
+            action();
+        }
+        else
+        {
+            // On different thread, need to marshal to UI thread
+            Exception? exception = null;
+            var done = new ManualResetEventSlim(false);
+
+            AsyncExec(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                finally
+                {
+                    done.Set();
+                }
+            });
+
+            done.Wait();
+            if (exception != null)
+                throw new InvalidOperationException("Exception occurred during SyncExec", exception);
+        }
+    }
+
+    /// <summary>
+    /// Executes the specified action asynchronously on the UI thread.
+    /// Returns immediately without waiting for execution to complete.
+    /// </summary>
+    /// <param name="action">The action to execute on the UI thread</param>
+    /// <exception cref="ArgumentNullException">If action is null</exception>
+    public void AsyncExec(Action action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action));
+
+        if (IsValidThread())
+        {
+            // Already on UI thread, execute immediately
+            action();
+        }
+        else
+        {
+            // Queue for execution on UI thread
+            lock (_asyncActions)
+            {
+                _asyncActions.Enqueue(action);
+            }
+            Wake();
+        }
+    }
+
+    /// <summary>
+    /// Processes queued async actions. Called by the event loop.
+    /// </summary>
+    private void ProcessAsyncActions()
+    {
+        Action[] actions;
+        lock (_asyncActions)
+        {
+            if (_asyncActions.Count == 0)
+                return;
+            actions = _asyncActions.ToArray();
+            _asyncActions.Clear();
+        }
+
+        foreach (var action in actions)
+        {
+            try
+            {
+                action();
+            }
+            catch
+            {
+                // Swallow exceptions from async actions
+            }
+        }
     }
 
     /// <summary>
