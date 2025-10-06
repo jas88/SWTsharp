@@ -62,10 +62,10 @@ internal partial class LinuxPlatform : IPlatform
     private static extern IntPtr gtk_widget_get_window(IntPtr widget);
 
     // Signal handling
-    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
+    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern ulong g_signal_connect_data(
         IntPtr instance,
-        string detailed_signal,
+        [MarshalAs(UnmanagedType.LPStr)] string detailed_signal,
         IntPtr callback,
         IntPtr data,
         IntPtr destroy_data,
