@@ -860,6 +860,11 @@ public struct FileDialogResult
     /// Selected filter path (directory).
     /// </summary>
     public string? FilterPath { get; set; }
+
+    /// <summary>
+    /// Selected filter index (0-based).
+    /// </summary>
+    public int FilterIndex { get; set; }
 }
 
 /// <summary>
