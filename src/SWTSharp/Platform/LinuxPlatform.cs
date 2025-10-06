@@ -10,6 +10,7 @@ internal partial class LinuxPlatform : IPlatform
     private const string GtkLib = "libgtk-3.so.0";
     private const string GdkLib = "libgdk-3.so.0";
     private const string GLibLib = "libglib-2.0.so.0";
+    private const string GObjectLib = "libgobject-2.0.so.0";
 
     // GTK initialization and main loop
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
@@ -62,7 +63,7 @@ internal partial class LinuxPlatform : IPlatform
     private static extern IntPtr gtk_widget_get_window(IntPtr widget);
 
     // Signal handling
-    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(GObjectLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern ulong g_signal_connect_data(
         IntPtr instance,
         [MarshalAs(UnmanagedType.LPStr)] string detailed_signal,
