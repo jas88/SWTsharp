@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Runtime.ConstrainedExecution;
 
 namespace SWTSharp.Platform.SafeHandles;
 
@@ -59,7 +58,6 @@ public abstract class SafeImageHandle : SafeHandle
     /// by derived classes to provide platform-specific cleanup of image resources.
     /// This method runs in a constrained execution region (CER) to guarantee execution.
     /// </remarks>
-    [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
     protected abstract override bool ReleaseHandle();
 
     /// <summary>

@@ -307,8 +307,8 @@ internal partial class MacOSPlatform
         var indices = new List<int>();
         nuint currentIndex = objc_msgSend_ret_ulong(indexSet, _selFirstIndex);
 
-        const ulong NSNotFound = ulong.MaxValue;
-        while (currentIndex != (nuint)NSNotFound && indices.Count < (int)count)
+        nuint NSNotFound = unchecked((nuint)ulong.MaxValue);
+        while (currentIndex != NSNotFound && indices.Count < (int)count)
         {
             indices.Add((int)currentIndex);
             currentIndex = objc_msgSend_ret_ulong_arg(indexSet, _selIndexGreaterThanIndex, currentIndex);

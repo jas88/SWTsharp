@@ -388,7 +388,7 @@ internal partial class MacOSPlatform
             }
             else
             {
-                IntPtr nsToolTip = CreateNSString(toolTipText);
+                IntPtr nsToolTip = CreateNSString(toolTipText!);
                 objc_msgSend(headerCell, _selSetToolTip, nsToolTip);
             }
         }

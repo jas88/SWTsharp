@@ -316,7 +316,7 @@ internal partial class MacOSPlatform : IPlatformGraphics
             switch (style)
             {
                 case SWT.LINE_SOLID:
-                    CGContextSetLineDash(gcHandle, 0, null, 0);
+                    CGContextSetLineDash(gcHandle, 0, null!, 0);
                     break;
                 case SWT.LINE_DASH:
                     CGContextSetLineDash(gcHandle, 0, new double[] { 8, 4 }, 2);

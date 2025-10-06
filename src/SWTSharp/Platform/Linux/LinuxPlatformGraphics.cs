@@ -411,7 +411,7 @@ internal partial class LinuxPlatform : IPlatformGraphics
                 break;
             case SWT.LINE_SOLID:
             default:
-                cairo_set_dash(state.CairoContext, null, 0, 0);
+                cairo_set_dash(state.CairoContext, null!, 0, 0);
                 break;
         }
     }

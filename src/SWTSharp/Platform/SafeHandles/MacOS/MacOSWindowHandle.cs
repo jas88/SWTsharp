@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Runtime.ConstrainedExecution;
 
 namespace SWTSharp.Platform.SafeHandles.MacOS;
 
@@ -46,7 +45,6 @@ public sealed class MacOSWindowHandle : SafeWindowHandle
     /// Executes the code required to free the macOS window handle.
     /// </summary>
     /// <returns>true if the handle is released successfully; otherwise, false.</returns>
-    [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
     protected override bool ReleaseHandle()
     {
         // In a CER, we must not throw exceptions

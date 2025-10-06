@@ -385,7 +385,11 @@ internal partial class LinuxPlatform
         GtkTreeIter childIter;
         GtkTreeIter parentIter = itemData.Iter;
 
-        if (gtk_tree_model_iter_children(treeData.TreeStore, out childIter, Marshal.AllocHGlobal(Marshal.SizeOf<GtkTreeIter>())))
+        // Allocate memory for parent iter parameter
+        IntPtr parentIterPtr = Marshal.AllocHGlobal(Marshal.SizeOf<GtkTreeIter>());
+        Marshal.StructureToPtr(parentIter, parentIterPtr, false);
+
+        if (gtk_tree_model_iter_children(treeData.TreeStore, out childIter, parentIterPtr))
         {
             do
             {
@@ -403,6 +407,9 @@ internal partial class LinuxPlatform
             }
             while (gtk_tree_model_iter_next(treeData.TreeStore, ref childIter));
         }
+
+        // Free the allocated memory
+        Marshal.FreeHGlobal(parentIterPtr);
 
         // Remove all children
         foreach (var child in childrenToRemove)

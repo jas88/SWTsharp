@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Runtime.ConstrainedExecution;
 
 namespace SWTSharp.Platform.SafeHandles.Linux;
 
@@ -43,7 +42,6 @@ public sealed class LinuxGraphicsHandle : SafeGraphicsHandle
     /// Executes the code required to free the Linux/Cairo graphics context handle.
     /// </summary>
     /// <returns>true if the handle is released successfully; otherwise, false.</returns>
-    [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
     protected override bool ReleaseHandle()
     {
         // In a CER, we must not throw exceptions
