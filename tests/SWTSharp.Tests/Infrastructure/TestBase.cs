@@ -106,6 +106,9 @@ public abstract class TestBase : IDisposable
                     {
                         shell?.Dispose();
                     }
+
+                    // Dispose display on UI thread
+                    Display?.Dispose();
                 });
 
                 // Signal event loop to exit
@@ -113,8 +116,6 @@ public abstract class TestBase : IDisposable
 
                 // Wait for UI thread to finish
                 _uiThread?.Join(1000);
-
-                Display?.Dispose();
             }
             else
             {
