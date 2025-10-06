@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>SWTSharp</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>SWTSharp Contributors</Authors>
+    <Description>A C#/.NET port of the Java SWT (Standard Widget Toolkit) library with multi-platform support</Description>
+    <PackageTags>swt;ui;widgets;cross-platform;gui</PackageTags>
+    <RepositoryUrl>https://github.com/jas88/swtsharp</RepositoryUrl>
+    <PackageLicenseExpression>EPL-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+</Project>
