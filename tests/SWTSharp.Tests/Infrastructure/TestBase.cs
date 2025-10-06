@@ -8,6 +8,7 @@ namespace SWTSharp.Tests.Infrastructure;
 /// <summary>
 /// Base class for all SWTSharp tests providing common setup and teardown.
 /// </summary>
+[Collection("Display Tests")]
 public abstract class TestBase : IDisposable
 {
     protected Display Display { get; private set; } = null!;
