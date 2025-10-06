@@ -77,7 +77,7 @@ internal partial class Win32Platform : IPlatform
     }
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+    [LibraryImport(User32, EntryPoint = "CreateWindowExW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
     private static partial IntPtr CreateWindowEx(
         uint dwExStyle,
         string lpClassName,
@@ -90,7 +90,7 @@ internal partial class Win32Platform : IPlatform
         IntPtr hInstance,
         IntPtr lpParam);
 #else
-    [DllImport(User32, CharSet = CharSet.Unicode, SetLastError = true)]
+    [DllImport(User32, EntryPoint = "CreateWindowExW", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr CreateWindowEx(
         uint dwExStyle,
         string lpClassName,
