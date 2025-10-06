@@ -8,13 +8,13 @@ namespace SWTSharp.Platform;
 internal partial class LinuxPlatform
 {
     // TabFolder data storage
-    private class TabFolderData
+    private sealed class TabFolderData
     {
         public IntPtr Notebook { get; set; }
         public List<IntPtr> TabItems { get; } = new List<IntPtr>();
     }
 
-    private class TabItemData
+    private sealed class TabItemData
     {
         public IntPtr TabFolderHandle { get; set; }
         public IntPtr Label { get; set; }

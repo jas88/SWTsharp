@@ -14,6 +14,46 @@
     <PackageTags>swt;ui;widgets;cross-platform;gui</PackageTags>
     <RepositoryUrl>https://github.com/jas88/swtsharp</RepositoryUrl>
     <PackageLicenseExpression>EPL-2.0</PackageLicenseExpression>
+
+    <!-- Code Quality and Analysis -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode> <!-- Use Recommended instead of All for reasonable rules -->
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- Missing XML documentation -->
+
+    <!-- Analyzer suppressions -->
+    <!-- CA1852: Suppress for partial platform classes that cannot be sealed -->
+    <NoWarn>$(NoWarn);CA1852</NoWarn>
+
+    <!-- P/Invoke and cross-platform suppressions -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn> <!-- Identifiers should not contain underscores (native API names) -->
+    <NoWarn>$(NoWarn);CA2101</NoWarn> <!-- Specify marshaling for P/Invoke strings (UTF-8 is platform default) -->
+    <NoWarn>$(NoWarn);CA1510</NoWarn> <!-- ArgumentNullException.ThrowIfNull (not available in netstandard2.0) -->
+    <NoWarn>$(NoWarn);CA1805</NoWarn> <!-- Do not initialize unnecessarily (explicit initialization for clarity) -->
+    <NoWarn>$(NoWarn);CA1822</NoWarn> <!-- Member can be static (instance methods for consistency) -->
+    <NoWarn>$(NoWarn);CA1419</NoWarn> <!-- Provide a parameterless constructor (P/Invoke structs) -->
+    <NoWarn>$(NoWarn);CA1806</NoWarn> <!-- Do not ignore method results (GTK/Win32 return values) -->
+    <NoWarn>$(NoWarn);CA1716</NoWarn> <!-- Identifiers should not match keywords (SWT API compatibility) -->
+    <NoWarn>$(NoWarn);CA1720</NoWarn> <!-- Identifier contains type name (SWT API compatibility) -->
+    <NoWarn>$(NoWarn);CA1310</NoWarn> <!-- Specify StringComparison (netstandard2.0 compatibility) -->
+    <NoWarn>$(NoWarn);CA1854</NoWarn> <!-- Prefer TryGetValue (acceptable pattern in this codebase) -->
+    <NoWarn>$(NoWarn);CA1513</NoWarn> <!-- Use ThrowIfNull (not available in netstandard2.0) -->
+    <NoWarn>$(NoWarn);CA2208</NoWarn> <!-- Argument name matches parameter (acceptable for clarity) -->
+    <NoWarn>$(NoWarn);CA1861</NoWarn> <!-- Avoid constant arrays as arguments (acceptable for readability) -->
+    <NoWarn>$(NoWarn);CA1305</NoWarn> <!-- Specify IFormatProvider (culture-invariant not needed for internal) -->
+    <NoWarn>$(NoWarn);CA1838</NoWarn> <!-- Avoid StringBuilder parameters (acceptable pattern) -->
+    <NoWarn>$(NoWarn);CA1711</NoWarn> <!-- Identifiers should not have incorrect suffix (SWT API names) -->
+    <NoWarn>$(NoWarn);CA1708</NoWarn> <!-- Identifiers differ by case (acceptable for this codebase) -->
+    <NoWarn>$(NoWarn);CA1866</NoWarn> <!-- Use char overload (not available in all targets) -->
+
+    <!-- Deterministic builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
 </Project>

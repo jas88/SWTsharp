@@ -38,7 +38,7 @@ internal partial class Win32Platform
     private static extern IntPtr CreateSolidBrush(uint color);
 
     // Canvas data structure
-    private class CanvasData
+    private sealed class CanvasData
     {
         public Action<int, int, int, int, object?>? PaintCallback { get; set; }
         public Graphics.RGB BackgroundColor { get; set; }

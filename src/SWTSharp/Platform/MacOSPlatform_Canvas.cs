@@ -8,7 +8,7 @@ namespace SWTSharp.Platform;
 internal partial class MacOSPlatform
 {
     // Canvas data structure
-    private class CanvasData
+    private sealed class CanvasData
     {
         public Action<int, int, int, int, object?>? PaintCallback { get; set; }
         public Graphics.RGB? BackgroundColor { get; set; }

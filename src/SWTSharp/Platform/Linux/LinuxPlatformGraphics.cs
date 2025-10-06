@@ -154,7 +154,7 @@ internal partial class LinuxPlatform : IPlatformGraphics
     private static extern void gdk_cairo_set_source_pixbuf(IntPtr cr, IntPtr pixbuf, double x, double y);
 
     // Graphics state tracking
-    private class GraphicsState
+    private sealed class GraphicsState
     {
         public IntPtr CairoContext;
         public IntPtr Surface;

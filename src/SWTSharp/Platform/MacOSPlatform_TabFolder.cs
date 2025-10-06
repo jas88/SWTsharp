@@ -40,13 +40,13 @@ internal partial class MacOSPlatform
     private IntPtr _selSetMenu;
     private IntPtr _selShowsMenu;
 
-    private class TabFolderData
+    private sealed class TabFolderData
     {
         public IntPtr TabView { get; set; }
         public List<IntPtr> TabItems { get; set; } = new();
     }
 
-    private class TabItemData
+    private sealed class TabItemData
     {
         public IntPtr TabFolderHandle { get; set; }
         public IntPtr TabViewItem { get; set; }
@@ -54,14 +54,14 @@ internal partial class MacOSPlatform
         public int Index { get; set; }
     }
 
-    private class ToolBarData
+    private sealed class ToolBarData
     {
         public IntPtr Toolbar { get; set; }
         public IntPtr Window { get; set; }
         public List<IntPtr> Items { get; set; } = new();
     }
 
-    private class ToolItemData
+    private sealed class ToolItemData
     {
         public IntPtr ToolbarItem { get; set; }
         public IntPtr ToolbarHandle { get; set; }

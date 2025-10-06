@@ -84,7 +84,7 @@ internal partial class Win32Platform
     [DllImport(User32)]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, ref TVITEM lParam);
 
-    private class TreeItemData
+    private sealed class TreeItemData
     {
         public IntPtr TreeHandle;
         public IntPtr ItemHandle;

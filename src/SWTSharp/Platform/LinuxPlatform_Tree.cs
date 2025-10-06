@@ -51,7 +51,7 @@ internal partial class LinuxPlatform
     private static extern bool gtk_tree_model_iter_next(IntPtr tree_model, ref GtkTreeIter iter);
 
     // Tree data storage
-    private class TreeData
+    private sealed class TreeData
     {
         public IntPtr TreeStore { get; set; }
         public IntPtr TreeView { get; set; }
@@ -60,7 +60,7 @@ internal partial class LinuxPlatform
         public int ColumnCount { get; set; } = 1; // Default: text column
     }
 
-    private class TreeItemData
+    private sealed class TreeItemData
     {
         public IntPtr TreeHandle { get; set; }
         public GtkTreeIter Iter { get; set; }

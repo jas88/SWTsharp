@@ -43,7 +43,7 @@ internal partial class Win32Platform
     [DllImport(User32)]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, ref TCITEM lParam);
 
-    private class TabItemData
+    private sealed class TabItemData
     {
         public IntPtr TabFolderHandle;
         public int TabIndex;

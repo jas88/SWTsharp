@@ -17,7 +17,7 @@ internal partial class MacOSPlatform
     private IntPtr _selRowForItem;
     private IntPtr _selItemAtRow;
 
-    private class TreeData
+    private sealed class TreeData
     {
         public IntPtr ScrollView { get; set; }
         public IntPtr OutlineView { get; set; }
@@ -26,7 +26,7 @@ internal partial class MacOSPlatform
         public bool HasCheck { get; set; }
     }
 
-    private class TreeNode
+    private sealed class TreeNode
     {
         public IntPtr Handle { get; set; }
         public string Text { get; set; } = string.Empty;

@@ -94,7 +94,7 @@ internal partial class MacOSPlatform : IPlatformGraphics
     private static extern void CGImageRelease(IntPtr image);
 
     // Graphics context state tracking
-    private class GraphicsState
+    private sealed class GraphicsState
     {
         public IntPtr Context { get; set; }
         public IntPtr ForegroundColor { get; set; }

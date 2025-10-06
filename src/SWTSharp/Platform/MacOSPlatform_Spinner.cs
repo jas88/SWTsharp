@@ -8,7 +8,7 @@ namespace SWTSharp.Platform;
 internal partial class MacOSPlatform
 {
     // Spinner data structure
-    private class SpinnerData
+    private sealed class SpinnerData
     {
         public IntPtr TextField { get; set; }
         public IntPtr Stepper { get; set; }

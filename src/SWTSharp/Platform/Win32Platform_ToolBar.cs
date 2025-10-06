@@ -105,14 +105,14 @@ internal partial class Win32Platform
     [DllImport(User32)]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, ref RECT lParam);
 
-    private class ToolBarData
+    private sealed class ToolBarData
     {
         public IntPtr ToolBar { get; set; }
         public List<IntPtr> ToolItems { get; set; } = new();
         public bool IsVertical { get; set; }
     }
 
-    private class ToolItemData
+    private sealed class ToolItemData
     {
         public IntPtr ToolBarHandle { get; set; }
         public int CommandId { get; set; }

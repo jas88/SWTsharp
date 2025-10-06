@@ -39,7 +39,7 @@ internal partial class LinuxPlatform
     }
 
     // Canvas data storage
-    private class CanvasData
+    private sealed class CanvasData
     {
         public GdkRGBA BackgroundColor { get; set; }
         public Action<int, int, int, int, object?>? PaintCallback { get; set; }

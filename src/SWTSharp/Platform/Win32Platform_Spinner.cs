@@ -20,7 +20,7 @@ internal partial class Win32Platform
     private const int ES_READONLY = 0x0800;
     private const int EM_SETLIMITTEXT = 0x00C5;
 
-    private class SpinnerData
+    private sealed class SpinnerData
     {
         public IntPtr EditHandle;
         public IntPtr UpDownHandle;

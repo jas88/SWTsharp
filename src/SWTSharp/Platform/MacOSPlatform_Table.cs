@@ -18,7 +18,7 @@ internal partial class MacOSPlatform
     private const int NSTableViewSolidVerticalGridLineMask = 1 << 0;
     private const int NSTableViewSolidHorizontalGridLineMask = 1 << 1;
 
-    private class TableData
+    private sealed class TableData
     {
         public IntPtr TableView { get; set; }
         public List<IntPtr> Columns { get; set; } = new();
@@ -27,7 +27,7 @@ internal partial class MacOSPlatform
         public bool LinesVisible { get; set; } = false;
     }
 
-    private class TableRow
+    private sealed class TableRow
     {
         public Dictionary<int, string> CellText { get; set; } = new();
         public Dictionary<int, IntPtr> CellImages { get; set; } = new();
@@ -210,7 +210,7 @@ internal partial class MacOSPlatform
     private const int NSTableColumnAutoresizingMask = 1 << 0;
     private const int NSTableColumnUserResizingMask = 1 << 1;
 
-    private class ColumnData
+    private sealed class ColumnData
     {
         public IntPtr TableScrollView { get; set; }
         public int ColumnIndex { get; set; }
@@ -420,7 +420,7 @@ internal partial class MacOSPlatform
     private readonly Dictionary<IntPtr, ItemData> _itemData = new();
     private int _nextItemId = 1;
 
-    private class ItemData
+    private sealed class ItemData
     {
         public IntPtr TableScrollView { get; set; }
         public int RowIndex { get; set; }

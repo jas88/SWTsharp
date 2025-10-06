@@ -8,13 +8,13 @@ namespace SWTSharp.Platform;
 internal partial class LinuxPlatform
 {
     // ToolBar data storage
-    private class ToolBarData
+    private sealed class ToolBarData
     {
         public IntPtr Toolbar { get; set; }
         public List<IntPtr> Items { get; set; } = new();
     }
 
-    private class ToolItemData
+    private sealed class ToolItemData
     {
         public IntPtr ToolItem { get; set; }
         public IntPtr ToolBarHandle { get; set; }

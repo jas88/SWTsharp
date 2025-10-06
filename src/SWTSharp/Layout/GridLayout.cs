@@ -546,7 +546,7 @@ public class GridLayout : Layout
         return new Point(width, height);
     }
 
-    private class GridCell
+    private sealed class GridCell
     {
         public Control? Control { get; set; }
         public GridData Data { get; set; } = new GridData();

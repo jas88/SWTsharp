@@ -160,7 +160,7 @@ internal partial class LinuxPlatform
     }
 
     // Table data storage
-    private class TableData
+    private sealed class TableData
     {
         public IntPtr ScrolledWindow { get; set; }
         public IntPtr TreeView { get; set; }
@@ -172,7 +172,7 @@ internal partial class LinuxPlatform
     }
 
     // Column data storage
-    private class TableColumnData
+    private sealed class TableColumnData
     {
         public IntPtr TableHandle { get; set; }
         public IntPtr ColumnHandle { get; set; }

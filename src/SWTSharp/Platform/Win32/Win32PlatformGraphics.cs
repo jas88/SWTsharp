@@ -326,7 +326,7 @@ internal partial class Win32Platform : IPlatformGraphics
     private readonly Dictionary<IntPtr, IntPtr> _gcToWindow = new();
     private readonly Dictionary<IntPtr, GCState> _gcStates = new();
 
-    private class GCState
+    private sealed class GCState
     {
         public IntPtr Pen = IntPtr.Zero;
         public IntPtr Brush = IntPtr.Zero;
