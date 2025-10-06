@@ -71,21 +71,24 @@ public abstract class SafeImageHandle : SafeHandle
     /// </exception>
     public static SafeImageHandle CreatePlatformImage(int width, int height)
     {
+#if WINDOWS
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return Win32.Win32ImageHandle.Create(width, height);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+#endif
+#if MACOS
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return MacOS.MacOSImageHandle.Create(width, height);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+#endif
+#if LINUX
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return Linux.LinuxImageHandle.Create(width, height);
         }
-        else
-        {
-            throw new PlatformNotSupportedException("Current platform is not supported for image creation.");
-        }
+#endif
+        throw new PlatformNotSupportedException("Current platform is not supported for image creation.");
     }
 }

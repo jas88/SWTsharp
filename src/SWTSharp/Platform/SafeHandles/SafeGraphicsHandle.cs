@@ -70,21 +70,24 @@ public abstract class SafeGraphicsHandle : SafeHandle
     /// </exception>
     public static SafeGraphicsHandle CreatePlatformGraphicsContext(IntPtr windowHandle)
     {
+#if WINDOWS
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return Win32.Win32GraphicsHandle.Create(windowHandle);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+#endif
+#if MACOS
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return MacOS.MacOSGraphicsHandle.Create(windowHandle);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+#endif
+#if LINUX
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return Linux.LinuxGraphicsHandle.Create(windowHandle);
         }
-        else
-        {
-            throw new PlatformNotSupportedException("Current platform is not supported for graphics context creation.");
-        }
+#endif
+        throw new PlatformNotSupportedException("Current platform is not supported for graphics context creation.");
     }
 }

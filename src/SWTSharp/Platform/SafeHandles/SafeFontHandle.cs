@@ -72,21 +72,24 @@ public abstract class SafeFontHandle : SafeHandle
     /// </exception>
     public static SafeFontHandle CreatePlatformFont(string fontName, int fontSize, int fontStyle)
     {
+#if WINDOWS
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return Win32.Win32FontHandle.Create(fontName, fontSize, fontStyle);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+#endif
+#if MACOS
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return MacOS.MacOSFontHandle.Create(fontName, fontSize, fontStyle);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+#endif
+#if LINUX
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return Linux.LinuxFontHandle.Create(fontName, fontSize, fontStyle);
         }
-        else
-        {
-            throw new PlatformNotSupportedException("Current platform is not supported for font creation.");
-        }
+#endif
+        throw new PlatformNotSupportedException("Current platform is not supported for font creation.");
     }
 }

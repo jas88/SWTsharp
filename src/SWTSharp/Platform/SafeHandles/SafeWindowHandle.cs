@@ -71,21 +71,24 @@ public abstract class SafeWindowHandle : SafeHandle
     /// </exception>
     public static SafeWindowHandle CreatePlatformWindow(int style, string title)
     {
+#if WINDOWS
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return Win32.Win32WindowHandle.Create(style, title);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+#endif
+#if MACOS
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return MacOS.MacOSWindowHandle.Create(style, title);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+#endif
+#if LINUX
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return Linux.LinuxWindowHandle.Create(style, title);
         }
-        else
-        {
-            throw new PlatformNotSupportedException("Current platform is not supported for window creation.");
-        }
+#endif
+        throw new PlatformNotSupportedException("Current platform is not supported for window creation.");
     }
 }

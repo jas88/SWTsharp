@@ -70,21 +70,24 @@ public abstract class SafeMenuHandle : SafeHandle
     /// </exception>
     public static SafeMenuHandle CreatePlatformMenu(int style)
     {
+#if WINDOWS
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return Win32.Win32MenuHandle.Create(style);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+#endif
+#if MACOS
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return MacOS.MacOSMenuHandle.Create(style);
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+#endif
+#if LINUX
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return Linux.LinuxMenuHandle.Create(style);
         }
-        else
-        {
-            throw new PlatformNotSupportedException("Current platform is not supported for menu creation.");
-        }
+#endif
+        throw new PlatformNotSupportedException("Current platform is not supported for menu creation.");
     }
 }
