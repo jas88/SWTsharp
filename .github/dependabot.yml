@@ -1,0 +1,63 @@
+# Dependabot configuration for SWTSharp
+# Automatically updates NuGet packages and GitHub Actions (including .NET SDK)
+
+version: 2
+updates:
+  # Update NuGet package dependencies
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "nuget"
+    reviewers:
+      - "jas88"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      # Group all production dependencies
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "NSubstitute*"
+          - "xunit*"
+          - "coverlet*"
+          - "Microsoft.NET.Test.Sdk"
+      # Group all test dependencies
+      test-dependencies:
+        patterns:
+          - "NSubstitute*"
+          - "xunit*"
+          - "coverlet*"
+          - "Microsoft.NET.Test.Sdk"
+
+  # Update GitHub Actions (includes .NET SDK versions)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    reviewers:
+      - "jas88"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      # Group all GitHub Actions updates together
+      github-actions:
+        patterns:
+          - "*"
