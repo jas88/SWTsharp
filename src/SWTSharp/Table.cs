@@ -103,6 +103,24 @@ public class Table : Composite
     }
 
     /// <summary>
+    /// Gets or sets the index of the selected item for single-selection tables.
+    /// Returns -1 if no item is selected.
+    /// </summary>
+    public int SelectionIndex
+    {
+        get
+        {
+            CheckWidget();
+            return _selectedIndices.Count > 0 ? _selectedIndices[0] : -1;
+        }
+        set
+        {
+            CheckWidget();
+            SetSelection(value);
+        }
+    }
+
+    /// <summary>
     /// Occurs when the selection changes.
     /// </summary>
     public event EventHandler? SelectionChanged;

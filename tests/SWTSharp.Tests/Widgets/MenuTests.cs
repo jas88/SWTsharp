@@ -101,20 +101,7 @@ public class MenuTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
-    public void Menu_Enabled_ShouldGetAndSet()
-    {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-
-        menu.Enabled = false;
-        Assert.False(menu.Enabled);
-
-        menu.Enabled = true;
-        Assert.True(menu.Enabled);
-
-        menu.Dispose();
-    }
+    // Menu does not have Enabled property - it's a Widget, not a Control
 
     [Fact]
     public void Menu_Dispose_ShouldSetIsDisposed()

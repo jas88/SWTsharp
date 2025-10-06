@@ -92,10 +92,11 @@ public class TreeTests : WidgetTestBase
         var tree = new Tree(shell, SWT.SINGLE);
 
         new TreeItem(tree, SWT.NONE);
-        new TreeItem(tree, SWT.NONE);
+        var item2 = new TreeItem(tree, SWT.NONE);
 
-        tree.SelectionIndex = 1;
-        Assert.Equal(1, tree.SelectionIndex);
+        tree.SetSelection(new[] { item2 });
+        Assert.Single(tree.Selection);
+        Assert.Same(item2, tree.Selection[0]);
 
         tree.Dispose();
     }
@@ -109,8 +110,8 @@ public class TreeTests : WidgetTestBase
         var item1 = new TreeItem(tree, SWT.NONE);
         var item2 = new TreeItem(tree, SWT.NONE);
 
-        tree.SelectionIndex = 1;
-        Assert.Same(item2, tree.Selection);
+        tree.SetSelection(new[] { item2 });
+        Assert.Same(item2, tree.Selection[0]);
 
         tree.Dispose();
     }

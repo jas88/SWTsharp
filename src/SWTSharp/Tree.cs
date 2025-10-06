@@ -80,6 +80,39 @@ public class Tree : Composite
     }
 
     /// <summary>
+    /// Gets or sets the index of the selected item for single-selection trees.
+    /// Returns -1 if no item is selected.
+    /// </summary>
+    public int SelectionIndex
+    {
+        get
+        {
+            CheckWidget();
+            if (_selection.Count == 0)
+            {
+                return -1;
+            }
+            return GetItemIndex(_selection[0]);
+        }
+        set
+        {
+            CheckWidget();
+            if (value < 0)
+            {
+                _selection.Clear();
+                UpdateSelection();
+                return;
+            }
+
+            var item = FindItemAtIndex(value);
+            if (item != null)
+            {
+                SetSelection(item);
+            }
+        }
+    }
+
+    /// <summary>
     /// Occurs when the selection changes.
     /// </summary>
     public event EventHandler? SelectionChanged;
@@ -399,6 +432,98 @@ public class Tree : Composite
     /// Returns whether the tree is in check mode.
     /// </summary>
     internal bool IsCheckStyle => _check;
+
+    /// <summary>
+    /// Gets the flattened index of a tree item.
+    /// </summary>
+    private int GetItemIndex(TreeItem item)
+    {
+        int index = 0;
+        foreach (var rootItem in _items)
+        {
+            if (rootItem == item)
+            {
+                return index;
+            }
+            index++;
+
+            index = GetItemIndexRecursive(rootItem, item, ref index);
+            if (index >= 0)
+            {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Recursively searches for an item and returns its flattened index.
+    /// </summary>
+    private int GetItemIndexRecursive(TreeItem parent, TreeItem target, ref int currentIndex)
+    {
+        for (int i = 0; i < parent.ItemCount; i++)
+        {
+            var child = parent.GetItem(i);
+            if (child == target)
+            {
+                return currentIndex;
+            }
+            currentIndex++;
+
+            int found = GetItemIndexRecursive(child, target, ref currentIndex);
+            if (found >= 0)
+            {
+                return found;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Finds a tree item at the specified flattened index.
+    /// </summary>
+    private TreeItem? FindItemAtIndex(int targetIndex)
+    {
+        int currentIndex = 0;
+        foreach (var rootItem in _items)
+        {
+            if (currentIndex == targetIndex)
+            {
+                return rootItem;
+            }
+            currentIndex++;
+
+            var found = FindItemAtIndexRecursive(rootItem, targetIndex, ref currentIndex);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Recursively searches for an item at a flattened index.
+    /// </summary>
+    private TreeItem? FindItemAtIndexRecursive(TreeItem parent, int targetIndex, ref int currentIndex)
+    {
+        for (int i = 0; i < parent.ItemCount; i++)
+        {
+            var child = parent.GetItem(i);
+            if (currentIndex == targetIndex)
+            {
+                return child;
+            }
+            currentIndex++;
+
+            var found = FindItemAtIndexRecursive(child, targetIndex, ref currentIndex);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+        return null;
+    }
 
     protected override void ReleaseWidget()
     {

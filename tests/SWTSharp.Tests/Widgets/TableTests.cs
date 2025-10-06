@@ -142,11 +142,12 @@ public class TableTests : WidgetTestBase
         using var shell = CreateTestShell();
         var table = new Table(shell, SWT.SINGLE);
 
-        new TableItem(table, SWT.NONE);
-        new TableItem(table, SWT.NONE);
+        var item1 = new TableItem(table, SWT.NONE);
+        var item2 = new TableItem(table, SWT.NONE);
 
-        table.SelectionIndex = 1;
-        Assert.Equal(1, table.SelectionIndex);
+        table.SetSelection(new[] { item2 });
+        Assert.Single(table.Selection);
+        Assert.Same(item2, table.Selection[0]);
 
         table.Dispose();
     }

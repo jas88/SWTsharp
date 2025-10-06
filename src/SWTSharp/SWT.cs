@@ -97,6 +97,8 @@ public static class SWT
     public const int WEBKIT = 1 << 16;
     public const int FULL_SELECTION = 1 << 16;
     public const int HIDE_SELECTION = 1 << 15;
+    public const int H_SCROLL = 1 << 8;
+    public const int V_SCROLL = 1 << 9;
 
     // Dialog styles
     public const int OPEN = 1 << 0;

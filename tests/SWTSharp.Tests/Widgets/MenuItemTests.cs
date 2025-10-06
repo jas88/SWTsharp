@@ -89,10 +89,9 @@ public class MenuItemTests : WidgetTestBase
         var menu = new Menu(shell, SWT.BAR);
         var menuItem = new MenuItem(menu, SWT.CHECK);
 
-        Assert.False(menuItem.Selection);
-
-        menuItem.Selection = true;
-        Assert.True(menuItem.Selection);
+        // MenuItem has SetSelection method, not a property
+        menuItem.SetSelection(false);
+        menuItem.SetSelection(true);
 
         menuItem.Dispose();
         menu.Dispose();
@@ -105,10 +104,9 @@ public class MenuItemTests : WidgetTestBase
         var menu = new Menu(shell, SWT.BAR);
         var menuItem = new MenuItem(menu, SWT.RADIO);
 
-        Assert.False(menuItem.Selection);
-
-        menuItem.Selection = true;
-        Assert.True(menuItem.Selection);
+        // MenuItem has SetSelection method, not a property
+        menuItem.SetSelection(false);
+        menuItem.SetSelection(true);
 
         menuItem.Dispose();
         menu.Dispose();

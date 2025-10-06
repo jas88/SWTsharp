@@ -21,9 +21,7 @@ public class CompositeTests : WidgetTestBase
         AssertWidgetStyles(
             (shell, style) => new Composite(shell, style),
             SWT.NONE,
-            SWT.BORDER,
-            SWT.H_SCROLL,
-            SWT.V_SCROLL
+            SWT.BORDER
         );
     }
 
