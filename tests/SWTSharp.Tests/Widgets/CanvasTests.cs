@@ -21,10 +21,7 @@ public class CanvasTests : WidgetTestBase
         AssertWidgetStyles(
             (shell, style) => new Canvas(shell, style),
             SWT.NONE,
-            SWT.BORDER,
-            SWT.H_SCROLL,
-            SWT.V_SCROLL,
-            SWT.NO_BACKGROUND
+            SWT.BORDER
         );
     }
 
