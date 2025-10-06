@@ -8,12 +8,18 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>SWTSharp</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>SWTSharp Contributors</Authors>
     <Description>A C#/.NET port of the Java SWT (Standard Widget Toolkit) library with multi-platform support</Description>
     <PackageTags>swt;ui;widgets;cross-platform;gui</PackageTags>
     <RepositoryUrl>https://github.com/jas88/swtsharp</RepositoryUrl>
     <PackageLicenseExpression>EPL-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/jas88/swtsharp</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <!-- Code Quality and Analysis -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -55,5 +61,9 @@
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
 </Project>
