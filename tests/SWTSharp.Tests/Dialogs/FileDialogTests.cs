@@ -8,7 +8,7 @@ namespace SWTSharp.Tests.Dialogs;
 /// <summary>
 /// Comprehensive unit tests for FileDialog dialog.
 /// </summary>
-public class FileDialogTests : WidgetTestBase
+public class FileDialogTests : TestBase
 {
     [Fact]
     public void FileDialog_Create_ShouldSucceed()
@@ -17,9 +17,6 @@ public class FileDialogTests : WidgetTestBase
         var fileDialog = new FileDialog(shell);
 
         Assert.NotNull(fileDialog);
-        AssertNotDisposed(fileDialog);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -32,7 +29,6 @@ public class FileDialogTests : WidgetTestBase
         {
             var fileDialog = new FileDialog(shell, style);
             Assert.NotNull(fileDialog);
-            fileDialog.Dispose();
         }
     }
 
@@ -45,8 +41,6 @@ public class FileDialogTests : WidgetTestBase
         fileDialog.FileName = "test.txt";
 
         Assert.Equal("test.txt", fileDialog.FileName);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -58,8 +52,6 @@ public class FileDialogTests : WidgetTestBase
         fileDialog.FileName = string.Empty;
 
         Assert.Equal(string.Empty, fileDialog.FileName);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -71,8 +63,6 @@ public class FileDialogTests : WidgetTestBase
         fileDialog.FileName = null!;
 
         Assert.Equal(string.Empty, fileDialog.FileName);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -85,8 +75,6 @@ public class FileDialogTests : WidgetTestBase
         fileDialog.FilterExtensions = extensions;
 
         Assert.Equal(extensions, fileDialog.FilterExtensions);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -99,8 +87,6 @@ public class FileDialogTests : WidgetTestBase
         fileDialog.FilterNames = names;
 
         Assert.Equal(names, fileDialog.FilterNames);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -112,53 +98,6 @@ public class FileDialogTests : WidgetTestBase
         fileDialog.FilterPath = "/home/user";
 
         Assert.Equal("/home/user", fileDialog.FilterPath);
-
-        fileDialog.Dispose();
-    }
-
-    [Fact]
-    public void FileDialog_Dispose_ShouldSetIsDisposed()
-    {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
-
-        AssertNotDisposed(fileDialog);
-        fileDialog.Dispose();
-        AssertDisposed(fileDialog);
-    }
-
-    [Fact]
-    public void FileDialog_SetFileName_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
-        fileDialog.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => fileDialog.FileName = "test.txt");
-    }
-
-    [Fact]
-    public void FileDialog_GetFileName_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
-        fileDialog.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => _ = fileDialog.FileName);
-    }
-
-    [Fact]
-    public void FileDialog_Data_ShouldGetAndSet()
-    {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
-
-        var testData = new { Name = "Test", Value = 42 };
-        fileDialog.Data = testData;
-
-        Assert.Same(testData, fileDialog.Data);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -168,19 +107,6 @@ public class FileDialogTests : WidgetTestBase
         var fileDialog = new FileDialog(shell);
 
         Assert.Equal(string.Empty, fileDialog.FileName);
-
-        fileDialog.Dispose();
-    }
-
-    [Fact]
-    public void FileDialog_Display_ShouldMatchParent()
-    {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
-
-        Assert.Same(shell.Display, fileDialog.Display);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
@@ -192,18 +118,34 @@ public class FileDialogTests : WidgetTestBase
         fileDialog.FilterExtensions = Array.Empty<string>();
 
         Assert.Empty(fileDialog.FilterExtensions);
-
-        fileDialog.Dispose();
     }
 
     [Fact]
-    public void FileDialog_IsDisposed_InitiallyFalse()
+    public void FileDialog_Parent_ShouldMatchShell()
     {
         using var shell = CreateTestShell();
         var fileDialog = new FileDialog(shell);
 
-        Assert.False(fileDialog.IsDisposed);
+        Assert.Same(shell, fileDialog.Parent);
+    }
 
-        fileDialog.Dispose();
+    [Fact]
+    public void FileDialog_Style_ShouldMatchConstructor()
+    {
+        using var shell = CreateTestShell();
+        var fileDialog = new FileDialog(shell, SWT.OPEN);
+
+        Assert.Equal(SWT.OPEN, fileDialog.Style);
+    }
+
+    [Fact]
+    public void FileDialog_Text_ShouldGetAndSet()
+    {
+        using var shell = CreateTestShell();
+        var fileDialog = new FileDialog(shell);
+
+        fileDialog.Text = "Select File";
+
+        Assert.Equal("Select File", fileDialog.Text);
     }
 }

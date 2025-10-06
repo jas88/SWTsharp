@@ -9,7 +9,7 @@ namespace SWTSharp.Tests.Dialogs;
 /// <summary>
 /// Comprehensive unit tests for ColorDialog dialog.
 /// </summary>
-public class ColorDialogTests : WidgetTestBase
+public class ColorDialogTests : TestBase
 {
     [Fact]
     public void ColorDialog_Create_ShouldSucceed()
@@ -18,9 +18,6 @@ public class ColorDialogTests : WidgetTestBase
         var colorDialog = new ColorDialog(shell);
 
         Assert.NotNull(colorDialog);
-        AssertNotDisposed(colorDialog);
-
-        colorDialog.Dispose();
     }
 
     [Fact]
@@ -33,7 +30,6 @@ public class ColorDialogTests : WidgetTestBase
         {
             var colorDialog = new ColorDialog(shell, style);
             Assert.NotNull(colorDialog);
-            colorDialog.Dispose();
         }
     }
 
@@ -47,8 +43,6 @@ public class ColorDialogTests : WidgetTestBase
         colorDialog.RGB = rgb;
 
         Assert.Equal(rgb, colorDialog.RGB);
-
-        colorDialog.Dispose();
     }
 
     [Fact]
@@ -61,8 +55,6 @@ public class ColorDialogTests : WidgetTestBase
         colorDialog.RGB = black;
 
         Assert.Equal(black, colorDialog.RGB);
-
-        colorDialog.Dispose();
     }
 
     [Fact]
@@ -75,87 +67,6 @@ public class ColorDialogTests : WidgetTestBase
         colorDialog.RGB = white;
 
         Assert.Equal(white, colorDialog.RGB);
-
-        colorDialog.Dispose();
-    }
-
-    [Fact]
-    public void ColorDialog_Dispose_ShouldSetIsDisposed()
-    {
-        using var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-
-        AssertNotDisposed(colorDialog);
-        colorDialog.Dispose();
-        AssertDisposed(colorDialog);
-    }
-
-    [Fact]
-    public void ColorDialog_SetRGB_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-        colorDialog.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => colorDialog.RGB = new RGB(0, 0, 0));
-    }
-
-    [Fact]
-    public void ColorDialog_GetRGB_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-        colorDialog.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => _ = colorDialog.RGB);
-    }
-
-    [Fact]
-    public void ColorDialog_Data_ShouldGetAndSet()
-    {
-        using var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-
-        var testData = new { Name = "Test", Value = 42 };
-        colorDialog.Data = testData;
-
-        Assert.Same(testData, colorDialog.Data);
-
-        colorDialog.Dispose();
-    }
-
-    [Fact]
-    public void ColorDialog_Display_ShouldMatchParent()
-    {
-        using var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-
-        Assert.Same(shell.Display, colorDialog.Display);
-
-        colorDialog.Dispose();
-    }
-
-    [Fact]
-    public void ColorDialog_IsDisposed_InitiallyFalse()
-    {
-        using var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-
-        Assert.False(colorDialog.IsDisposed);
-
-        colorDialog.Dispose();
-    }
-
-    [Fact]
-    public void ColorDialog_MultipleDispose_ShouldNotThrow()
-    {
-        using var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-
-        colorDialog.Dispose();
-        colorDialog.Dispose(); // Should not throw
-
-        Assert.True(colorDialog.IsDisposed);
     }
 
     [Fact]
@@ -171,21 +82,6 @@ public class ColorDialogTests : WidgetTestBase
         var color2 = new RGB(0, 255, 0);
         colorDialog.RGB = color2;
         Assert.Equal(color2, colorDialog.RGB);
-
-        colorDialog.Dispose();
-    }
-
-    [Fact]
-    public void ColorDialog_ParentDispose_ShouldNotAffectDialog()
-    {
-        var shell = CreateTestShell();
-        var colorDialog = new ColorDialog(shell);
-
-        shell.Dispose();
-
-        AssertNotDisposed(colorDialog);
-
-        colorDialog.Dispose();
     }
 
     [Fact]
@@ -195,7 +91,51 @@ public class ColorDialogTests : WidgetTestBase
         var colorDialog = new ColorDialog(shell);
 
         Assert.NotNull(colorDialog.RGB);
+    }
 
-        colorDialog.Dispose();
+    [Fact]
+    public void ColorDialog_RGBs_ShouldGetAndSet()
+    {
+        using var shell = CreateTestShell();
+        var colorDialog = new ColorDialog(shell);
+
+        var customColors = new[] {
+            new RGB(255, 0, 0),
+            new RGB(0, 255, 0),
+            new RGB(0, 0, 255)
+        };
+
+        colorDialog.RGBs = customColors;
+
+        Assert.Equal(customColors, colorDialog.RGBs);
+    }
+
+    [Fact]
+    public void ColorDialog_Text_ShouldGetAndSet()
+    {
+        using var shell = CreateTestShell();
+        var colorDialog = new ColorDialog(shell);
+
+        colorDialog.Text = "Select a Color";
+
+        Assert.Equal("Select a Color", colorDialog.Text);
+    }
+
+    [Fact]
+    public void ColorDialog_Parent_ShouldMatchShell()
+    {
+        using var shell = CreateTestShell();
+        var colorDialog = new ColorDialog(shell);
+
+        Assert.Same(shell, colorDialog.Parent);
+    }
+
+    [Fact]
+    public void ColorDialog_Style_ShouldMatchConstructor()
+    {
+        using var shell = CreateTestShell();
+        var colorDialog = new ColorDialog(shell, SWT.NONE);
+
+        Assert.Equal(SWT.NONE, colorDialog.Style);
     }
 }

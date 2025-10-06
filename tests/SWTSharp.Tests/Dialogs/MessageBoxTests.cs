@@ -8,7 +8,7 @@ namespace SWTSharp.Tests.Dialogs;
 /// <summary>
 /// Comprehensive unit tests for MessageBox dialog.
 /// </summary>
-public class MessageBoxTests : WidgetTestBase
+public class MessageBoxTests : TestBase
 {
     [Fact]
     public void MessageBox_Create_ShouldSucceed()
@@ -17,9 +17,6 @@ public class MessageBoxTests : WidgetTestBase
         var messageBox = new MessageBox(shell);
 
         Assert.NotNull(messageBox);
-        AssertNotDisposed(messageBox);
-
-        messageBox.Dispose();
     }
 
     [Fact]
@@ -32,7 +29,6 @@ public class MessageBoxTests : WidgetTestBase
         {
             var messageBox = new MessageBox(shell, style);
             Assert.NotNull(messageBox);
-            messageBox.Dispose();
         }
     }
 
@@ -45,8 +41,6 @@ public class MessageBoxTests : WidgetTestBase
         messageBox.Message = "Test message";
 
         Assert.Equal("Test message", messageBox.Message);
-
-        messageBox.Dispose();
     }
 
     [Fact]
@@ -58,8 +52,6 @@ public class MessageBoxTests : WidgetTestBase
         messageBox.Message = string.Empty;
 
         Assert.Equal(string.Empty, messageBox.Message);
-
-        messageBox.Dispose();
     }
 
     [Fact]
@@ -71,53 +63,6 @@ public class MessageBoxTests : WidgetTestBase
         messageBox.Message = null!;
 
         Assert.Equal(string.Empty, messageBox.Message);
-
-        messageBox.Dispose();
-    }
-
-    [Fact]
-    public void MessageBox_Dispose_ShouldSetIsDisposed()
-    {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
-
-        AssertNotDisposed(messageBox);
-        messageBox.Dispose();
-        AssertDisposed(messageBox);
-    }
-
-    [Fact]
-    public void MessageBox_SetMessage_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
-        messageBox.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => messageBox.Message = "Test");
-    }
-
-    [Fact]
-    public void MessageBox_GetMessage_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
-        messageBox.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => _ = messageBox.Message);
-    }
-
-    [Fact]
-    public void MessageBox_Data_ShouldGetAndSet()
-    {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
-
-        var testData = new { Name = "Test", Value = 42 };
-        messageBox.Data = testData;
-
-        Assert.Same(testData, messageBox.Data);
-
-        messageBox.Dispose();
     }
 
     [Fact]
@@ -127,31 +72,6 @@ public class MessageBoxTests : WidgetTestBase
         var messageBox = new MessageBox(shell);
 
         Assert.Equal(string.Empty, messageBox.Message);
-
-        messageBox.Dispose();
-    }
-
-    [Fact]
-    public void MessageBox_Display_ShouldMatchParent()
-    {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
-
-        Assert.Same(shell.Display, messageBox.Display);
-
-        messageBox.Dispose();
-    }
-
-    [Fact]
-    public void MessageBox_MultipleDispose_ShouldNotThrow()
-    {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
-
-        messageBox.Dispose();
-        messageBox.Dispose(); // Should not throw
-
-        Assert.True(messageBox.IsDisposed);
     }
 
     [Fact]
@@ -165,32 +85,34 @@ public class MessageBoxTests : WidgetTestBase
 
         messageBox.Message = "Second";
         Assert.Equal("Second", messageBox.Message);
-
-        messageBox.Dispose();
     }
 
     [Fact]
-    public void MessageBox_ParentDispose_ShouldNotAffectMessageBox()
-    {
-        var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
-
-        shell.Dispose();
-
-        // MessageBox should still be valid after parent disposal
-        AssertNotDisposed(messageBox);
-
-        messageBox.Dispose();
-    }
-
-    [Fact]
-    public void MessageBox_IsDisposed_InitiallyFalse()
+    public void MessageBox_Parent_ShouldMatchShell()
     {
         using var shell = CreateTestShell();
         var messageBox = new MessageBox(shell);
 
-        Assert.False(messageBox.IsDisposed);
+        Assert.Same(shell, messageBox.Parent);
+    }
 
-        messageBox.Dispose();
+    [Fact]
+    public void MessageBox_Style_ShouldMatchConstructor()
+    {
+        using var shell = CreateTestShell();
+        var messageBox = new MessageBox(shell, SWT.OK | SWT.ICON_INFORMATION);
+
+        Assert.Equal(SWT.OK | SWT.ICON_INFORMATION, messageBox.Style);
+    }
+
+    [Fact]
+    public void MessageBox_Text_ShouldGetAndSet()
+    {
+        using var shell = CreateTestShell();
+        var messageBox = new MessageBox(shell);
+
+        messageBox.Text = "Dialog Title";
+
+        Assert.Equal("Dialog Title", messageBox.Text);
     }
 }

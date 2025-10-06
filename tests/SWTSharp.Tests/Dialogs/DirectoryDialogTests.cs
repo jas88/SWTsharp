@@ -8,7 +8,7 @@ namespace SWTSharp.Tests.Dialogs;
 /// <summary>
 /// Comprehensive unit tests for DirectoryDialog dialog.
 /// </summary>
-public class DirectoryDialogTests : WidgetTestBase
+public class DirectoryDialogTests : TestBase
 {
     [Fact]
     public void DirectoryDialog_Create_ShouldSucceed()
@@ -17,9 +17,6 @@ public class DirectoryDialogTests : WidgetTestBase
         var directoryDialog = new DirectoryDialog(shell);
 
         Assert.NotNull(directoryDialog);
-        AssertNotDisposed(directoryDialog);
-
-        directoryDialog.Dispose();
     }
 
     [Fact]
@@ -32,7 +29,6 @@ public class DirectoryDialogTests : WidgetTestBase
         {
             var directoryDialog = new DirectoryDialog(shell, style);
             Assert.NotNull(directoryDialog);
-            directoryDialog.Dispose();
         }
     }
 
@@ -45,8 +41,6 @@ public class DirectoryDialogTests : WidgetTestBase
         directoryDialog.FilterPath = "/home/user";
 
         Assert.Equal("/home/user", directoryDialog.FilterPath);
-
-        directoryDialog.Dispose();
     }
 
     [Fact]
@@ -58,8 +52,6 @@ public class DirectoryDialogTests : WidgetTestBase
         directoryDialog.FilterPath = string.Empty;
 
         Assert.Equal(string.Empty, directoryDialog.FilterPath);
-
-        directoryDialog.Dispose();
     }
 
     [Fact]
@@ -71,8 +63,6 @@ public class DirectoryDialogTests : WidgetTestBase
         directoryDialog.FilterPath = null!;
 
         Assert.Equal(string.Empty, directoryDialog.FilterPath);
-
-        directoryDialog.Dispose();
     }
 
     [Fact]
@@ -84,53 +74,6 @@ public class DirectoryDialogTests : WidgetTestBase
         directoryDialog.Message = "Select a directory";
 
         Assert.Equal("Select a directory", directoryDialog.Message);
-
-        directoryDialog.Dispose();
-    }
-
-    [Fact]
-    public void DirectoryDialog_Dispose_ShouldSetIsDisposed()
-    {
-        using var shell = CreateTestShell();
-        var directoryDialog = new DirectoryDialog(shell);
-
-        AssertNotDisposed(directoryDialog);
-        directoryDialog.Dispose();
-        AssertDisposed(directoryDialog);
-    }
-
-    [Fact]
-    public void DirectoryDialog_SetFilterPath_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var directoryDialog = new DirectoryDialog(shell);
-        directoryDialog.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => directoryDialog.FilterPath = "/test");
-    }
-
-    [Fact]
-    public void DirectoryDialog_GetFilterPath_AfterDispose_ShouldThrow()
-    {
-        using var shell = CreateTestShell();
-        var directoryDialog = new DirectoryDialog(shell);
-        directoryDialog.Dispose();
-
-        Assert.Throws<SWTDisposedException>(() => _ = directoryDialog.FilterPath);
-    }
-
-    [Fact]
-    public void DirectoryDialog_Data_ShouldGetAndSet()
-    {
-        using var shell = CreateTestShell();
-        var directoryDialog = new DirectoryDialog(shell);
-
-        var testData = new { Name = "Test", Value = 42 };
-        directoryDialog.Data = testData;
-
-        Assert.Same(testData, directoryDialog.Data);
-
-        directoryDialog.Dispose();
     }
 
     [Fact]
@@ -140,42 +83,6 @@ public class DirectoryDialogTests : WidgetTestBase
         var directoryDialog = new DirectoryDialog(shell);
 
         Assert.Equal(string.Empty, directoryDialog.FilterPath);
-
-        directoryDialog.Dispose();
-    }
-
-    [Fact]
-    public void DirectoryDialog_Display_ShouldMatchParent()
-    {
-        using var shell = CreateTestShell();
-        var directoryDialog = new DirectoryDialog(shell);
-
-        Assert.Same(shell.Display, directoryDialog.Display);
-
-        directoryDialog.Dispose();
-    }
-
-    [Fact]
-    public void DirectoryDialog_IsDisposed_InitiallyFalse()
-    {
-        using var shell = CreateTestShell();
-        var directoryDialog = new DirectoryDialog(shell);
-
-        Assert.False(directoryDialog.IsDisposed);
-
-        directoryDialog.Dispose();
-    }
-
-    [Fact]
-    public void DirectoryDialog_MultipleDispose_ShouldNotThrow()
-    {
-        using var shell = CreateTestShell();
-        var directoryDialog = new DirectoryDialog(shell);
-
-        directoryDialog.Dispose();
-        directoryDialog.Dispose(); // Should not throw
-
-        Assert.True(directoryDialog.IsDisposed);
     }
 
     [Fact]
@@ -189,7 +96,34 @@ public class DirectoryDialogTests : WidgetTestBase
 
         directoryDialog.Message = "Second";
         Assert.Equal("Second", directoryDialog.Message);
+    }
 
-        directoryDialog.Dispose();
+    [Fact]
+    public void DirectoryDialog_Parent_ShouldMatchShell()
+    {
+        using var shell = CreateTestShell();
+        var directoryDialog = new DirectoryDialog(shell);
+
+        Assert.Same(shell, directoryDialog.Parent);
+    }
+
+    [Fact]
+    public void DirectoryDialog_Style_ShouldMatchConstructor()
+    {
+        using var shell = CreateTestShell();
+        var directoryDialog = new DirectoryDialog(shell, SWT.NONE);
+
+        Assert.Equal(SWT.NONE, directoryDialog.Style);
+    }
+
+    [Fact]
+    public void DirectoryDialog_Text_ShouldGetAndSet()
+    {
+        using var shell = CreateTestShell();
+        var directoryDialog = new DirectoryDialog(shell);
+
+        directoryDialog.Text = "Choose Directory";
+
+        Assert.Equal("Choose Directory", directoryDialog.Text);
     }
 }
