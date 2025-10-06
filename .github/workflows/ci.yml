@@ -34,7 +34,6 @@ jobs:
 
       - name: Run tests
         run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
-        continue-on-error: true  # GUI tests may fail without interactive session
 
       - name: Upload test results
         if: always()
@@ -65,7 +64,6 @@ jobs:
 
       - name: Run tests
         run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
-        continue-on-error: true  # GUI tests may fail without window server access
 
       - name: Upload test results
         if: always()
