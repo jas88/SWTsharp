@@ -12,7 +12,7 @@ public class ShellTests : WidgetTestBase
     [Fact]
     public void Shell_Create_WithDisplay_ShouldSucceed()
     {
-        AssertWidgetCreation(shell => new Shell(shell.Display));
+        AssertWidgetCreation(shell => new Shell(shell.Display!));
     }
 
     [Fact]

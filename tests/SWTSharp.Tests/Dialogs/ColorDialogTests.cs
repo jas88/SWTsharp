@@ -85,12 +85,13 @@ public class ColorDialogTests : TestBase
     }
 
     [Fact]
-    public void ColorDialog_InitialRGB_ShouldNotBeNull()
+    public void ColorDialog_InitialRGB_ShouldHaveDefaultValue()
     {
         using var shell = CreateTestShell();
         var colorDialog = new ColorDialog(shell);
 
-        Assert.NotNull(colorDialog.RGB);
+        // RGB is a value type, verify it has a valid default value
+        Assert.NotEqual(default(RGB), colorDialog.RGB);
     }
 
     [Fact]
