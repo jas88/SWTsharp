@@ -2782,9 +2782,121 @@ internal partial class LinuxPlatform : IPlatform
     [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void g_slist_free(IntPtr list);
 
+    // GTK Message Dialog imports
+    private enum GtkMessageType
+    {
+        Info = 0,
+        Warning = 1,
+        Question = 2,
+        Error = 3,
+        Other = 4
+    }
+
+    private enum GtkButtonsType
+    {
+        None = 0,
+        OK = 1,
+        Close = 2,
+        Cancel = 3,
+        YesNo = 4,
+        OKCancel = 5
+    }
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
+    private static extern IntPtr gtk_message_dialog_new(
+        IntPtr parent,
+        int flags,
+        GtkMessageType type,
+        GtkButtonsType buttons,
+        string message_format,
+        IntPtr args);
+
+    // GTK Color Chooser Dialog imports
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
+    private static extern IntPtr gtk_color_chooser_dialog_new(string title, IntPtr parent);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_color_chooser_set_rgba(IntPtr chooser, ref GdkRGBA color);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_color_chooser_get_rgba(IntPtr chooser, out GdkRGBA color);
+
+    // GTK Font Chooser Dialog imports
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
+    private static extern IntPtr gtk_font_chooser_dialog_new(string title, IntPtr parent);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
+    private static extern void gtk_font_chooser_set_font(IntPtr fontchooser, string fontname);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_font_chooser_get_font(IntPtr fontchooser);
+
     public int ShowMessageBox(IntPtr parent, string message, string title, int style)
     {
-        throw new NotImplementedException("MessageBox not yet implemented on Linux platform");
+        // Determine icon type
+        GtkMessageType messageType = GtkMessageType.Info;
+        if ((style & SWT.ICON_ERROR) != 0)
+            messageType = GtkMessageType.Error;
+        else if ((style & SWT.ICON_WARNING) != 0)
+            messageType = GtkMessageType.Warning;
+        else if ((style & SWT.ICON_QUESTION) != 0)
+            messageType = GtkMessageType.Question;
+        else if ((style & SWT.ICON_INFORMATION) != 0)
+            messageType = GtkMessageType.Info;
+
+        // Determine button type
+        GtkButtonsType buttonsType = GtkButtonsType.OK;
+        if ((style & SWT.OK) != 0 && (style & SWT.CANCEL) != 0)
+            buttonsType = GtkButtonsType.OKCancel;
+        else if ((style & SWT.YES) != 0 && (style & SWT.NO) != 0)
+            buttonsType = GtkButtonsType.YesNo;
+        else if ((style & SWT.OK) != 0)
+            buttonsType = GtkButtonsType.OK;
+
+        // Create message dialog
+        IntPtr dialog = gtk_message_dialog_new(
+            parent,
+            0, // flags
+            messageType,
+            buttonsType,
+            message ?? string.Empty,
+            IntPtr.Zero);
+
+        if (dialog == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK message dialog");
+        }
+
+        try
+        {
+            // Set title if provided
+            if (!string.IsNullOrEmpty(title))
+            {
+                gtk_window_set_title(dialog, title);
+            }
+
+            // Run dialog
+            int response = gtk_dialog_run(dialog);
+
+            // Map GTK response to SWT constants
+            switch ((GtkResponseType)response)
+            {
+                case GtkResponseType.OK:
+                    return SWT.OK;
+                case GtkResponseType.Cancel:
+                    return SWT.CANCEL;
+                case GtkResponseType.Yes:
+                    return SWT.YES;
+                case GtkResponseType.No:
+                    return SWT.NO;
+                default:
+                    return SWT.CANCEL;
+            }
+        }
+        finally
+        {
+            gtk_widget_destroy(dialog);
+        }
     }
 
     public FileDialogResult ShowFileDialog(IntPtr parentHandle, string title, string filterPath, string fileName, string[] filterNames, string[] filterExtensions, int style, bool overwrite)
@@ -2957,16 +3069,250 @@ internal partial class LinuxPlatform : IPlatform
 
     public string? ShowDirectoryDialog(IntPtr parentHandle, string title, string message, string filterPath)
     {
-        throw new NotImplementedException("DirectoryDialog not yet implemented on Linux platform");
+        // Create directory chooser dialog
+        IntPtr dialog = gtk_file_chooser_dialog_new(
+            title ?? "Select Directory",
+            parentHandle,
+            GtkFileChooserAction.SelectFolder,
+            "_Cancel",
+            GtkResponseType.Cancel,
+            "_Select",
+            GtkResponseType.Accept,
+            IntPtr.Zero);
+
+        if (dialog == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK directory chooser dialog");
+        }
+
+        try
+        {
+            // Set initial directory
+            if (!string.IsNullOrEmpty(filterPath) && Directory.Exists(filterPath))
+            {
+                gtk_file_chooser_set_current_folder(dialog, filterPath);
+            }
+
+            // Run dialog
+            int response = gtk_dialog_run(dialog);
+
+            if (response != (int)GtkResponseType.Accept)
+            {
+                return null;
+            }
+
+            // Get selected directory
+            IntPtr dirPtr = gtk_file_chooser_get_filename(dialog);
+            if (dirPtr != IntPtr.Zero)
+            {
+#if NETSTANDARD2_0
+                string? directory = Marshal.PtrToStringAnsi(dirPtr);
+#else
+                string? directory = Marshal.PtrToStringUTF8(dirPtr);
+#endif
+                g_free(dirPtr);
+                return directory;
+            }
+
+            return null;
+        }
+        finally
+        {
+            gtk_widget_destroy(dialog);
+        }
     }
 
     public Graphics.RGB? ShowColorDialog(IntPtr parentHandle, string title, Graphics.RGB initialColor, Graphics.RGB[]? customColors)
     {
-        throw new NotImplementedException("ColorDialog not yet implemented on Linux platform");
+        // Create color chooser dialog
+        IntPtr dialog = gtk_color_chooser_dialog_new(title ?? "Select Color", parentHandle);
+
+        if (dialog == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK color chooser dialog");
+        }
+
+        try
+        {
+            // Set initial color
+            GdkRGBA gdkColor = new GdkRGBA(initialColor);
+            gtk_color_chooser_set_rgba(dialog, ref gdkColor);
+
+            // Note: GTK's GtkColorChooserDialog doesn't have a direct way to set custom colors
+            // Custom colors would require additional implementation with custom palette widgets
+
+            // Run dialog
+            int response = gtk_dialog_run(dialog);
+
+            if (response != (int)GtkResponseType.OK)
+            {
+                return null;
+            }
+
+            // Get selected color
+            gtk_color_chooser_get_rgba(dialog, out GdkRGBA selectedColor);
+
+            return new Graphics.RGB(
+                (int)(selectedColor.Red * 255),
+                (int)(selectedColor.Green * 255),
+                (int)(selectedColor.Blue * 255));
+        }
+        finally
+        {
+            gtk_widget_destroy(dialog);
+        }
     }
 
     public FontDialogResult ShowFontDialog(IntPtr parentHandle, string title, Graphics.FontData? initialFont, Graphics.RGB? initialColor)
     {
-        throw new NotImplementedException("FontDialog not yet implemented on Linux platform");
+        // Create font chooser dialog
+        IntPtr dialog = gtk_font_chooser_dialog_new(title ?? "Select Font", parentHandle);
+
+        if (dialog == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK font chooser dialog");
+        }
+
+        try
+        {
+            // Set initial font if provided
+            if (initialFont != null)
+            {
+                // Build Pango font description string (e.g., "Arial Bold 12")
+                string fontDesc = initialFont.Name;
+
+                if ((initialFont.Style & SWT.BOLD) != 0 && (initialFont.Style & SWT.ITALIC) != 0)
+                    fontDesc += " Bold Italic";
+                else if ((initialFont.Style & SWT.BOLD) != 0)
+                    fontDesc += " Bold";
+                else if ((initialFont.Style & SWT.ITALIC) != 0)
+                    fontDesc += " Italic";
+
+                fontDesc += " " + initialFont.Height;
+
+                gtk_font_chooser_set_font(dialog, fontDesc);
+            }
+
+            // Note: GTK's GtkFontChooserDialog doesn't support color selection
+            // Font color would need to be handled separately
+
+            // Run dialog
+            int response = gtk_dialog_run(dialog);
+
+            if (response != (int)GtkResponseType.OK)
+            {
+                return new FontDialogResult
+                {
+                    FontData = null,
+                    Color = null
+                };
+            }
+
+            // Get selected font
+            IntPtr fontPtr = gtk_font_chooser_get_font(dialog);
+            if (fontPtr == IntPtr.Zero)
+            {
+                return new FontDialogResult
+                {
+                    FontData = null,
+                    Color = null
+                };
+            }
+
+#if NETSTANDARD2_0
+            string? fontString = Marshal.PtrToStringAnsi(fontPtr);
+#else
+            string? fontString = Marshal.PtrToStringUTF8(fontPtr);
+#endif
+            g_free(fontPtr);
+
+            if (string.IsNullOrEmpty(fontString))
+            {
+                return new FontDialogResult
+                {
+                    FontData = null,
+                    Color = null
+                };
+            }
+
+            // Parse Pango font description (e.g., "Arial Bold Italic 12")
+            Graphics.FontData fontData = ParsePangoFontDescription(fontString);
+
+            return new FontDialogResult
+            {
+                FontData = fontData,
+                Color = initialColor // GTK doesn't support font color in font chooser
+            };
+        }
+        finally
+        {
+            gtk_widget_destroy(dialog);
+        }
+    }
+
+    private Graphics.FontData ParsePangoFontDescription(string fontString)
+    {
+        // Parse Pango font description string
+        // Format: "Family [Style] [Variant] [Weight] [Stretch] Size"
+        // Example: "Arial Bold Italic 12"
+
+        var fontData = new Graphics.FontData();
+
+        // Split into parts
+        string[] parts = fontString.Split(' ');
+        if (parts.Length == 0)
+        {
+            fontData.Name = "Sans";
+            fontData.Height = 10;
+            fontData.Style = SWT.NORMAL;
+            return fontData;
+        }
+
+        // Extract size (last numeric part)
+        int size = 10;
+        int lastPartIndex = parts.Length - 1;
+        if (int.TryParse(parts[lastPartIndex], out int parsedSize))
+        {
+            size = parsedSize;
+            lastPartIndex--;
+        }
+        fontData.Height = size;
+
+        // Determine style from style keywords
+        int style = SWT.NORMAL;
+        int nameEndIndex = lastPartIndex;
+
+        for (int i = lastPartIndex; i >= 0; i--)
+        {
+            string part = parts[i];
+            if (part.Equals("Bold", StringComparison.OrdinalIgnoreCase))
+            {
+                style |= SWT.BOLD;
+                nameEndIndex = i - 1;
+            }
+            else if (part.Equals("Italic", StringComparison.OrdinalIgnoreCase) ||
+                     part.Equals("Oblique", StringComparison.OrdinalIgnoreCase))
+            {
+                style |= SWT.ITALIC;
+                nameEndIndex = i - 1;
+            }
+            else
+            {
+                break;
+            }
+        }
+        fontData.Style = style;
+
+        // Extract font family name (remaining parts)
+        if (nameEndIndex >= 0)
+        {
+            fontData.Name = string.Join(" ", parts, 0, nameEndIndex + 1);
+        }
+        else
+        {
+            fontData.Name = "Sans";
+        }
+
+        return fontData;
     }
 }
