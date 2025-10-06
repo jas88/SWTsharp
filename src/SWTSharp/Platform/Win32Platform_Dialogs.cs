@@ -591,20 +591,13 @@ internal partial class Win32Platform
     private const uint CF_SCALABLEONLY = 0x00020000;
     private const uint CF_NOSCRIPTSEL = 0x00800000;
 
-    // Font weights
-    private const int FW_NORMAL = 400;
-    private const int FW_BOLD = 700;
-
-    // Font quality
-    private const byte DEFAULT_QUALITY = 0;
+    // Font quality (additional quality levels not in Graphics file)
     private const byte DRAFT_QUALITY = 1;
     private const byte PROOF_QUALITY = 2;
     private const byte NONANTIALIASED_QUALITY = 3;
-    private const byte ANTIALIASED_QUALITY = 4;
-    private const byte CLEARTYPE_QUALITY = 5;
+    private const byte CLEARTYPE_QUALITY_BYTE = 5;
 
-    // Font pitch and family
-    private const byte DEFAULT_PITCH = 0;
+    // Font pitch and family (additional pitch types not in Graphics file)
     private const byte FIXED_PITCH = 1;
     private const byte VARIABLE_PITCH = 2;
 
@@ -686,7 +679,7 @@ internal partial class Win32Platform
             logFont.lfCharSet = 1; // DEFAULT_CHARSET
             logFont.lfOutPrecision = 0; // OUT_DEFAULT_PRECIS
             logFont.lfClipPrecision = 0; // CLIP_DEFAULT_PRECIS
-            logFont.lfQuality = CLEARTYPE_QUALITY;
+            logFont.lfQuality = CLEARTYPE_QUALITY_BYTE;
             logFont.lfPitchAndFamily = DEFAULT_PITCH;
 
             Marshal.StructureToPtr(logFont, logFontPtr, false);

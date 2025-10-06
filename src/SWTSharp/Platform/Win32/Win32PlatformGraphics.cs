@@ -8,12 +8,26 @@ namespace SWTSharp.Platform;
 internal partial class Win32Platform : IPlatformGraphics
 {
     private const string Gdi32 = "gdi32.dll";
+    private const string GdiPlus = "gdiplus.dll";
     private const string Msimg32 = "msimg32.dll";
 
     // GDI Object Types
     private const int OBJ_PEN = 1;
     private const int OBJ_BRUSH = 2;
     private const int OBJ_FONT = 6;
+
+    // Font weights
+    private const int FW_NORMAL = 400;
+    private const int FW_BOLD = 700;
+
+    // Font quality
+    private const int DEFAULT_QUALITY = 0;
+    private const int ANTIALIASED_QUALITY = 4;
+    private const int CLEARTYPE_QUALITY = 5;
+
+    // Font pitch and family
+    private const int DEFAULT_PITCH = 0;
+    private const int FF_DONTCARE = 0;
 
     // Stock Objects
     private const int NULL_BRUSH = 5;
@@ -80,6 +94,18 @@ internal partial class Win32Platform : IPlatformGraphics
         public byte tmStruckOut;
         public byte tmPitchAndFamily;
         public byte tmCharSet;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BITMAP
+    {
+        public int bmType;
+        public int bmWidth;
+        public int bmHeight;
+        public int bmWidthBytes;
+        public ushort bmPlanes;
+        public ushort bmBitsPixel;
+        public IntPtr bmBits;
     }
 
     // GDI function imports
@@ -322,6 +348,52 @@ internal partial class Win32Platform : IPlatformGraphics
     private static extern int SelectClipRgn(IntPtr hDC, IntPtr hRgn);
 #endif
 
+    // Font operations
+    [DllImport(Gdi32, CharSet = CharSet.Unicode)]
+    private static extern IntPtr CreateFont(
+        int nHeight, int nWidth, int nEscapement, int nOrientation,
+        int fnWeight, uint fdwItalic, uint fdwUnderline, uint fdwStrikeOut,
+        uint fdwCharSet, uint fdwOutputPrecision, uint fdwClipPrecision,
+        uint fdwQuality, uint fdwPitchAndFamily, string lpszFace);
+
+    // Bitmap/Image operations
+#if NET8_0_OR_GREATER
+    [LibraryImport(Gdi32)]
+    private static partial IntPtr CreateDIBSection(IntPtr hdc, IntPtr pbmi, uint usage, out IntPtr ppvBits, IntPtr hSection, uint offset);
+#else
+    [DllImport(Gdi32)]
+    private static extern IntPtr CreateDIBSection(IntPtr hdc, IntPtr pbmi, uint usage, out IntPtr ppvBits, IntPtr hSection, uint offset);
+#endif
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(Gdi32)]
+    private static partial IntPtr CreateCompatibleBitmap(IntPtr hdc, int width, int height);
+#else
+    [DllImport(Gdi32)]
+    private static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int width, int height);
+#endif
+
+    // GDI+ Image loading (simplified approach)
+#if NET8_0_OR_GREATER
+    [LibraryImport(Gdi32, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial IntPtr LoadImageW(IntPtr hinst, string name, uint type, int cx, int cy, uint fuLoad);
+#else
+    [DllImport(User32, CharSet = CharSet.Unicode, EntryPoint = "LoadImageW")]
+    private static extern IntPtr LoadImageW(IntPtr hinst, string name, uint type, int cx, int cy, uint fuLoad);
+#endif
+
+    private const uint IMAGE_BITMAP = 0;
+    private const uint LR_LOADFROMFILE = 0x0010;
+    private const uint LR_CREATEDIBSECTION = 0x2000;
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(Gdi32)]
+    private static partial int GetObject(IntPtr hObject, int nSize, IntPtr lpObject);
+#else
+    [DllImport(Gdi32)]
+    private static extern int GetObject(IntPtr hObject, int nSize, IntPtr lpObject);
+#endif
+
     // GC Handle to window mapping
     private readonly Dictionary<IntPtr, IntPtr> _gcToWindow = new();
     private readonly Dictionary<IntPtr, GCState> _gcStates = new();
@@ -354,32 +426,116 @@ internal partial class Win32Platform : IPlatformGraphics
 
     public IntPtr CreateFont(string name, int height, int style)
     {
-        // TODO: Implement font creation using CreateFont Win32 API
-        // For now, return default system font
-        return GetStockObject(13); // DEFAULT_GUI_FONT
+        // Convert SWT font style flags to Win32 parameters
+        int weight = (style & SWT.BOLD) != 0 ? FW_BOLD : FW_NORMAL;
+        uint italic = (style & SWT.ITALIC) != 0 ? 1u : 0u;
+
+        // Height is negative for character height (positive for cell height)
+        // We want character height, so negate the value
+        int nHeight = -Math.Abs(height);
+
+        // Create the font
+        IntPtr hFont = CreateFont(
+            nHeight,                    // Height
+            0,                          // Width (0 = use aspect ratio)
+            0,                          // Escapement
+            0,                          // Orientation
+            weight,                     // Weight (BOLD or NORMAL)
+            italic,                     // Italic
+            0,                          // Underline
+            0,                          // StrikeOut
+            1,                          // CharSet (DEFAULT_CHARSET = 1)
+            0,                          // OutputPrecision
+            0,                          // ClipPrecision
+            ANTIALIASED_QUALITY,        // Quality (antialiased for better rendering)
+            (DEFAULT_PITCH << 0) | (FF_DONTCARE << 4), // PitchAndFamily
+            name                        // Font face name
+        );
+
+        if (hFont == IntPtr.Zero)
+        {
+            // Fall back to default GUI font if creation fails
+            return GetStockObject(13); // DEFAULT_GUI_FONT
+        }
+
+        return hFont;
     }
 
     public void DestroyFont(IntPtr handle)
     {
-        // TODO: Implement font destruction
-        // Don't delete stock objects
+        // Don't delete stock objects (handle values < 20 are stock objects)
+        if (handle != IntPtr.Zero && handle.ToInt32() > 20)
+        {
+            DeleteObject(handle);
+        }
     }
 
     public IntPtr CreateImage(int width, int height)
     {
-        // TODO: Implement image creation using CreateDIBSection
-        throw new NotImplementedException("Image creation not yet implemented on Win32 platform");
+        // Create a compatible bitmap for the screen DC
+        IntPtr screenDC = GetDC(IntPtr.Zero);
+        try
+        {
+            IntPtr hBitmap = CreateCompatibleBitmap(screenDC, width, height);
+            if (hBitmap == IntPtr.Zero)
+            {
+                throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create bitmap");
+            }
+            return hBitmap;
+        }
+        finally
+        {
+            ReleaseDC(IntPtr.Zero, screenDC);
+        }
     }
 
     public (IntPtr Handle, int Width, int Height) LoadImage(string filename)
     {
-        // TODO: Implement image loading
-        throw new NotImplementedException("Image loading not yet implemented on Win32 platform");
+        // Use LoadImageW to load bitmap from file
+        IntPtr hBitmap = LoadImageW(
+            IntPtr.Zero,
+            filename,
+            IMAGE_BITMAP,
+            0,                          // Use original width
+            0,                          // Use original height
+            LR_LOADFROMFILE | LR_CREATEDIBSECTION
+        );
+
+        if (hBitmap == IntPtr.Zero)
+        {
+            throw new SWTException(SWT.ERROR_IO, $"Failed to load image from '{filename}'");
+        }
+
+        // Get bitmap dimensions
+        BITMAP bmp;
+        unsafe
+        {
+            int size = Marshal.SizeOf<BITMAP>();
+            IntPtr pBmp = Marshal.AllocHGlobal(size);
+            try
+            {
+                if (GetObject(hBitmap, size, pBmp) == 0)
+                {
+                    DeleteObject(hBitmap);
+                    throw new SWTException(SWT.ERROR_INVALID_IMAGE, "Failed to get bitmap information");
+                }
+                bmp = Marshal.PtrToStructure<BITMAP>(pBmp);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pBmp);
+            }
+        }
+
+        return (hBitmap, bmp.bmWidth, bmp.bmHeight);
     }
 
     public void DestroyImage(IntPtr handle)
     {
-        // TODO: Implement image destruction
+        if (handle != IntPtr.Zero)
+        {
+            DeleteObject(handle);
+        }
     }
 
     public IntPtr CreateGraphicsContext(IntPtr drawable)
@@ -691,17 +847,76 @@ internal partial class Win32Platform : IPlatformGraphics
 
     public void DrawImage(IntPtr gcHandle, IntPtr imageHandle, int x, int y)
     {
-        // TODO: Implement image drawing
-        // This requires creating a compatible DC and using BitBlt
-        throw new NotImplementedException("Image drawing not yet implemented on Win32 platform");
+        // Get bitmap dimensions
+        BITMAP bmp;
+        unsafe
+        {
+            int size = Marshal.SizeOf<BITMAP>();
+            IntPtr pBmp = Marshal.AllocHGlobal(size);
+            try
+            {
+                if (GetObject(imageHandle, size, pBmp) == 0)
+                {
+                    return; // Invalid bitmap, silently fail
+                }
+                bmp = Marshal.PtrToStructure<BITMAP>(pBmp);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pBmp);
+            }
+        }
+
+        // Create a memory DC compatible with the target DC
+        IntPtr memDC = CreateCompatibleDC(gcHandle);
+        try
+        {
+            // Select the bitmap into the memory DC
+            IntPtr oldBitmap = SelectObject(memDC, imageHandle);
+            try
+            {
+                // Copy the bitmap to the target DC
+                BitBlt(gcHandle, x, y, bmp.bmWidth, bmp.bmHeight, memDC, 0, 0, SRCCOPY);
+            }
+            finally
+            {
+                SelectObject(memDC, oldBitmap);
+            }
+        }
+        finally
+        {
+            DeleteDC(memDC);
+        }
     }
 
     public void DrawImageScaled(IntPtr gcHandle, IntPtr imageHandle,
         int srcX, int srcY, int srcWidth, int srcHeight,
         int destX, int destY, int destWidth, int destHeight)
     {
-        // TODO: Implement scaled image drawing using StretchBlt
-        throw new NotImplementedException("Scaled image drawing not yet implemented on Win32 platform");
+        // Create a memory DC compatible with the target DC
+        IntPtr memDC = CreateCompatibleDC(gcHandle);
+        try
+        {
+            // Select the bitmap into the memory DC
+            IntPtr oldBitmap = SelectObject(memDC, imageHandle);
+            try
+            {
+                // Use StretchBlt to scale the image from source rectangle to destination rectangle
+                StretchBlt(
+                    gcHandle, destX, destY, destWidth, destHeight,
+                    memDC, srcX, srcY, srcWidth, srcHeight,
+                    SRCCOPY
+                );
+            }
+            finally
+            {
+                SelectObject(memDC, oldBitmap);
+            }
+        }
+        finally
+        {
+            DeleteDC(memDC);
+        }
     }
 
     public void CopyArea(IntPtr gcHandle, int srcX, int srcY, int width, int height, int destX, int destY)
