@@ -1,8 +1,9 @@
 # Dependabot configuration for SWTSharp
-# Automatically updates NuGet packages and GitHub Actions (including .NET SDK)
+# Automatically updates NuGet packages, GitHub Actions, and .NET SDK (via global.json)
 
 version: 2
 updates:
+
   # Update NuGet package dependencies
   - package-ecosystem: "nuget"
     directory: "/"
