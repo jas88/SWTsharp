@@ -80,7 +80,7 @@ internal partial class LinuxPlatform
         }
 
         // Create tree store (hierarchical model)
-        IntPtr[] columnTypes = new IntPtr[] { g_type_from_name("gchararray") }; // String column
+        IntPtr[] columnTypes = new IntPtr[] { new IntPtr((long)g_type_from_name("gchararray")) }; // String column
         IntPtr treeStore = gtk_tree_store_newv(1, columnTypes);
 
         if (treeStore == IntPtr.Zero)

@@ -1,3 +1,7 @@
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
+
 namespace SWTSharp;
 
 /// <summary>
@@ -208,11 +212,44 @@ public static class SWT
     public const string PLATFORM_MACOSX = "macosx";
     public const string PLATFORM_LINUX = "linux";
 
+#if NET8_0_OR_GREATER
+    // Frozen dictionary for optimal lookup performance on .NET 8+
+    private static readonly FrozenDictionary<int, string> ErrorMessages = new Dictionary<int, string>
+    {
+        [ERROR_UNSPECIFIED] = "Unspecified error",
+        [ERROR_NO_HANDLES] = "No more handles",
+        [ERROR_NO_MORE_CALLBACKS] = "No more callbacks",
+        [ERROR_NULL_ARGUMENT] = "Argument cannot be null",
+        [ERROR_INVALID_ARGUMENT] = "Argument not valid",
+        [ERROR_INVALID_RANGE] = "Index out of bounds",
+        [ERROR_CANNOT_BE_ZERO] = "Argument cannot be zero",
+        [ERROR_CANNOT_GET_ITEM] = "Cannot get item",
+        [ERROR_CANNOT_GET_SELECTION] = "Cannot get selection",
+        [ERROR_CANNOT_GET_TEXT] = "Cannot get text",
+        [ERROR_CANNOT_SET_TEXT] = "Cannot set text",
+        [ERROR_ITEM_NOT_ADDED] = "Item not added",
+        [ERROR_ITEM_NOT_REMOVED] = "Item not removed",
+        [ERROR_NOT_IMPLEMENTED] = "Not implemented",
+        [ERROR_THREAD_INVALID_ACCESS] = "Invalid thread access",
+        [ERROR_WIDGET_DISPOSED] = "Widget is disposed",
+        [ERROR_CANNOT_SET_SELECTION] = "Cannot set selection",
+        [ERROR_IO] = "I/O error",
+        [ERROR_INVALID_IMAGE] = "Invalid image",
+        [ERROR_GRAPHIC_DISPOSED] = "Graphic is disposed",
+        [ERROR_DEVICE_DISPOSED] = "Device is disposed"
+    }.ToFrozenDictionary();
+#endif
+
     /// <summary>
     /// Returns an error message for the given error code.
     /// </summary>
     public static string GetErrorMessage(int code)
     {
+#if NET8_0_OR_GREATER
+        return ErrorMessages.TryGetValue(code, out var message)
+            ? message
+            : $"Unknown error code: {code}";
+#else
         return code switch
         {
             ERROR_UNSPECIFIED => "Unspecified error",
@@ -238,9 +275,24 @@ public static class SWT
             ERROR_DEVICE_DISPOSED => "Device is disposed",
             _ => $"Unknown error code: {code}"
         };
+#endif
     }
 
     // Value-based widget styles
     public const int SMOOTH = 1 << 16;
     public const int INDETERMINATE = 1 << 1;
+
+    // Line styles
+    public const int LINE_SOLID = 1;
+    public const int LINE_DASH = 2;
+    public const int LINE_DOT = 3;
+    public const int LINE_DASHDOT = 4;
+    public const int LINE_DASHDOTDOT = 5;
+    public const int LINE_CUSTOM = 6;
+
+    // Drawing flags
+    public const int DRAW_DELIMITER = 1 << 17;
+    public const int DRAW_TAB = 1 << 18;
+    public const int DRAW_MNEMONIC = 1 << 19;
+    public const int DRAW_TRANSPARENT = 1 << 30;
 }

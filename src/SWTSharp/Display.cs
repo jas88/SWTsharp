@@ -9,7 +9,11 @@ namespace SWTSharp;
 public class Display : IDisposable
 {
     private static Display? _default;
+#if NET9_0_OR_GREATER
+    private static readonly Lock _lock = new Lock();
+#else
     private static readonly object _lock = new object();
+#endif
 
     private bool _disposed;
     private Thread? _thread;

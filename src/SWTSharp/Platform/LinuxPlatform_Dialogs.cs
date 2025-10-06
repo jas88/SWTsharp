@@ -465,8 +465,8 @@ internal partial class LinuxPlatform
             // Set initial font if provided
             if (initialFont != null && !string.IsNullOrEmpty(initialFont.Name))
             {
-                string fontDesc = $"{initialFont.Name} {initialFont.Height}";
-                gtk_font_chooser_set_font(dialog, fontDesc);
+                string initialFontDesc = $"{initialFont.Name} {initialFont.Height}";
+                gtk_font_chooser_set_font(dialog, initialFontDesc);
             }
 
             // Run dialog
@@ -520,7 +520,7 @@ internal partial class LinuxPlatform
             }
 
             string name = string.Join(" ", parts.Take(parts.Length - 1));
-            if (!int.TryParse(parts[^1], out int size))
+            if (!int.TryParse(parts[parts.Length - 1], out int size))
             {
                 size = 10;
             }

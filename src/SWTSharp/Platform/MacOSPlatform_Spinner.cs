@@ -60,7 +60,8 @@ internal partial class MacOSPlatform
         InitializeSpinnerSelectors();
 
         // Create a container view to hold both text field and stepper
-        IntPtr containerView = objc_msgSend(_nsViewClass ?? objc_getClass("NSView"), _selAlloc);
+        IntPtr viewClass = _nsViewClass != IntPtr.Zero ? _nsViewClass : objc_getClass("NSView");
+        IntPtr containerView = objc_msgSend(viewClass, _selAlloc);
         containerView = objc_msgSend(containerView, _selInit);
 
         // Create NSTextField for displaying/editing value

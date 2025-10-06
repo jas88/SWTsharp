@@ -20,14 +20,7 @@ internal partial class Win32Platform
         public byte[] rgbReserved;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct RECT
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-    }
+    // RECT struct is defined in main Win32Platform.cs
 
     // Note: BeginPaint/EndPaint use DllImport (not LibraryImport) due to struct marshalling
     [DllImport(User32)]

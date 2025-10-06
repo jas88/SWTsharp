@@ -15,6 +15,9 @@ internal partial class Win32Platform : IPlatform
     private const uint WS_OVERLAPPEDWINDOW = 0x00CF0000;
     private const uint WS_VISIBLE = 0x10000000;
     private const uint WS_CHILD = 0x40000000;
+    private const uint WS_BORDER = 0x00800000;
+    private const uint WS_CLIPCHILDREN = 0x02000000;
+    private const uint WS_CLIPSIBLINGS = 0x04000000;
 
     // Class Styles
     private const uint CS_HREDRAW = 0x0002;
@@ -47,6 +50,15 @@ internal partial class Win32Platform : IPlatform
     {
         public int X;
         public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -777,6 +789,7 @@ internal partial class Win32Platform : IPlatform
     private const uint ES_AUTOVSCROLL = 0x0040;
     private const uint ES_AUTOHSCROLL = 0x0080;
     private const uint ES_NOHIDESEL = 0x0100;
+    private const uint ES_WANTRETURN = 0x1000;
     // ES_READONLY and ES_NUMBER defined in Win32Platform_Spinner.cs
 
     // Edit control messages

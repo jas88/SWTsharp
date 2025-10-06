@@ -57,7 +57,7 @@ public abstract class Resource : IDisposable
         if (disposed) return;
 
         Dispose(true);
-        GC.SuppressFinalize(this);
+        System.GC.SuppressFinalize(this);
         disposed = true;
     }
 

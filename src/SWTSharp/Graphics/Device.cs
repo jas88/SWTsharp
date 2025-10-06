@@ -94,7 +94,7 @@ public abstract class Device : IDisposable
         if (disposed) return;
 
         Dispose(true);
-        GC.SuppressFinalize(this);
+        System.GC.SuppressFinalize(this);
         disposed = true;
     }
 

@@ -51,6 +51,9 @@ internal partial class MacOSPlatform : IPlatform
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
 
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_size(IntPtr receiver, IntPtr selector, CGSize size);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct CGRect
     {
@@ -63,6 +66,19 @@ internal partial class MacOSPlatform : IPlatform
         {
             this.x = x;
             this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CGSize
+    {
+        public double width;
+        public double height;
+
+        public CGSize(double width, double height)
+        {
             this.width = width;
             this.height = height;
         }

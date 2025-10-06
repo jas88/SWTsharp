@@ -14,6 +14,7 @@ public class FileDialog : Dialog
     private string _fileName = string.Empty;
     private string[] _fileNames = Array.Empty<string>();
     private bool _overwrite = true;
+    private int _filterIndex = 0;
 
     /// <summary>
     /// Gets or sets the file filter extensions (e.g., "*.txt", "*.jpg;*.png").
@@ -70,6 +71,15 @@ public class FileDialog : Dialog
     }
 
     /// <summary>
+    /// Gets or sets the index of the selected filter (0-based).
+    /// </summary>
+    public int FilterIndex
+    {
+        get => _filterIndex;
+        set => _filterIndex = value;
+    }
+
+    /// <summary>
     /// Creates a new file dialog with the specified parent and style.
     /// </summary>
     /// <param name="parent">Parent shell (can be null)</param>
@@ -109,6 +119,7 @@ public class FileDialog : Dialog
             _fileName = result.SelectedFiles[0];
             _fileNames = result.SelectedFiles;
             _filterPath = result.FilterPath ?? _filterPath;
+            _filterIndex = result.FilterIndex;
             return _fileName;
         }
 

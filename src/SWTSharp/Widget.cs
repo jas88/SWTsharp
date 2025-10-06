@@ -1,4 +1,7 @@
 using System.Runtime.InteropServices;
+#if NET8_0_OR_GREATER
+using System.Buffers;
+#endif
 using SWTSharp.Events;
 
 namespace SWTSharp;
@@ -107,6 +110,20 @@ public abstract class Widget : IDisposable
     /// </summary>
     protected virtual void ReleaseWidget()
     {
+        // LEAK-001: Clear event handlers to prevent memory leaks
+        if (_eventTable != null)
+        {
+            foreach (var eventType in _eventTable.Keys.ToList())
+            {
+                if (_eventTable.TryGetValue(eventType, out var listeners))
+                {
+                    listeners.Clear();
+                }
+            }
+            _eventTable.Clear();
+            _eventTable = null;
+        }
+
         _data = null;
         _display = null;
     }
@@ -227,6 +244,50 @@ public abstract class Widget : IDisposable
             @event.Widget = this;
             @event.Display ??= _display;
 
+#if NET8_0_OR_GREATER
+            // Use ArrayPool for better performance on .NET 8+
+            var count = listeners.Count;
+            var listenersCopy = ArrayPool<IListener>.Shared.Rent(count);
+            try
+            {
+                listeners.CopyTo(listenersCopy, 0);
+                for (int i = 0; i < count; i++)
+                {
+                    try
+                    {
+                        listenersCopy[i].HandleEvent(@event);
+                    }
+                    catch (OutOfMemoryException)
+                    {
+                        // SEC-005: Critical exception - rethrow immediately
+                        throw;
+                    }
+                    catch (StackOverflowException)
+                    {
+                        // SEC-005: Critical exception - rethrow immediately
+                        throw;
+                    }
+                    catch (AccessViolationException)
+                    {
+                        // SEC-005: Critical exception - rethrow immediately
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        // SEC-005: Log properly instead of swallowing
+                        var errorMessage = $"Exception in event handler for {GetType().Name}: {ex.GetType().Name} - {ex.Message}";
+                        Console.Error.WriteLine(errorMessage);
+                        System.Diagnostics.Debug.WriteLine(errorMessage);
+                        System.Diagnostics.Trace.WriteLine(errorMessage);
+                        NotifyApplicationError(ex, @event);
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<IListener>.Shared.Return(listenersCopy, clearArray: true);
+            }
+#else
             // Create a copy of the listeners list to avoid modification issues during iteration
             var listenersCopy = new List<IListener>(listeners);
             foreach (var listener in listenersCopy)
@@ -235,13 +296,32 @@ public abstract class Widget : IDisposable
                 {
                     listener.HandleEvent(@event);
                 }
+                catch (OutOfMemoryException)
+                {
+                    // SEC-005: Critical exception - rethrow immediately
+                    throw;
+                }
+                catch (StackOverflowException)
+                {
+                    // SEC-005: Critical exception - rethrow immediately
+                    throw;
+                }
+                catch (AccessViolationException)
+                {
+                    // SEC-005: Critical exception - rethrow immediately
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    // Log or handle the exception as needed
-                    // In SWT, exceptions from event handlers are typically swallowed
-                    System.Diagnostics.Debug.WriteLine($"Exception in event handler: {ex}");
+                    // SEC-005: Log properly instead of swallowing
+                    var errorMessage = $"Exception in event handler for {GetType().Name}: {ex.GetType().Name} - {ex.Message}";
+                    Console.Error.WriteLine(errorMessage);
+                    System.Diagnostics.Debug.WriteLine(errorMessage);
+                    System.Diagnostics.Trace.WriteLine(errorMessage);
+                    NotifyApplicationError(ex, @event);
                 }
             }
+#endif
         }
     }
 
@@ -376,5 +456,15 @@ public abstract class Widget : IDisposable
                 _eventTable.Remove(eventType);
             }
         }
+    }
+
+    /// <summary>
+    /// SEC-005: Notify application-level error handler of unhandled exceptions in event handlers.
+    /// This can be overridden by Display or other global handlers.
+    /// </summary>
+    protected virtual void NotifyApplicationError(Exception ex, Event @event)
+    {
+        // Subclasses or Display can override this to provide centralized error handling
+        // Default implementation does nothing beyond logging (already done in NotifyListeners)
     }
 }

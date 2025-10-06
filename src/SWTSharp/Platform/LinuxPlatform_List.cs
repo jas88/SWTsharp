@@ -47,6 +47,16 @@ internal partial class LinuxPlatform
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern double gtk_adjustment_get_value(IntPtr adjustment);
 
+    // GLib list functions
+    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint g_list_length(IntPtr list);
+
+    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr g_list_nth_data(IntPtr list, uint n);
+
+    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void g_list_free(IntPtr list);
+
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_adjustment_set_value(IntPtr adjustment, double value);
 

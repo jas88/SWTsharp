@@ -8,6 +8,9 @@ namespace SWTSharp.Platform;
 internal partial class LinuxPlatform
 {
     // GTK TreeView/ListStore P/Invoke declarations for Table widget
+    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    private static extern nuint g_type_from_name(string name);
+
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_tree_view_new();
 
@@ -191,7 +194,7 @@ internal partial class LinuxPlatform
 
         // Create list store initially with no columns (will be added dynamically)
         // Start with just one column to avoid issues
-        IntPtr[] types = new IntPtr[] { g_type_from_name("gchararray") };
+        IntPtr[] types = new IntPtr[] { new IntPtr((long)g_type_from_name("gchararray")) };
         IntPtr listStore = gtk_list_store_newv(1, types);
 
         // Create tree view with the model
