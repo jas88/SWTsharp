@@ -34,10 +34,10 @@ internal partial class Win32Platform
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
+    [LibraryImport(User32, EntryPoint = "SetWindowLongW", SetLastError = true)]
     private static partial uint SetWindowLong(IntPtr hWnd, int nIndex, uint dwNewLong);
 #else
-    [DllImport(User32, SetLastError = true)]
+    [DllImport(User32, EntryPoint = "SetWindowLongW", SetLastError = true)]
     private static extern uint SetWindowLong(IntPtr hWnd, int nIndex, uint dwNewLong);
 #endif
 

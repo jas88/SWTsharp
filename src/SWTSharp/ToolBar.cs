@@ -72,7 +72,7 @@ public class ToolBar : Composite
     protected override void CreateWidget()
     {
         // Create platform-specific toolbar handle
-        Handle = Platform.PlatformFactory.Instance.CreateToolBar(Style);
+        Handle = Platform.PlatformFactory.Instance.CreateToolBar(Parent!.Handle, Style);
     }
 
     /// <summary>

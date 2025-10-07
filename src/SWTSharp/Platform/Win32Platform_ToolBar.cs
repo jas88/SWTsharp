@@ -132,7 +132,7 @@ internal partial class Win32Platform
     private readonly Dictionary<int, IntPtr> _toolItemsByCommandId = new();
     private int _nextToolItemId = 1000; // Start at 1000 to avoid conflicts
 
-    public IntPtr CreateToolBar(int style)
+    public IntPtr CreateToolBar(IntPtr parent, int style)
     {
         uint toolBarStyle = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS |
                            CCS_NODIVIDER | CCS_NOPARENTALIGN;
@@ -161,7 +161,7 @@ internal partial class Win32Platform
             "",
             toolBarStyle,
             0, 0, 100, 24, // Default size
-            IntPtr.Zero,    // No parent initially
+            parent,         // Set parent window
             IntPtr.Zero,
             _hInstance,
             IntPtr.Zero

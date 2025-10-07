@@ -79,7 +79,7 @@ internal partial class LinuxPlatform
     }
 
     // ToolBar operations
-    public IntPtr CreateToolBar(int style)
+    public IntPtr CreateToolBar(IntPtr parent, int style)
     {
         // Create GtkToolbar
         IntPtr toolbar = gtk_toolbar_new();

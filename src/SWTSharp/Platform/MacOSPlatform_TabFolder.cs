@@ -292,7 +292,7 @@ internal partial class MacOSPlatform
     }
 
     // ToolBar operations
-    public IntPtr CreateToolBar(int style)
+    public IntPtr CreateToolBar(IntPtr parent, int style)
     {
         InitializeToolBarSelectors();
 

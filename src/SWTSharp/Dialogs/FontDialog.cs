@@ -47,6 +47,8 @@ public class FontDialog : Dialog
     /// <param name="style">Style bits</param>
     public FontDialog(Shell? parent, int style) : base(parent, style)
     {
+        // Initialize with default font data
+        _fontData = new FontData("Arial", 12, SWT.NORMAL);
     }
 
     /// <summary>

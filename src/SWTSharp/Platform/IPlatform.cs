@@ -400,9 +400,10 @@ public partial interface IPlatform
     /// <summary>
     /// Creates a native toolbar control.
     /// </summary>
+    /// <param name="parent">Parent window handle</param>
     /// <param name="style">Toolbar style (FLAT, WRAP, RIGHT, HORIZONTAL, VERTICAL, SHADOW_OUT)</param>
     /// <returns>Handle to the created toolbar</returns>
-    IntPtr CreateToolBar(int style);
+    IntPtr CreateToolBar(IntPtr parent, int style);
 
     // ToolItem operations
 
