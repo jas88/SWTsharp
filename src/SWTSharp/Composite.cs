@@ -124,7 +124,8 @@ public class Composite : Control
     protected virtual void CreateWidget()
     {
         // Create platform-specific composite/container handle
-        Handle = Platform.PlatformFactory.Instance.CreateComposite(Style);
+        IntPtr parentHandle = Parent?.Handle ?? IntPtr.Zero;
+        Handle = Platform.PlatformFactory.Instance.CreateComposite(parentHandle, Style);
     }
 
     /// <summary>

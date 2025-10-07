@@ -202,7 +202,7 @@ internal partial class LinuxPlatform : IPlatform
         gtk_main_quit();
     }
 
-    public IntPtr CreateComposite(int style)
+    public IntPtr CreateComposite(IntPtr parent, int style)
     {
         // Create a GtkFixed container widget (allows absolute positioning)
         // This is similar to SWT's Composite when no layout is set
@@ -212,6 +212,12 @@ internal partial class LinuxPlatform : IPlatform
         {
             // Show the widget by default
             gtk_widget_show(composite);
+
+            // Add to parent if provided
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_add(parent, composite);
+            }
         }
 
         return composite;

@@ -401,7 +401,7 @@ internal partial class Win32Platform : IPlatform
         PostQuitMessage(0);
     }
 
-    public IntPtr CreateComposite(int style)
+    public IntPtr CreateComposite(IntPtr parent, int style)
     {
         // Create a child window that acts as a container
         // Use WS_CHILD style for composites
@@ -420,7 +420,7 @@ internal partial class Win32Platform : IPlatform
             windowStyle,
             0, 0,                   // Position
             100, 100,               // Default size
-            IntPtr.Zero,            // No parent yet
+            parent,                 // Parent window
             IntPtr.Zero,            // No menu
             hInstance,
             IntPtr.Zero);

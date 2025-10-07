@@ -364,7 +364,7 @@ internal partial class MacOSPlatform : IPlatform
         objc_msgSend(_nsApplication, _selStop, _nsApplication);
     }
 
-    public IntPtr CreateComposite(int style)
+    public IntPtr CreateComposite(IntPtr parent, int style)
     {
         // Create an NSView instance to act as a container
         IntPtr nsViewClass = objc_getClass("NSView");
@@ -374,6 +374,20 @@ internal partial class MacOSPlatform : IPlatform
         CGRect frame = new CGRect(0, 0, 100, 100);
         IntPtr selSetFrame = sel_registerName("setFrame:");
         objc_msgSend_rect(view, selSetFrame, frame);
+
+        // Add to parent if provided
+        if (parent != IntPtr.Zero)
+        {
+            // Lazy initialize _selAddSubview if not already done
+            if (_selAddSubview == IntPtr.Zero)
+            {
+                _selAddSubview = sel_registerName("addSubview:");
+            }
+
+            IntPtr selContentView = sel_registerName("contentView");
+            IntPtr contentView = objc_msgSend(parent, selContentView);
+            objc_msgSend(contentView, _selAddSubview, view);
+        }
 
         return view;
     }

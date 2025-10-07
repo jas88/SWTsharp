@@ -27,7 +27,8 @@ public class Text : Control
         {
             CheckWidget();
             _text = value ?? string.Empty;
-            if (_text.Length > _textLimit)
+            // Only truncate if limit > 0 (0 means unlimited)
+            if (_textLimit > 0 && _text.Length > _textLimit)
             {
                 _text = _text.Substring(0, _textLimit);
             }

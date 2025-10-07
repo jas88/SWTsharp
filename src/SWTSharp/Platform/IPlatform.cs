@@ -60,8 +60,9 @@ public partial interface IPlatform
     /// <summary>
     /// Creates a native composite/container control.
     /// </summary>
+    /// <param name="parent">Parent window handle</param>
     /// <param name="style">Composite style bits</param>
-    IntPtr CreateComposite(int style);
+    IntPtr CreateComposite(IntPtr parent, int style);
 
     // Menu operations
 
