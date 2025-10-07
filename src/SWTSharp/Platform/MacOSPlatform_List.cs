@@ -146,18 +146,7 @@ internal partial class MacOSPlatform
         objc_msgSend_rect(scrollView, _selSetFrame, frame);
 
         // Add to parent if provided
-        if (parentHandle != IntPtr.Zero)
-        {
-            IntPtr selContentView = sel_registerName("contentView");
-            IntPtr contentView = objc_msgSend(parentHandle, selContentView);
-            // Lazy initialize _selAddSubview if not already done
-            if (_selAddSubview == IntPtr.Zero)
-            {
-                _selAddSubview = sel_registerName("addSubview:");
-            }
-
-            objc_msgSend(contentView, _selAddSubview, scrollView);
-        }
+        AddChildToParent(parentHandle, scrollView);
 
         // Initialize empty items list for this control
         _listItems[scrollView] = new List<string>();

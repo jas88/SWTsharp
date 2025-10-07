@@ -108,16 +108,7 @@ internal partial class MacOSPlatform
         objc_msgSend_rect(tabView, selSetFrame, frame);
 
         // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            // Lazy initialize _selAddSubview if not already done
-            if (_selAddSubview == IntPtr.Zero)
-            {
-                _selAddSubview = sel_registerName("addSubview:");
-            }
-
-            objc_msgSend(parent, _selAddSubview, tabView);
-        }
+        AddChildToParent(parent, tabView);
 
         // Store tab folder data
         _tabFolderData[tabView] = new TabFolderData

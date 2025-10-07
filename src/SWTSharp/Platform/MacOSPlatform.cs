@@ -161,6 +161,38 @@ internal partial class MacOSPlatform : IPlatform
         _nsApplication = objc_msgSend(_nsApplicationClass, _selSharedApplication);
     }
 
+    /// <summary>
+    /// Helper to add a child view to parent, handling both NSWindow and NSView parents.
+    /// NSWindow parents have contentView, NSView parents do not.
+    /// </summary>
+    private void AddChildToParent(IntPtr parent, IntPtr child)
+    {
+        if (parent == IntPtr.Zero) return;
+
+        // Lazy initialize _selAddSubview if needed
+        if (_selAddSubview == IntPtr.Zero)
+        {
+            _selAddSubview = sel_registerName("addSubview:");
+        }
+
+        // Check if parent is an NSWindow (has contentView) or NSView (direct subview)
+        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+        IntPtr selContentView = sel_registerName("contentView");
+        bool hasContentView = objc_msgSend_bool(parent, selRespondsToSelector, selContentView);
+
+        if (hasContentView)
+        {
+            // Parent is NSWindow, add to contentView
+            IntPtr contentView = objc_msgSend(parent, selContentView);
+            objc_msgSend(contentView, _selAddSubview, child);
+        }
+        else
+        {
+            // Parent is NSView, add directly
+            objc_msgSend(parent, _selAddSubview, child);
+        }
+    }
+
     // Helper method for creating index sets (used by Table and other widgets)
     private IntPtr CreateIndexSetForAllColumns(int columnCount)
     {
@@ -371,31 +403,7 @@ internal partial class MacOSPlatform : IPlatform
         objc_msgSend_rect(view, selSetFrame, frame);
 
         // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            // Lazy initialize _selAddSubview if not already done
-            if (_selAddSubview == IntPtr.Zero)
-            {
-                _selAddSubview = sel_registerName("addSubview:");
-            }
-
-            // Check if parent is an NSWindow (has contentView) or NSView (direct subview)
-            IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
-            IntPtr selContentView = sel_registerName("contentView");
-            bool hasContentView = objc_msgSend_bool(parent, selRespondsToSelector, selContentView);
-
-            if (hasContentView)
-            {
-                // Parent is NSWindow, add to contentView
-                IntPtr contentView = objc_msgSend(parent, selContentView);
-                objc_msgSend(contentView, _selAddSubview, view);
-            }
-            else
-            {
-                // Parent is NSView, add directly
-                objc_msgSend(parent, _selAddSubview, view);
-            }
-        }
+        AddChildToParent(parent, view);
 
         return view;
     }
@@ -511,13 +519,7 @@ internal partial class MacOSPlatform : IPlatform
         objc_msgSend_rect(button, _selSetFrame, frame);
 
         // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            // Get content view of window
-            IntPtr selContentView = sel_registerName("contentView");
-            IntPtr contentView = objc_msgSend(parent, selContentView);
-            objc_msgSend(contentView, _selAddSubview, button);
-        }
+        AddChildToParent(parent, button);
 
         return button;
     }
@@ -780,18 +782,7 @@ internal partial class MacOSPlatform : IPlatform
         objc_msgSend_rect(textControl, _selSetFrame, frame);
 
         // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            // Lazy initialize _selAddSubview if not already done
-            if (_selAddSubview == IntPtr.Zero)
-            {
-                _selAddSubview = sel_registerName("addSubview:");
-            }
-
-            IntPtr selContentView = sel_registerName("contentView");
-            IntPtr contentView = objc_msgSend(parent, selContentView);
-            objc_msgSend(contentView, _selAddSubview, textControl);
-        }
+        AddChildToParent(parent, textControl);
 
         return textControl;
     }

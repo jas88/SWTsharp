@@ -79,18 +79,7 @@ internal partial class MacOSPlatform
         objc_msgSend_rect(scrollView, _selSetFrame, frame);
 
         // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            IntPtr selContentView = sel_registerName("contentView");
-            IntPtr contentView = objc_msgSend(parent, selContentView);
-            // Lazy initialize _selAddSubview if not already done
-            if (_selAddSubview == IntPtr.Zero)
-            {
-                _selAddSubview = sel_registerName("addSubview:");
-            }
-
-            objc_msgSend(contentView, _selAddSubview, scrollView);
-        }
+        AddChildToParent(parent, scrollView);
 
         // Initialize table data
         _tableData[scrollView] = new TableData
