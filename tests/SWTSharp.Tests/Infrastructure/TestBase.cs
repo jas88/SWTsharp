@@ -99,7 +99,7 @@ public abstract class TestBase : IDisposable
         {
             if (disposing && _eventLoopStarted)
             {
-                // Cleanup display and shells on UI thread FIRST, before signaling exit
+                // Cleanup shells on UI thread FIRST, before signaling exit
                 try
                 {
                     Display?.SyncExec(() =>
@@ -109,9 +109,7 @@ public abstract class TestBase : IDisposable
                         {
                             shell?.Dispose();
                         }
-
-                        // Dispose display on UI thread
-                        Display?.Dispose();
+                        // Do NOT dispose Display here - it will be disposed when the singleton is finalized
                     });
                 }
                 catch

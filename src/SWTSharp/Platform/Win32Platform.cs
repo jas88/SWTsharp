@@ -123,11 +123,11 @@ internal partial class Win32Platform : IPlatform
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+    [LibraryImport(User32, EntryPoint = "SetWindowTextW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool SetWindowText(IntPtr hWnd, string lpString);
 #else
-    [DllImport(User32, CharSet = CharSet.Unicode, SetLastError = true)]
+    [DllImport(User32, EntryPoint = "SetWindowTextW", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool SetWindowText(IntPtr hWnd, string lpString);
 #endif
 
@@ -456,18 +456,18 @@ internal partial class Win32Platform : IPlatform
     private const uint WM_ENABLE = 0x000A;
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32)]
+    [LibraryImport(User32, EntryPoint = "SendMessageW")]
     private static partial IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 #else
-    [DllImport(User32)]
+    [DllImport(User32, EntryPoint = "SendMessageW")]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport(User32, EntryPoint = "SendMessageW", StringMarshalling = StringMarshalling.Utf16)]
     private static partial IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam);
 #else
-    [DllImport(User32, CharSet = CharSet.Unicode)]
+    [DllImport(User32, EntryPoint = "SendMessageW", CharSet = CharSet.Unicode)]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam);
 #endif
 
