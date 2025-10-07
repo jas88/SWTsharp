@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class TableTests : WidgetTestBase
 {
+    public TableTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Table_Create_ShouldSucceed()
     {

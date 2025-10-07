@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ListTests : WidgetTestBase
 {
+    public ListTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void List_Create_ShouldSucceed()
     {

@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class MenuItemTests : WidgetTestBase
 {
+    public MenuItemTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void MenuItem_Create_ShouldSucceed()
     {

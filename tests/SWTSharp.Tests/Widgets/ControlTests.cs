@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ControlTests : WidgetTestBase
 {
+    public ControlTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Control_Visible_DefaultTrue()
     {

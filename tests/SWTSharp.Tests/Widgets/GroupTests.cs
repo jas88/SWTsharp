@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class GroupTests : WidgetTestBase
 {
+    public GroupTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Group_Create_ShouldSucceed()
     {

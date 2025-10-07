@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class CompositeTests : WidgetTestBase
 {
+    public CompositeTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Composite_Create_ShouldSucceed()
     {

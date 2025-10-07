@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class SpinnerTests : WidgetTestBase
 {
+    public SpinnerTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Spinner_Create_ShouldSucceed()
     {

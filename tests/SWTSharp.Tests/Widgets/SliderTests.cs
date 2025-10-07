@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class SliderTests : WidgetTestBase
 {
+    public SliderTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Slider_Create_ShouldSucceed()
     {

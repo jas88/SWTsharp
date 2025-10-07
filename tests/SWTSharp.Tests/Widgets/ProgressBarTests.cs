@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ProgressBarTests : WidgetTestBase
 {
+    public ProgressBarTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void ProgressBar_Create_ShouldSucceed()
     {

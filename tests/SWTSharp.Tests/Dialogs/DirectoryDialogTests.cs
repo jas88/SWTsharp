@@ -10,6 +10,8 @@ namespace SWTSharp.Tests.Dialogs;
 /// </summary>
 public class DirectoryDialogTests : TestBase
 {
+    public DirectoryDialogTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void DirectoryDialog_Create_ShouldSucceed()
     {

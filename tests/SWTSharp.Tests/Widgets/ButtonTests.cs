@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ButtonTests : WidgetTestBase
 {
+    public ButtonTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Button_Create_ShouldSucceed()
     {

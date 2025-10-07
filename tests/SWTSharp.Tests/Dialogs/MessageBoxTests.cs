@@ -10,6 +10,8 @@ namespace SWTSharp.Tests.Dialogs;
 /// </summary>
 public class MessageBoxTests : TestBase
 {
+    public MessageBoxTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void MessageBox_Create_ShouldSucceed()
     {

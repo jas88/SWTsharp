@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ShellTests : WidgetTestBase
 {
+    public ShellTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Shell_Create_WithDisplay_ShouldSucceed()
     {

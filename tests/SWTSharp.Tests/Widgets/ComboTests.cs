@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ComboTests : WidgetTestBase
 {
+    public ComboTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Combo_Create_ShouldSucceed()
     {

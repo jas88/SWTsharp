@@ -11,6 +11,8 @@ namespace SWTSharp.Tests.Dialogs;
 /// </summary>
 public class FontDialogTests : TestBase
 {
+    public FontDialogTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void FontDialog_Create_ShouldSucceed()
     {

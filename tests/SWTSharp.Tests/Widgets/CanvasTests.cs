@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class CanvasTests : WidgetTestBase
 {
+    public CanvasTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Canvas_Create_ShouldSucceed()
     {

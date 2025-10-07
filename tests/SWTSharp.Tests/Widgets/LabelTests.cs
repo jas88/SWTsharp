@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class LabelTests : WidgetTestBase
 {
+    public LabelTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Label_Create_ShouldSucceed()
     {

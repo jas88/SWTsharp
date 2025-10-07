@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ToolBarTests : WidgetTestBase
 {
+    public ToolBarTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void ToolBar_Create_ShouldSucceed()
     {

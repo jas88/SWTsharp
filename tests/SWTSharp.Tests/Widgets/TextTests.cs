@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class TextTests : WidgetTestBase
 {
+    public TextTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Text_Create_ShouldSucceed()
     {

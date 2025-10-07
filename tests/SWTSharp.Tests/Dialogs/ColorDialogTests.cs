@@ -11,6 +11,8 @@ namespace SWTSharp.Tests.Dialogs;
 /// </summary>
 public class ColorDialogTests : TestBase
 {
+    public ColorDialogTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void ColorDialog_Create_ShouldSucceed()
     {

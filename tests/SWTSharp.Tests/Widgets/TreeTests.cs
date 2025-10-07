@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class TreeTests : WidgetTestBase
 {
+    public TreeTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Tree_Create_ShouldSucceed()
     {

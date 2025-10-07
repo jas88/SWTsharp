@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class ScaleTests : WidgetTestBase
 {
+    public ScaleTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void Scale_Create_ShouldSucceed()
     {

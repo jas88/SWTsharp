@@ -8,6 +8,8 @@ namespace SWTSharp.Tests.Infrastructure;
 /// </summary>
 public abstract class WidgetTestBase : TestBase
 {
+    protected WidgetTestBase(DisplayFixture displayFixture) : base(displayFixture) { }
+
     /// <summary>
     /// Tests that a widget can be created without throwing exceptions.
     /// </summary>

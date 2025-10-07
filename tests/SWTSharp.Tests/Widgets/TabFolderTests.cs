@@ -9,6 +9,8 @@ namespace SWTSharp.Tests.Widgets;
 /// </summary>
 public class TabFolderTests : WidgetTestBase
 {
+    public TabFolderTests(DisplayFixture displayFixture) : base(displayFixture) { }
+
     [Fact]
     public void TabFolder_Create_ShouldSucceed()
     {
