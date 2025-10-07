@@ -110,6 +110,12 @@ internal partial class MacOSPlatform
         // Add to parent if provided
         if (parent != IntPtr.Zero)
         {
+            // Lazy initialize _selAddSubview if not already done
+            if (_selAddSubview == IntPtr.Zero)
+            {
+                _selAddSubview = sel_registerName("addSubview:");
+            }
+
             objc_msgSend(parent, _selAddSubview, tabView);
         }
 
@@ -239,6 +245,12 @@ internal partial class MacOSPlatform
         }
 
         // Add control to the tab's content view
+            // Lazy initialize _selAddSubview if not already done
+            if (_selAddSubview == IntPtr.Zero)
+            {
+                _selAddSubview = sel_registerName("addSubview:");
+            }
+
         objc_msgSend(data.ContentView, _selAddSubview, controlHandle);
 
         // Make the control fill the content view

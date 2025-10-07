@@ -73,6 +73,12 @@ internal partial class MacOSPlatform
         {
             IntPtr selContentView = sel_registerName("contentView");
             IntPtr contentView = objc_msgSend(parentHandle, selContentView);
+            // Lazy initialize _selAddSubview if not already done
+            if (_selAddSubview == IntPtr.Zero)
+            {
+                _selAddSubview = sel_registerName("addSubview:");
+            }
+
             objc_msgSend(contentView, _selAddSubview, combo);
         }
 
