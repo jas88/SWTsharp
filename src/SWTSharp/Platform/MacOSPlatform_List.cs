@@ -106,10 +106,6 @@ internal partial class MacOSPlatform
 
     public IntPtr CreateList(IntPtr parentHandle, int style)
     {
-        if (_selAlloc == IntPtr.Zero)
-        {
-            Initialize();
-        }
         InitializeListSelectors();
 
         // Create NSScrollView to contain the table

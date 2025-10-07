@@ -49,10 +49,6 @@ internal partial class MacOSPlatform
 
     public IntPtr CreateTable(IntPtr parent, int style)
     {
-        if (_selAlloc == IntPtr.Zero)
-        {
-            Initialize();
-        }
         InitializeTableSelectors();
 
         // Create NSScrollView to contain the table

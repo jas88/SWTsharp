@@ -96,10 +96,6 @@ internal partial class MacOSPlatform
 
     public IntPtr CreateTabFolder(IntPtr parent, int style)
     {
-        if (_selAlloc == IntPtr.Zero)
-        {
-            Initialize();
-        }
         InitializeTabFolderSelectors();
 
         // Create NSTabView
