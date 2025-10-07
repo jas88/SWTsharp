@@ -8,7 +8,7 @@ namespace SWTSharp.Platform;
 internal partial class LinuxPlatform
 {
     // GTK TreeView/ListStore P/Invoke declarations for Table widget
-    [DllImport(GLibLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    [DllImport(GObjectLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     private static extern nuint g_type_from_name(string name);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]

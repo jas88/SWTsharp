@@ -122,6 +122,11 @@ internal partial class MacOSPlatform : IPlatform
     // Event masks
     private const ulong NSEventMaskAny = ulong.MaxValue;
 
+    public MacOSPlatform()
+    {
+        Initialize();
+    }
+
     public void Initialize()
     {
         // Initialize selectors
