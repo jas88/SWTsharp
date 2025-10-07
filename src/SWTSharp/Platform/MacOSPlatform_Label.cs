@@ -10,6 +10,12 @@ internal partial class MacOSPlatform
     // Label operations
     public IntPtr CreateLabel(IntPtr parent, int style, int alignment, bool wrap)
     {
+        // Ensure basic selectors are initialized
+        if (_selAlloc == IntPtr.Zero)
+        {
+            Initialize();
+        }
+
         // Use NSTextField with non-editable and non-selectable properties for labels
         // For separators, use NSBox with separator style
 

@@ -43,6 +43,10 @@ internal partial class MacOSPlatform
     // Combo control operations
     public IntPtr CreateCombo(IntPtr parentHandle, int style)
     {
+        if (_selAlloc == IntPtr.Zero)
+        {
+            Initialize();
+        }
         InitializeComboSelectors();
 
         IntPtr combo;
