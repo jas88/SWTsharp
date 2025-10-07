@@ -99,21 +99,28 @@ public abstract class TestBase : IDisposable
         {
             if (disposing && _eventLoopStarted)
             {
-                // Signal event loop to exit FIRST, before cleanup
-                _disposed = true;
-
-                // Cleanup display and shells on UI thread
-                Display?.SyncExec(() =>
+                // Cleanup display and shells on UI thread FIRST, before signaling exit
+                try
                 {
-                    var shells = Display.GetShells();
-                    foreach (var shell in shells)
+                    Display?.SyncExec(() =>
                     {
-                        shell?.Dispose();
-                    }
+                        var shells = Display.GetShells();
+                        foreach (var shell in shells)
+                        {
+                            shell?.Dispose();
+                        }
 
-                    // Dispose display on UI thread
-                    Display?.Dispose();
-                });
+                        // Dispose display on UI thread
+                        Display?.Dispose();
+                    });
+                }
+                catch
+                {
+                    // Swallow exceptions during disposal
+                }
+
+                // NOW signal event loop to exit
+                _disposed = true;
 
                 // Wait for UI thread to finish
                 _uiThread?.Join(1000);
