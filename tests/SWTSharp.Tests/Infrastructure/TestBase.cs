@@ -99,6 +99,9 @@ public abstract class TestBase : IDisposable
         {
             if (disposing && _eventLoopStarted)
             {
+                // Signal event loop to exit FIRST, before cleanup
+                _disposed = true;
+
                 // Cleanup display and shells on UI thread
                 Display?.SyncExec(() =>
                 {
@@ -111,9 +114,6 @@ public abstract class TestBase : IDisposable
                     // Dispose display on UI thread
                     Display?.Dispose();
                 });
-
-                // Signal event loop to exit
-                _disposed = true;
 
                 // Wait for UI thread to finish
                 _uiThread?.Join(1000);

@@ -197,10 +197,10 @@ internal partial class Win32Platform : IPlatform
     private static extern ushort RegisterClass(ref WNDCLASS lpWndClass);
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32)]
+    [LibraryImport(User32, EntryPoint = "DefWindowProcW")]
     private static partial IntPtr DefWindowProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
 #else
-    [DllImport(User32)]
+    [DllImport(User32, EntryPoint = "DefWindowProcW", CharSet = CharSet.Unicode)]
     private static extern IntPtr DefWindowProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
 #endif
 
