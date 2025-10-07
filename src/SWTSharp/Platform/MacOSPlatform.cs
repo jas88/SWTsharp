@@ -159,6 +159,11 @@ internal partial class MacOSPlatform : IPlatform
 
         // Get or create shared application
         _nsApplication = objc_msgSend(_nsApplicationClass, _selSharedApplication);
+
+        // Set activation policy for headless/testing mode
+        // NSApplicationActivationPolicyProhibited = 2 (no Dock icon, runs in background)
+        IntPtr selSetActivationPolicy = sel_registerName("setActivationPolicy:");
+        objc_msgSend(_nsApplication, selSetActivationPolicy, (IntPtr)2);
     }
 
     // Helper method for creating index sets (used by Table and other widgets)
