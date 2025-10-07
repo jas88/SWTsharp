@@ -11,35 +11,14 @@ namespace SWTSharp.Tests.Infrastructure;
 [Collection("Display Tests")]
 public abstract class TestBase : IDisposable
 {
-    protected Display Display { get; private set; } = null!;
+    protected Display Display { get; private set; }
     protected IPlatform MockPlatform { get; private set; } = null!;
     private bool _disposed;
-    private Thread? _uiThread;
-    private bool _eventLoopStarted;
 
-    protected TestBase()
+    protected TestBase(DisplayFixture displayFixture)
     {
-        // Start UI thread with event loop
-        var displayReady = new ManualResetEventSlim(false);
-        _uiThread = new Thread(() =>
-        {
-            // Initialize display on UI thread
-            Display = Display.Default;
-            displayReady.Set();
-
-            // Run event loop - process async actions but don't block
-            while (!_disposed)
-            {
-                Display.ReadAndDispatch();
-                Thread.Sleep(10);
-            }
-        });
-        _uiThread.IsBackground = true;
-        _uiThread.Start();
-
-        // Wait for display to be initialized
-        displayReady.Wait();
-        _eventLoopStarted = true;
+        // Use shared Display from fixture
+        Display = displayFixture.Display;
 
         // Create mock platform for testing
         MockPlatform = Substitute.For<IPlatform>();
@@ -97,9 +76,9 @@ public abstract class TestBase : IDisposable
     {
         if (!_disposed)
         {
-            if (disposing && _eventLoopStarted)
+            if (disposing)
             {
-                // Cleanup shells on UI thread FIRST, before signaling exit
+                // Cleanup shells created by this test
                 try
                 {
                     Display?.SyncExec(() =>
@@ -109,24 +88,15 @@ public abstract class TestBase : IDisposable
                         {
                             shell?.Dispose();
                         }
-                        // Do NOT dispose Display here - it will be disposed when the singleton is finalized
                     });
                 }
                 catch
                 {
                     // Swallow exceptions during disposal
                 }
-
-                // NOW signal event loop to exit
-                _disposed = true;
-
-                // Wait for UI thread to finish
-                _uiThread?.Join(1000);
             }
-            else
-            {
-                _disposed = true;
-            }
+
+            _disposed = true;
         }
     }
 }
