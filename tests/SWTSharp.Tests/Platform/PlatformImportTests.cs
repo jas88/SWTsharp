@@ -44,13 +44,15 @@ public class PlatformImportTests
             throw new PlatformNotSupportedException("Unknown platform");
         }
 
-        if (_missingImports.Count > 0)
+        // Use Assert.Multiple to report all failures at once
+        Assert.Multiple(() =>
         {
-            var message = $"Found {_missingImports.Count} missing P/Invoke imports:\n" +
-                         string.Join("\n", _missingImports);
-            _output.WriteLine("\n" + message);
-            Assert.Fail(message);
-        }
+            foreach (var error in _missingImports)
+            {
+                _output.WriteLine(error);
+                Assert.Fail(error);
+            }
+        });
 
         _output.WriteLine("\n✓ All platform imports resolved successfully");
     }
