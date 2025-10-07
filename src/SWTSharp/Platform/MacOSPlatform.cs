@@ -379,9 +379,22 @@ internal partial class MacOSPlatform : IPlatform
                 _selAddSubview = sel_registerName("addSubview:");
             }
 
+            // Check if parent is an NSWindow (has contentView) or NSView (direct subview)
+            IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
             IntPtr selContentView = sel_registerName("contentView");
-            IntPtr contentView = objc_msgSend(parent, selContentView);
-            objc_msgSend(contentView, _selAddSubview, view);
+            bool hasContentView = objc_msgSend_bool(parent, selRespondsToSelector, selContentView);
+
+            if (hasContentView)
+            {
+                // Parent is NSWindow, add to contentView
+                IntPtr contentView = objc_msgSend(parent, selContentView);
+                objc_msgSend(contentView, _selAddSubview, view);
+            }
+            else
+            {
+                // Parent is NSView, add directly
+                objc_msgSend(parent, _selAddSubview, view);
+            }
         }
 
         return view;
