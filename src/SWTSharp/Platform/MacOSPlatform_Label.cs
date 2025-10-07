@@ -16,6 +16,9 @@ internal partial class MacOSPlatform
             Initialize();
         }
 
+        // Debug logging
+        Console.WriteLine($"[DEBUG CreateLabel] _selAlloc={_selAlloc}, _selInit={_selInit}");
+
         // Use NSTextField with non-editable and non-selectable properties for labels
         // For separators, use NSBox with separator style
 
@@ -23,7 +26,11 @@ internal partial class MacOSPlatform
         {
             // Create NSBox for separator
             IntPtr nsBoxClass = objc_getClass("NSBox");
-            IntPtr separator = objc_msgSend(objc_msgSend(nsBoxClass, _selAlloc), _selInit);
+            Console.WriteLine($"[DEBUG CreateLabel] nsBoxClass={nsBoxClass}");
+            IntPtr separatorAlloc = objc_msgSend(nsBoxClass, _selAlloc);
+            Console.WriteLine($"[DEBUG CreateLabel] separatorAlloc={separatorAlloc}");
+            IntPtr separator = objc_msgSend(separatorAlloc, _selInit);
+            Console.WriteLine($"[DEBUG CreateLabel] separator={separator}");
 
             // Set box type to separator (NSBoxSeparator = 2)
             IntPtr selSetBoxType = sel_registerName("setBoxType:");
@@ -34,7 +41,11 @@ internal partial class MacOSPlatform
 
         // Create NSTextField for text label
         IntPtr nsTextFieldClass = objc_getClass("NSTextField");
-        IntPtr label = objc_msgSend(objc_msgSend(nsTextFieldClass, _selAlloc), _selInit);
+        Console.WriteLine($"[DEBUG CreateLabel] nsTextFieldClass={nsTextFieldClass}");
+        IntPtr labelAlloc = objc_msgSend(nsTextFieldClass, _selAlloc);
+        Console.WriteLine($"[DEBUG CreateLabel] labelAlloc={labelAlloc}");
+        IntPtr label = objc_msgSend(labelAlloc, _selInit);
+        Console.WriteLine($"[DEBUG CreateLabel] label={label}");
 
         // Make it non-editable and non-selectable (label behavior)
         IntPtr selSetEditable = sel_registerName("setEditable:");
@@ -62,6 +73,7 @@ internal partial class MacOSPlatform
         // Add to parent if provided
         AddChildToParent(parent, label);
 
+        Console.WriteLine($"[DEBUG CreateLabel] Returning label={label}");
         return label;
     }
 
