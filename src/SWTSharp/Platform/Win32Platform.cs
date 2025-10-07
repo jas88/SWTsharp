@@ -620,11 +620,11 @@ internal partial class Win32Platform : IPlatform
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+    [LibraryImport(User32, EntryPoint = "AppendMenuW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool AppendMenu(IntPtr hMenu, uint uFlags, UIntPtr uIDNewItem, string lpNewItem);
 #else
-    [DllImport(User32, CharSet = CharSet.Unicode, SetLastError = true)]
+    [DllImport(User32, EntryPoint = "AppendMenuW", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool AppendMenu(IntPtr hMenu, uint uFlags, UIntPtr uIDNewItem, string lpNewItem);
 #endif
 

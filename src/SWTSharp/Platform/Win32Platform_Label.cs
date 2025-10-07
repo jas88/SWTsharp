@@ -26,10 +26,10 @@ internal partial class Win32Platform
     private const uint SWP_FRAMECHANGED = 0x0020;
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
+    [LibraryImport(User32, EntryPoint = "GetWindowLongW", SetLastError = true)]
     private static partial uint GetWindowLong(IntPtr hWnd, int nIndex);
 #else
-    [DllImport(User32, SetLastError = true)]
+    [DllImport(User32, EntryPoint = "GetWindowLongW", SetLastError = true)]
     private static extern uint GetWindowLong(IntPtr hWnd, int nIndex);
 #endif
 
