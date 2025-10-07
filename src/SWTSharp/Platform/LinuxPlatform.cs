@@ -306,6 +306,9 @@ internal partial class LinuxPlatform : IPlatform
         else if ((style & SWT.RADIO) != 0)
         {
             button = gtk_radio_button_new_with_label(IntPtr.Zero, text);
+            // GTK radio buttons default to active when created as the first in a group
+            // SWT expects them to be inactive initially
+            gtk_toggle_button_set_active(button, false);
         }
         else if ((style & SWT.TOGGLE) != 0)
         {
