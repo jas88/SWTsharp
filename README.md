@@ -21,7 +21,11 @@ Or build from source:
 ```bash
 git clone https://github.com/jas88/swtsharp
 cd swtsharp
+dotnet restore
 dotnet build
+
+# Install Git hooks (optional but recommended for contributors)
+./scripts/install-hooks.sh
 ```
 
 ## Quick Start
