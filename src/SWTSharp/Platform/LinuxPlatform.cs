@@ -255,6 +255,9 @@ internal partial class LinuxPlatform : IPlatform
     private static extern void gtk_container_add(IntPtr container, IntPtr widget);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_box_new(GtkOrientation orientation, int spacing);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]

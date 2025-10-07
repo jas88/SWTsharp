@@ -14,8 +14,9 @@ internal partial class LinuxPlatform
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_list_box_insert(IntPtr box, IntPtr child, int position);
 
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_list_box_remove(IntPtr box, IntPtr child);
+    // Note: gtk_list_box_remove was added in GTK 4.0, use gtk_container_remove for GTK3
+    // [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    // private static extern void gtk_list_box_remove(IntPtr box, IntPtr child);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_list_box_select_row(IntPtr box, IntPtr row);
@@ -178,8 +179,8 @@ internal partial class LinuxPlatform
         // Get the row to remove
         IntPtr row = rows[index];
 
-        // Remove from the list box
-        gtk_list_box_remove(listBox, row);
+        // Remove from the list box (use gtk_container_remove for GTK3)
+        gtk_container_remove(listBox, row);
 
         // Remove from tracking list
         rows.RemoveAt(index);
@@ -200,11 +201,11 @@ internal partial class LinuxPlatform
             throw new ArgumentException("List box widget not found", nameof(handle));
         }
 
-        // Remove all rows from the list box
+        // Remove all rows from the list box (use gtk_container_remove for GTK3)
         for (int i = rows.Count - 1; i >= 0; i--)
         {
             IntPtr row = rows[i];
-            gtk_list_box_remove(listBox, row);
+            gtk_container_remove(listBox, row);
         }
 
         rows.Clear();
