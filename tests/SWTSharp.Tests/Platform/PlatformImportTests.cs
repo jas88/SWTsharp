@@ -8,9 +8,9 @@ namespace SWTSharp.Tests.Platform;
 
 /// <summary>
 /// Verifies that all platform-specific P/Invoke imports are available.
-/// This test runs before widget tests to diagnose missing native libraries or entry points.
+/// This test runs independently before widget tests to diagnose missing native libraries or entry points.
+/// Does not use Display singleton, so runs outside Display Tests collection.
 /// </summary>
-[Collection("Display Tests")]
 public class PlatformImportTests
 {
     private readonly ITestOutputHelper _output;
