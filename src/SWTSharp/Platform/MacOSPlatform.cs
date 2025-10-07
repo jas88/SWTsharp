@@ -146,10 +146,11 @@ internal partial class MacOSPlatform : IPlatform
         _selSendEvent = sel_registerName("sendEvent:");
         _selUpdateWindows = sel_registerName("updateWindows");
 
-        // Initialize shared widget selectors
+        // Initialize shared widget selectors (used by many widgets)
         _selSetMinValue = sel_registerName("setMinValue:");
         _selSetMaxValue = sel_registerName("setMaxValue:");
         _selSetDoubleValue = sel_registerName("setDoubleValue:");
+        _selAddSubview = sel_registerName("addSubview:");
 
         // Get classes
         _nsApplicationClass = objc_getClass("NSApplication");
@@ -441,7 +442,7 @@ internal partial class MacOSPlatform : IPlatform
             _selSetHidden = sel_registerName("setHidden:");
             _selSetFrameOrigin = sel_registerName("setFrameOrigin:");
             _selSetFrameSize = sel_registerName("setFrameSize:");
-            _selAddSubview = sel_registerName("addSubview:");
+            // Note: _selAddSubview is now initialized in Initialize() method
         }
     }
 
