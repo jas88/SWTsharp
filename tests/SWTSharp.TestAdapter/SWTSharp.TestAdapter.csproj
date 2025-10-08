@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <!-- Package metadata -->
+    <PackageId>SWTSharp.TestAdapter</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>SWTSharp Contributors</Authors>
+    <Description>Custom VSTest adapter for SWTSharp that runs tests in a separate process with macOS Thread 1 support</Description>
+    <PackageTags>vstest;test-adapter;macos;swt;ui-testing</PackageTags>
+
+    <!-- Adapter must be packaged in build/netstandard2.0 folder for VSTest auto-discovery -->
+    <BuildOutputTargetFolder>build/netstandard2.0</BuildOutputTargetFolder>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- VSTest Platform Object Model - required for adapter interfaces -->
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.11.1" />
+
+    <!-- xUnit abstractions for discovering xUnit tests -->
+    <PackageReference Include="xunit.abstractions" Version="2.0.3" />
+    <PackageReference Include="xunit.runner.utility" Version="2.9.2" />
+  </ItemGroup>
+
+  <!-- Copy adapter to build output for NuGet packaging -->
+  <ItemGroup>
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="build/netstandard2.0" />
+    <None Include="$(OutputPath)$(AssemblyName).pdb" Pack="true" PackagePath="build/netstandard2.0" />
+  </ItemGroup>
+
+</Project>

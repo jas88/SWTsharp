@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- This is the test host executable that runs tests with Thread 1 control -->
+    <AssemblyName>SWTSharp.TestHost</AssemblyName>
+
+    <!-- Disable xUnit's auto-generated entry point -->
+    <GenerateProgramFile>false</GenerateProgramFile>
+
+    <!-- Use our Program.Main as entry point -->
+    <StartupObject>SWTSharp.TestHost.Program</StartupObject>
+
+    <!-- Disable specific xUnit analyzer rule that requires MarshalByRefObject -->
+    <NoWarn>xUnit3000</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- xUnit for running tests -->
+    <PackageReference Include="xunit.v3" Version="3.1.0" />
+    <PackageReference Include="xunit.runner.utility" Version="2.9.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference to main SWTSharp library for MainThreadDispatcher -->
+    <ProjectReference Include="..\..\src\SWTSharp\SWTSharp.csproj" />
+  </ItemGroup>
+
+</Project>
