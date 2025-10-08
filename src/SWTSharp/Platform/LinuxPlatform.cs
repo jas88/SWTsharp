@@ -781,7 +781,8 @@ internal partial class LinuxPlatform : IPlatform
 
                         IntPtr textPtr = gtk_text_buffer_get_text(buffer, startIter, endIter, false);
 #if NETSTANDARD2_0
-                        string result = Marshal.PtrToStringAnsi(textPtr) ?? string.Empty;
+                        // .NET Standard 2.0 doesn't have PtrToStringUTF8, use manual UTF-8 decoding
+                        string result = GetUtf8String(textPtr);
 #else
                         string result = Marshal.PtrToStringUTF8(textPtr) ?? string.Empty;
 #endif
@@ -804,7 +805,7 @@ internal partial class LinuxPlatform : IPlatform
                 // Single-line Entry
                 IntPtr textPtr = gtk_entry_get_text(handle);
 #if NETSTANDARD2_0
-                return Marshal.PtrToStringAnsi(textPtr) ?? string.Empty;
+                return GetUtf8String(textPtr);
 #else
                 return Marshal.PtrToStringUTF8(textPtr) ?? string.Empty;
 #endif
@@ -815,7 +816,7 @@ internal partial class LinuxPlatform : IPlatform
             // Fallback: assume Entry
             IntPtr textPtr = gtk_entry_get_text(handle);
 #if NETSTANDARD2_0
-            return Marshal.PtrToStringAnsi(textPtr) ?? string.Empty;
+            return GetUtf8String(textPtr);
 #else
             return Marshal.PtrToStringUTF8(textPtr) ?? string.Empty;
 #endif
@@ -1045,4 +1046,33 @@ internal partial class LinuxPlatform : IPlatform
         // We could change colors using CSS, but for now just ignore
         // This matches the behavior on platforms that don't support this feature
     }
+
+#if NETSTANDARD2_0
+    /// <summary>
+    /// Helper method to convert UTF-8 pointer to string for .NET Standard 2.0.
+    /// Marshal.PtrToStringUTF8 was added in .NET Core 2.1+
+    /// </summary>
+    private static string GetUtf8String(IntPtr ptr)
+    {
+        if (ptr == IntPtr.Zero)
+            return string.Empty;
+
+        // Find null terminator
+        int length = 0;
+        unsafe
+        {
+            byte* p = (byte*)ptr;
+            while (p[length] != 0)
+                length++;
+        }
+
+        if (length == 0)
+            return string.Empty;
+
+        // Copy to managed array and decode
+        byte[] bytes = new byte[length];
+        Marshal.Copy(ptr, bytes, 0, length);
+        return System.Text.Encoding.UTF8.GetString(bytes);
+    }
+#endif
 }

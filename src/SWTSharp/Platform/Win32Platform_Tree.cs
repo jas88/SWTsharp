@@ -230,7 +230,7 @@ internal partial class Win32Platform
         // Track parent-child relationship
         if (!_treeItemChildren.ContainsKey(parentItemHandle))
         {
-            _treeItemChildren[parentItemHandle] = new List<IntPtr>();
+            _treeItemChildren[parentItemHandle] = [];
         }
         _treeItemChildren[parentItemHandle].Add(itemHandle);
 
@@ -387,7 +387,7 @@ internal partial class Win32Platform
             // Update parent-child tracking
             if (!_treeItemChildren.ContainsKey(parentItemHandle))
             {
-                _treeItemChildren[parentItemHandle] = new List<IntPtr>();
+                _treeItemChildren[parentItemHandle] = [];
             }
 
             if (!_treeItemChildren[parentItemHandle].Contains(itemHandle))

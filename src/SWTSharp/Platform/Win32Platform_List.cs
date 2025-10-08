@@ -32,7 +32,7 @@ internal partial class Win32Platform
     private const uint LB_SELITEMRANGE = 0x019B;
 
     // Store list items for tracking (if needed)
-    private readonly Dictionary<IntPtr, List<string>> _listItems = new Dictionary<IntPtr, List<string>>();
+    private readonly Dictionary<IntPtr, List<string>> _listItems = [];
 
     // List control operations
     public IntPtr CreateList(IntPtr parentHandle, int style)
@@ -154,7 +154,11 @@ internal partial class Win32Platform
             // Single selection mode
             int index = SendMessage(handle, LB_GETCURSEL, IntPtr.Zero, IntPtr.Zero).ToInt32();
             if (index >= 0)
+#if NET8_0_OR_GREATER
+                return [index];
+#else
                 return new int[] { index };
+#endif
             return Array.Empty<int>();
         }
 

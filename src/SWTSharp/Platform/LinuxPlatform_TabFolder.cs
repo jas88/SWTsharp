@@ -11,7 +11,7 @@ internal partial class LinuxPlatform
     private sealed class TabFolderData
     {
         public IntPtr Notebook { get; set; }
-        public List<IntPtr> TabItems { get; } = new List<IntPtr>();
+        public List<IntPtr> TabItems { get; } = [];
     }
 
     private sealed class TabItemData
@@ -23,8 +23,8 @@ internal partial class LinuxPlatform
         public string Text { get; set; } = "";
     }
 
-    private readonly Dictionary<IntPtr, TabFolderData> _tabFolderData = new Dictionary<IntPtr, TabFolderData>();
-    private readonly Dictionary<IntPtr, TabItemData> _tabItemData = new Dictionary<IntPtr, TabItemData>();
+    private readonly Dictionary<IntPtr, TabFolderData> _tabFolderData = [];
+    private readonly Dictionary<IntPtr, TabItemData> _tabItemData = [];
     private int _nextTabItemHandle = 1;
 
     // GTK Notebook P/Invoke declarations

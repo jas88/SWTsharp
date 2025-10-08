@@ -328,16 +328,58 @@ internal partial class MacOSPlatform : IPlatform
     // SEC-002: Already has proper try-finally for memory management
     private IntPtr CreateNSString(string str)
     {
+#if NET8_0_OR_GREATER
+        // Use stack allocation for small strings to avoid heap allocation
         IntPtr sel = sel_registerName("stringWithUTF8String:");
-        IntPtr utf8 = Marshal.StringToHGlobalAnsi(str);
+        int maxByteCount = System.Text.Encoding.UTF8.GetMaxByteCount(str.Length) + 1; // +1 for null terminator
+
+        if (maxByteCount <= 256)
+        {
+            // Stack allocate for small strings
+            unsafe
+            {
+                Span<byte> utf8Bytes = stackalloc byte[maxByteCount];
+                int bytesWritten = System.Text.Encoding.UTF8.GetBytes(str, utf8Bytes);
+                utf8Bytes[bytesWritten] = 0; // null terminator
+
+                fixed (byte* ptr = utf8Bytes)
+                {
+                    return objc_msgSend(_nsStringClass, sel, (IntPtr)ptr);
+                }
+            }
+        }
+        else
+        {
+            // Heap allocate for large strings - must use UTF-8, not ANSI
+            byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(str);
+            IntPtr utf8 = Marshal.AllocHGlobal(utf8Bytes.Length + 1);
+            try
+            {
+                Marshal.Copy(utf8Bytes, 0, utf8, utf8Bytes.Length);
+                Marshal.WriteByte(utf8, utf8Bytes.Length, 0); // null terminator
+                return objc_msgSend(_nsStringClass, sel, utf8);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(utf8);
+            }
+        }
+#else
+        // .NET Standard 2.0 / older frameworks - must use proper UTF-8 encoding
+        IntPtr sel = sel_registerName("stringWithUTF8String:");
+        byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(str);
+        IntPtr utf8 = Marshal.AllocHGlobal(utf8Bytes.Length + 1);
         try
         {
+            Marshal.Copy(utf8Bytes, 0, utf8, utf8Bytes.Length);
+            Marshal.WriteByte(utf8, utf8Bytes.Length, 0); // null terminator
             return objc_msgSend(_nsStringClass, sel, utf8);
         }
         finally
         {
             Marshal.FreeHGlobal(utf8);
         }
+#endif
     }
 
     public void SetWindowSize(IntPtr handle, int width, int height)

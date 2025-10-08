@@ -105,7 +105,7 @@ internal partial class MacOSPlatform : IPlatformGraphics
         public int Alpha { get; set; } = 255;
     }
 
-    private readonly Dictionary<IntPtr, GraphicsState> _graphicsContexts = new Dictionary<IntPtr, GraphicsState>();
+    private readonly Dictionary<IntPtr, GraphicsState> _graphicsContexts = [];
 
     // Color operations
     public IntPtr CreateColor(int red, int green, int blue)

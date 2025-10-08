@@ -20,9 +20,9 @@ public class Display : IDisposable
 
     private bool _disposed;
     private Thread? _thread;
-    private readonly List<Shell> _shells = new();
+    private readonly List<Shell> _shells = [];
     private bool _running;
-    private readonly Queue<Action> _asyncActions = new Queue<Action>();
+    private readonly Queue<Action> _asyncActions = [];
     private Action<Action>? _customAsyncExecutor = null;
 
     /// <summary>
@@ -392,10 +392,19 @@ public class Display : IDisposable
                 lock (_lock)
                 {
                     // Dispose all shells
+#if NET8_0_OR_GREATER
+                    // Use CollectionsMarshal to avoid allocating ToArray()
+                    var shellsSpan = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_shells);
+                    for (int i = 0; i < shellsSpan.Length; i++)
+                    {
+                        shellsSpan[i].Dispose();
+                    }
+#else
                     foreach (var shell in _shells.ToArray())
                     {
                         shell.Dispose();
                     }
+#endif
                     _shells.Clear();
                 }
 

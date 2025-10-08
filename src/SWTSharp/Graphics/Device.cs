@@ -10,6 +10,11 @@ public abstract class Device : IDisposable
 {
     private bool disposed;
     private readonly List<Resource> resources = new();
+#if NET9_0_OR_GREATER
+    private readonly Lock resourcesLock = new();
+#else
+    private readonly object resourcesLock = new();
+#endif
 
     /// <summary>
     /// Gets the platform-specific implementation.
@@ -36,7 +41,7 @@ public abstract class Device : IDisposable
     internal void TrackResource(Resource resource)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
-        lock (resources)
+        lock (resourcesLock)
         {
             resources.Add(resource);
         }
@@ -48,7 +53,7 @@ public abstract class Device : IDisposable
     internal void UntrackResource(Resource resource)
     {
         if (resource == null) return;
-        lock (resources)
+        lock (resourcesLock)
         {
             resources.Remove(resource);
         }
@@ -71,9 +76,13 @@ public abstract class Device : IDisposable
     protected void DisposeResources()
     {
         Resource[] resourcesToDispose;
-        lock (resources)
+        lock (resourcesLock)
         {
+#if NET8_0_OR_GREATER
+            resourcesToDispose = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(resources).ToArray();
+#else
             resourcesToDispose = resources.ToArray();
+#endif
             resources.Clear();
         }
 

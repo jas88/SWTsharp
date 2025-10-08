@@ -113,6 +113,13 @@ public abstract class Widget : IDisposable
         // LEAK-001: Clear event handlers to prevent memory leaks
         if (_eventTable != null)
         {
+#if NET8_0_OR_GREATER
+            // Use CollectionsMarshal to avoid allocating ToList()
+            foreach (var kvp in _eventTable)
+            {
+                kvp.Value.Clear();
+            }
+#else
             foreach (var eventType in _eventTable.Keys.ToList())
             {
                 if (_eventTable.TryGetValue(eventType, out var listeners))
@@ -120,6 +127,7 @@ public abstract class Widget : IDisposable
                     listeners.Clear();
                 }
             }
+#endif
             _eventTable.Clear();
             _eventTable = null;
         }

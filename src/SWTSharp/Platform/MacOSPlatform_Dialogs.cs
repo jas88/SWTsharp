@@ -273,11 +273,19 @@ internal partial class MacOSPlatform
                 string ext = pattern.Trim();
                 if (ext.StartsWith("*."))
                 {
+#if NET8_0_OR_GREATER
+                    ext = ext.AsSpan(2).ToString(); // Remove "*."
+#else
                     ext = ext.Substring(2); // Remove "*."
+#endif
                 }
                 else if (ext.StartsWith("."))
                 {
+#if NET8_0_OR_GREATER
+                    ext = ext.AsSpan(1).ToString(); // Remove "."
+#else
                     ext = ext.Substring(1); // Remove "."
+#endif
                 }
 
                 if (!string.IsNullOrEmpty(ext))

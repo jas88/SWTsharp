@@ -30,7 +30,11 @@ public class Text : Control
             // Only truncate if limit > 0 (0 means unlimited)
             if (_textLimit > 0 && _text.Length > _textLimit)
             {
+#if NET8_0_OR_GREATER
+                _text = _text.AsSpan(0, _textLimit).ToString();
+#else
                 _text = _text.Substring(0, _textLimit);
+#endif
             }
             UpdateText();
         }
@@ -61,7 +65,11 @@ public class Text : Control
             // Only truncate if limit > 0 (0 means unlimited)
             if (_textLimit > 0 && _text.Length > _textLimit)
             {
+#if NET8_0_OR_GREATER
+                _text = _text.AsSpan(0, _textLimit).ToString();
+#else
                 _text = _text.Substring(0, _textLimit);
+#endif
                 UpdateText();
             }
         }
@@ -269,7 +277,11 @@ public class Text : Control
         string currentText = GetText();
         if (start >= 0 && end > start && end <= currentText.Length)
         {
+#if NET8_0_OR_GREATER
+            return currentText.AsSpan(start, end - start).ToString();
+#else
             return currentText.Substring(start, end - start);
+#endif
         }
         return string.Empty;
     }
