@@ -116,10 +116,10 @@ internal partial class LinuxPlatform
             gtk_tree_view_set_headers_visible(treeView, false);
         }
 
-        // Add to parent
+        // Add to parent using helper (handles GtkWindow -> container routing)
         if (parent != IntPtr.Zero)
         {
-            gtk_container_add(parent, treeView);
+            AddChildToParent(parent, treeView);
         }
 
         // Store tree data

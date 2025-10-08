@@ -232,6 +232,12 @@ internal partial class LinuxPlatform
         };
         _tableData[scrolledWindow] = tableData;
 
+        // Add to parent using helper (handles GtkWindow -> container routing)
+        if (parent != IntPtr.Zero)
+        {
+            AddChildToParent(parent, scrolledWindow);
+        }
+
         return scrolledWindow;
     }
 
