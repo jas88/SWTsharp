@@ -59,6 +59,12 @@ internal partial class LinuxPlatform : IPlatform
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
 
+    [DllImport(GObjectLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
+    private static extern bool g_type_check_instance_is_a(IntPtr instance, IntPtr gtype);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_type();
+
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_widget_get_window(IntPtr widget);
 
@@ -154,6 +160,21 @@ internal partial class LinuxPlatform : IPlatform
     }
 
     /// <summary>
+    /// Safely destroy a GTK widget with proper type validation.
+    /// </summary>
+    private void SafeDestroyWidget(IntPtr handle)
+    {
+        if (handle == IntPtr.Zero) return;
+
+        // Validate that this is actually a GtkWidget before destroying
+        IntPtr widgetType = gtk_widget_get_type();
+        if (widgetType != IntPtr.Zero && g_type_check_instance_is_a(handle, widgetType))
+        {
+            gtk_widget_destroy(handle);
+        }
+    }
+
+    /// <summary>
     /// Helper to add a child widget to parent, handling GtkWindow -> container mapping.
     /// GtkWindow can only contain one child, so we use the container we created.
     /// </summary>
@@ -176,11 +197,8 @@ internal partial class LinuxPlatform : IPlatform
 
     public void DestroyWindow(IntPtr handle)
     {
-        if (handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(handle);
-            _widgetContainers.Remove(handle);
-        }
+        SafeDestroyWidget(handle);
+        _widgetContainers.Remove(handle);
     }
 
     public void SetWindowVisible(IntPtr handle, bool visible)
@@ -488,10 +506,7 @@ internal partial class LinuxPlatform : IPlatform
 
     void IPlatform.DestroyMenu(IntPtr handle)
     {
-        if (handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(handle);
-        }
+        SafeDestroyWidget(handle);
     }
 
     void IPlatform.SetShellMenuBar(IntPtr shellHandle, IntPtr menuHandle)
@@ -557,10 +572,7 @@ internal partial class LinuxPlatform : IPlatform
 
     void IPlatform.DestroyMenuItem(IntPtr handle)
     {
-        if (handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(handle);
-        }
+        SafeDestroyWidget(handle);
     }
 
     void IPlatform.SetMenuItemText(IntPtr handle, string text)
