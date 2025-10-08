@@ -32,11 +32,7 @@ public class Combo : Control
             string newText = value ?? string.Empty;
             if (newText.Length > _textLimit)
             {
-#if NET8_0_OR_GREATER
-                newText = newText.AsSpan(0, _textLimit).ToString();
-#else
-                newText = newText.Substring(0, _textLimit);
-#endif
+                newText = newText.SliceToString(0, _textLimit);
             }
             if (_text != newText)
             {
@@ -133,11 +129,7 @@ public class Combo : Control
             _textLimit = value;
             if (_text.Length > _textLimit)
             {
-#if NET8_0_OR_GREATER
-                Text = _text.AsSpan(0, _textLimit).ToString();
-#else
-                Text = _text.Substring(0, _textLimit);
-#endif
+                Text = _text.SliceToString(0, _textLimit);
             }
             Platform.PlatformFactory.Instance.SetComboTextLimit(Handle, _textLimit);
         }
