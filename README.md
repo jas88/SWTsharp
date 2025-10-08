@@ -1,6 +1,7 @@
 # SWTSharp
 
 [![CI/CD Pipeline](https://github.com/jas88/SWTsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/jas88/SWTsharp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jas88/SWTsharp/branch/main/graph/badge.svg)](https://codecov.io/gh/jas88/SWTsharp)
 [![NuGet](https://img.shields.io/nuget/v/SWTSharp.svg)](https://www.nuget.org/packages/SWTSharp/)
 [![License](https://img.shields.io/badge/License-EPL%202.0-blue.svg)](https://www.eclipse.org/legal/epl-2.0/)
 
