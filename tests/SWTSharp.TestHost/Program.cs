@@ -97,10 +97,9 @@ public class Program
             var assembly = Assembly.LoadFrom(testAssemblyPath);
             Console.WriteLine($"[INFO] SWTSharp TestHost: Loaded assembly: {assembly.FullName}");
 
-            // Use xUnit to discover and run tests
-            using var framework = new Xunit2(
+            // Use xUnit to discover and run tests via XunitFrontController
+            using var controller = new XunitFrontController(
                 AppDomainSupport.Denied,
-                new NullSourceInformationProvider(),
                 testAssemblyPath,
                 configFileName: null,
                 shadowCopy: false,
@@ -108,7 +107,11 @@ public class Program
 
             // Discover tests
             var discoveryVisitor = new TestDiscoveryVisitor();
-            framework.Find(includeSourceInformation: false, discoveryVisitor, TestFrameworkOptions.ForDiscovery());
+            var discoveryOptions = TestFrameworkOptions.ForDiscovery();
+            controller.Find(
+                includeSourceInformation: false,
+                messageSink: discoveryVisitor,
+                discoveryOptions: discoveryOptions);
             discoveryVisitor.Finished.WaitOne();
 
             Console.WriteLine($"[INFO] SWTSharp TestHost: Discovered {discoveryVisitor.TestCases.Count} tests");
@@ -128,7 +131,8 @@ public class Program
 
             // Run tests
             var executionVisitor = new TestExecutionVisitor();
-            framework.RunTests(testsToRun, executionVisitor, TestFrameworkOptions.ForExecution());
+            var executionOptions = TestFrameworkOptions.ForExecution();
+            controller.RunTests(testsToRun, executionVisitor, executionOptions);
             executionVisitor.Finished.WaitOne();
 
             // Report results

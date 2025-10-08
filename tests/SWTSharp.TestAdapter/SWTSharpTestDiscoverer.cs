@@ -64,17 +64,22 @@ public class SWTSharpTestDiscoverer : ITestDiscoverer
 
     private void DiscoverTestsInSource(string source, IMessageLogger logger, ITestCaseDiscoverySink discoverySink)
     {
-        // Use xUnit's discovery mechanism
-        using var framework = new Xunit2(
+        // Use xUnit's discovery mechanism via XunitFrontController
+        using var controller = new XunitFrontController(
             AppDomainSupport.Denied,
-            new NullSourceInformationProvider(),
-            source,
+            assemblyFileName: source,
             configFileName: null,
             shadowCopy: false,
             diagnosticMessageSink: new DiagnosticMessageSink(logger));
 
         var visitor = new TestDiscoveryVisitor();
-        framework.Find(includeSourceInformation: true, visitor, TestFrameworkOptions.ForDiscovery());
+        var discoveryOptions = TestFrameworkOptions.ForDiscovery();
+
+        controller.Find(
+            includeSourceInformation: true,
+            messageSink: visitor,
+            discoveryOptions: discoveryOptions);
+
         visitor.Finished.WaitOne();
 
         foreach (var testCase in visitor.TestCases)
