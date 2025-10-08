@@ -25,7 +25,6 @@ public class DisplayFixture : IDisposable
     public DisplayFixture()
     {
         // CRITICAL: macOS requires ALL UI operations on the process's FIRST thread
-        // xUnit.StaFact's [UIFact] doesn't handle this - it only creates an STA thread (Windows concept)
         // We must use MainThreadDispatcher for macOS compatibility
         Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}");
 
