@@ -21,7 +21,7 @@
     <!-- VSTest Platform Object Model - required for adapter interfaces -->
     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.11.1" />
 
-    <!-- xUnit abstractions for discovering xUnit tests -->
+    <!-- xUnit v2 packages for discovering and running xUnit v2 tests -->
     <PackageReference Include="xunit.abstractions" Version="2.0.3" />
     <PackageReference Include="xunit.runner.utility" Version="2.9.2" />
     <PackageReference Include="xunit.extensibility.execution" Version="2.9.2" />
@@ -39,14 +39,9 @@
       <TestHostBinPath>../SWTSharp.TestHost/bin/$(Configuration)/net9.0</TestHostBinPath>
     </PropertyGroup>
     <ItemGroup>
-      <TestHostFiles Include="$(TestHostBinPath)/SWTSharp.TestHost.dll" />
-      <TestHostFiles Include="$(TestHostBinPath)/SWTSharp.TestHost.pdb" />
-      <TestHostFiles Include="$(TestHostBinPath)/SWTSharp.TestHost.runtimeconfig.json" />
-      <TestHostFiles Include="$(TestHostBinPath)/SWTSharp.TestHost.deps.json" />
-      <TestHostFiles Include="$(TestHostBinPath)/SWTSharp.dll" />
-      <TestHostFiles Include="$(TestHostBinPath)/xunit.*.dll" />
+      <TestHostFiles Include="$(TestHostBinPath)/**/*.*" Exclude="$(TestHostBinPath)/**/*.pdb" />
     </ItemGroup>
-    <Copy SourceFiles="@(TestHostFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <Copy SourceFiles="@(TestHostFiles)" DestinationFolder="$(OutDir)/%(RecursiveDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
   </Target>
 
 </Project>

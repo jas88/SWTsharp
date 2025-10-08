@@ -7,32 +7,29 @@
     <IsPackable>false</IsPackable>
     <!-- Test projects should be libraries, not executables, for VSTest discovery -->
     <EnableMSTestRunner>false</EnableMSTestRunner>
+    <!-- Disable xUnit analyzer that requires MarshalByRefObject (not needed for direct execution) -->
+    <NoWarn>xUnit3000</NoWarn>
+  </PropertyGroup>
+
+  <!-- Enable executable mode with custom test runner -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <StartupObject>SWTSharp.Tests.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Restore MainThreadDispatcher for macOS support -->
-    <!-- Program.cs, ModuleInitializer, and TestRunner excluded by default for library mode -->
-    <!-- TestRunner can be enabled with RunTestRunner=true property -->
-    <Compile Remove="Program.cs" />
+    <!-- ModuleInitializer not needed for direct execution -->
     <Compile Remove="ModuleInitializer.cs" />
-    <Compile Remove="TestRunner.cs" Condition="'$(RunTestRunner)' != 'true'" />
   </ItemGroup>
-
-  <!-- Optional: Enable TestRunner mode for macOS local testing.
-       Usage: dotnet build -p:RunTestRunner=true
-       Default: Library mode for VSTest (dotnet test) -->
-  <PropertyGroup Condition="'$(RunTestRunner)' == 'true'">
-    <OutputType>Exe</OutputType>
-    <StartupObject>SWTSharp.Tests.TestRunner</StartupObject>
-  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
-    <PackageReference Include="Xunit.StaFact" Version="3.0.13" />
-    <PackageReference Include="xunit.v3" Version="3.1.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.0.1">
+    <PackageReference Include="Xunit.StaFact" Version="1.1.11" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.utility" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -50,10 +47,9 @@
   <!-- VSTest looks for adapters in the test assembly's output directory -->
   <Target Name="CopyTestAdapter" AfterTargets="Build">
     <ItemGroup>
-      <AdapterFiles Include="..\SWTSharp.TestAdapter\bin\$(Configuration)\netstandard2.0\SWTSharp.TestAdapter.dll" />
-      <AdapterFiles Include="..\SWTSharp.TestAdapter\bin\$(Configuration)\netstandard2.0\SWTSharp.TestAdapter.pdb" />
+      <AdapterFiles Include="..\SWTSharp.TestAdapter\bin\$(Configuration)\netstandard2.0\**\*.*" />
     </ItemGroup>
-    <Copy SourceFiles="@(AdapterFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(AdapterFiles)" DestinationFolder="$(OutDir)\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

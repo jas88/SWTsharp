@@ -1,95 +1,242 @@
+using System;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using Xunit;
+using Xunit.Abstractions;
+using SWTSharp.Tests.Infrastructure;
 
 namespace SWTSharp.Tests;
 
 /// <summary>
-/// Custom entry point that keeps Thread 1 available for macOS UI operations.
-/// xUnit tests run on a background thread and marshal UI work back to Thread 1.
+/// Test runner entry point that executes all xUnit tests with macOS Thread 1 support.
+/// Reports failures to STDERR and exits with appropriate code for CI.
 /// </summary>
 public class Program
 {
     public static int Main(string[] args)
     {
-        Console.WriteLine($"Program.Main: Running on Thread {Thread.CurrentThread.ManagedThreadId}");
+        Console.WriteLine($"SWTSharp Test Runner");
+        Console.WriteLine($"Platform: {RuntimeInformation.OSDescription}");
+        Console.WriteLine($"Thread: {Thread.CurrentThread.ManagedThreadId}");
+        Console.WriteLine();
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            return RunWithMainThreadDispatcher(args).GetAwaiter().GetResult();
+            return RunTestsOnMacOS();
         }
         else
         {
-            // On other platforms, just run xUnit normally
-            return RunXUnit(args).GetAwaiter().GetResult();
+            return RunTests();
         }
     }
 
-    private static async Task<int> RunWithMainThreadDispatcher(string[] args)
+    private static int RunTestsOnMacOS()
     {
-        Console.WriteLine("Program: Initializing Main Thread Dispatcher...");
+        Console.WriteLine("macOS detected - initializing Thread 1 dispatcher...");
 
-        // Initialize AppKit on Thread 1 (this thread)
+        // Initialize MainThreadDispatcher on Thread 1
         MainThreadDispatcher.Initialize();
 
-        Console.WriteLine("Program: Starting xUnit on background thread...");
+        // Hook into MacOSPlatform to route ExecuteOnMainThread through our dispatcher
+        SWTSharp.Platform.MacOSPlatform.CustomMainThreadExecutor = MainThreadDispatcher.Invoke;
 
-        // Create a task completion source to get the exit code from xUnit
-        var exitCodeTaskSource = new TaskCompletionSource<int>();
+        var exitCode = 0;
+        var completionSignal = new ManualResetEventSlim(false);
 
-        // Run xUnit on a background thread
-        var xunitThread = new Thread(async () =>
+        // Run tests on background thread
+        var testThread = new Thread(() =>
         {
             try
             {
-                Console.WriteLine($"xUnit thread: Running on Thread {Thread.CurrentThread.ManagedThreadId}");
-                var exitCode = await RunXUnit(args);
-                Console.WriteLine($"xUnit thread: Tests completed with exit code {exitCode}");
-
-                // Signal dispatcher to stop
-                MainThreadDispatcher.Stop();
-
-                exitCodeTaskSource.SetResult(exitCode);
+                exitCode = RunTests();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"xUnit thread: FATAL ERROR: {ex}");
+                Console.Error.WriteLine($"FATAL: {ex.Message}");
+                Console.Error.WriteLine(ex.StackTrace);
+                exitCode = 1;
+            }
+            finally
+            {
                 MainThreadDispatcher.Stop();
-                exitCodeTaskSource.SetResult(1);
+                completionSignal.Set();
             }
         })
         {
-            Name = "xUnit Runner Thread",
+            Name = "Test Execution Thread",
             IsBackground = false
         };
 
-        xunitThread.Start();
+        testThread.Start();
 
-        Console.WriteLine("Program: Running dispatch loop on main thread (Thread 1)...");
+        // Run dispatch loop on Thread 1
+        Console.WriteLine("Starting main thread dispatch loop...");
+        MainThreadDispatcher.RunLoop();
 
-        // Run dispatch loop on THIS thread (Thread 1)
-        // This will block until tests complete and call MainThreadDispatcher.Stop()
-        try
+        // Wait for test thread completion
+        if (!completionSignal.Wait(TimeSpan.FromSeconds(10)))
         {
-            MainThreadDispatcher.RunLoop();
+            Console.Error.WriteLine("FATAL: Test thread did not complete");
+            return 1;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Dispatcher: ERROR: {ex}");
-        }
-
-        Console.WriteLine("Program: Dispatch loop completed, waiting for test results...");
-
-        // Wait for xUnit thread to finish and get exit code
-        var exitCode = await exitCodeTaskSource.Task;
-
-        Console.WriteLine("Program: Tests completed");
 
         return exitCode;
     }
 
-    private static async Task<int> RunXUnit(string[] args)
+    private static int RunTests()
     {
-        // Use xUnit v3's in-process system console runner
-        // The ConsoleRunner.Run() method is provided by xunit.v3 package
-        return await Xunit.Runner.InProc.SystemConsole.ConsoleRunner.Run(args);
+        try
+        {
+            var assemblyPath = Assembly.GetExecutingAssembly().Location;
+            Console.WriteLine($"Running tests in: {assemblyPath}");
+            Console.WriteLine();
+
+            // Use xUnit to discover and run tests
+            using var controller = new XunitFrontController(
+                AppDomainSupport.Denied,
+                assemblyPath,
+                configFileName: null,
+                shadowCopy: false,
+                diagnosticMessageSink: new DiagnosticMessageSink());
+
+            // Discover tests
+            var discoveryVisitor = new TestDiscoveryVisitor();
+            controller.Find(
+                includeSourceInformation: false,
+                messageSink: discoveryVisitor,
+                discoveryOptions: TestFrameworkOptions.ForDiscovery());
+
+            if (!discoveryVisitor.Finished.WaitOne(TimeSpan.FromSeconds(30)))
+            {
+                Console.Error.WriteLine("FATAL: Test discovery timed out");
+                return 1;
+            }
+
+            Console.WriteLine($"Discovered {discoveryVisitor.TestCases.Count} tests");
+            Console.WriteLine();
+
+            // Run tests
+            var executionVisitor = new TestExecutionVisitor();
+            controller.RunTests(
+                discoveryVisitor.TestCases,
+                executionVisitor,
+                TestFrameworkOptions.ForExecution());
+
+            if (!executionVisitor.Finished.WaitOne(TimeSpan.FromMinutes(5)))
+            {
+                Console.Error.WriteLine("FATAL: Test execution timed out");
+                return 1;
+            }
+
+            // Report results
+            Console.WriteLine();
+            Console.WriteLine("=== Test Results ===");
+            Console.WriteLine($"Passed:  {executionVisitor.PassedTests}");
+            Console.WriteLine($"Failed:  {executionVisitor.FailedTests}");
+            Console.WriteLine($"Skipped: {executionVisitor.SkippedTests}");
+            Console.WriteLine($"Total:   {executionVisitor.PassedTests + executionVisitor.FailedTests + executionVisitor.SkippedTests}");
+
+            return executionVisitor.FailedTests > 0 ? 1 : 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"FATAL: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            return 1;
+        }
+    }
+
+    private class TestDiscoveryVisitor : IMessageSink
+    {
+        public List<ITestCase> TestCases { get; } = new();
+        public ManualResetEvent Finished { get; } = new(false);
+
+        public bool OnMessage(IMessageSinkMessage message)
+        {
+            if (message is ITestCaseDiscoveryMessage discoveryMessage)
+            {
+                TestCases.Add(discoveryMessage.TestCase);
+            }
+            else if (message is IDiscoveryCompleteMessage)
+            {
+                Finished.Set();
+            }
+            return true;
+        }
+
+        public void Dispose()
+        {
+            Finished?.Dispose();
+        }
+    }
+
+    private class TestExecutionVisitor : IMessageSink
+    {
+        public int PassedTests { get; private set; }
+        public int FailedTests { get; private set; }
+        public int SkippedTests { get; private set; }
+        public ManualResetEvent Finished { get; } = new(false);
+
+        private readonly Stopwatch _testStopwatch = new();
+
+        public bool OnMessage(IMessageSinkMessage message)
+        {
+            switch (message)
+            {
+                case ITestStarting starting:
+                    _testStopwatch.Restart();
+                    Console.Write($"  {starting.Test.DisplayName} ... ");
+                    break;
+
+                case ITestPassed passed:
+                    PassedTests++;
+                    _testStopwatch.Stop();
+                    Console.WriteLine($"PASSED ({_testStopwatch.ElapsedMilliseconds}ms)");
+                    break;
+
+                case ITestFailed failed:
+                    FailedTests++;
+                    _testStopwatch.Stop();
+                    Console.WriteLine($"FAILED ({_testStopwatch.ElapsedMilliseconds}ms)");
+                    Console.Error.WriteLine($"FAILED: {failed.Test.DisplayName}");
+                    Console.Error.WriteLine($"  {string.Join("\n  ", failed.Messages)}");
+                    if (failed.StackTraces.Any())
+                    {
+                        Console.Error.WriteLine($"  {string.Join("\n  ", failed.StackTraces)}");
+                    }
+                    break;
+
+                case ITestSkipped skipped:
+                    SkippedTests++;
+                    Console.WriteLine($"SKIPPED ({skipped.Reason})");
+                    break;
+
+                case ITestAssemblyFinished:
+                    Finished.Set();
+                    break;
+            }
+
+            return true;
+        }
+
+        public void Dispose()
+        {
+            Finished?.Dispose();
+        }
+    }
+
+    private class DiagnosticMessageSink : IMessageSink
+    {
+        public bool OnMessage(IMessageSinkMessage message)
+        {
+            if (message is IDiagnosticMessage diagnostic)
+            {
+                Console.WriteLine($"[xUnit] {diagnostic.Message}");
+            }
+            return true;
+        }
+
+        public void Dispose() { }
     }
 }

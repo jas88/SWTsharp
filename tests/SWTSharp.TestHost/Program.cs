@@ -67,25 +67,34 @@ public class Program
             }
             finally
             {
-                completionSignal.Set();
-                // Signal dispatcher to stop
+                Console.WriteLine("[INFO] SWTSharp TestHost: Test thread completing...");
+                // Signal dispatcher to stop FIRST
                 MainThreadDispatcher.Stop();
+                // Then signal completion
+                completionSignal.Set();
             }
         })
         {
             Name = "Test Execution Thread",
-            IsBackground = true
+            IsBackground = false // Foreground thread to ensure it completes
         };
 
         testThread.Start();
 
         // Run the dispatch loop on Thread 1
         // This will block until tests complete and call Stop()
+        Console.WriteLine("[INFO] SWTSharp TestHost: Starting main thread dispatch loop...");
         MainThreadDispatcher.RunLoop();
 
-        // Wait for test thread to finish cleanup
-        completionSignal.Wait();
+        // Wait for test thread to finish cleanup (with timeout)
+        Console.WriteLine("[INFO] SWTSharp TestHost: Waiting for test thread completion...");
+        if (!completionSignal.Wait(TimeSpan.FromSeconds(10)))
+        {
+            Console.Error.WriteLine("[ERROR] SWTSharp TestHost: Test thread did not complete in time");
+            return 1;
+        }
 
+        Console.WriteLine("[INFO] SWTSharp TestHost: Exiting with code " + exitCode);
         return exitCode;
     }
 
@@ -118,7 +127,12 @@ public class Program
                 includeSourceInformation: false,
                 messageSink: discoveryVisitor,
                 discoveryOptions: discoveryOptions);
-            discoveryVisitor.Finished.WaitOne();
+
+            if (!discoveryVisitor.Finished.WaitOne(TimeSpan.FromSeconds(30)))
+            {
+                Console.Error.WriteLine("[ERROR] SWTSharp TestHost: Test discovery timed out");
+                return 1;
+            }
 
             Console.WriteLine($"[INFO] SWTSharp TestHost: Discovered {discoveryVisitor.TestCases.Count} tests");
 
@@ -139,7 +153,12 @@ public class Program
             var executionVisitor = new TestExecutionVisitor();
             var executionOptions = TestFrameworkOptions.ForExecution();
             controller.RunTests(testsToRun, executionVisitor, executionOptions);
-            executionVisitor.Finished.WaitOne();
+
+            if (!executionVisitor.Finished.WaitOne(TimeSpan.FromMinutes(5)))
+            {
+                Console.Error.WriteLine("[ERROR] SWTSharp TestHost: Test execution timed out");
+                return 1;
+            }
 
             // Report results
             Console.WriteLine($"[INFO] SWTSharp TestHost: Tests completed");
