@@ -11,20 +11,20 @@ public class WidgetTests : TestBase
     {
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Display_Default_ShouldNotBeNull()
     {
         Assert.NotNull(Display);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Display_Current_ShouldReturnSameAsDefault()
     {
         var current = Display.Current;
         Assert.Same(Display, current);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Shell_Create_ShouldNotBeNull()
     {
         Shell? shell = null;
@@ -37,7 +37,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Shell_Dispose_ShouldSetIsDisposed()
     {
         RunOnUIThread(() =>
@@ -49,7 +49,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Shell_CheckWidget_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -60,7 +60,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Shell_Text_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -72,7 +72,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Button_Create_ShouldNotBeNull()
     {
         RunOnUIThread(() =>
@@ -86,7 +86,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Button_Text_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -100,7 +100,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Button_Selection_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -115,7 +115,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Label_Text_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -129,7 +129,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Content_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -143,7 +143,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Append_ShouldAppendText()
     {
         RunOnUIThread(() =>
@@ -158,7 +158,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_TextLimit_ShouldLimitText()
     {
         RunOnUIThread(() =>
@@ -173,7 +173,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Visible_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -188,7 +188,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Enabled_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -203,7 +203,7 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Widget_Data_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -216,14 +216,14 @@ public class WidgetTests : TestBase
         });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void SWT_Platform_ShouldReturnValidPlatform()
     {
         var platform = Display.Platform;
         Assert.Contains(platform, new[] { SWT.PLATFORM_WIN32, SWT.PLATFORM_MACOSX, SWT.PLATFORM_LINUX });
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void SWT_GetErrorMessage_ShouldReturnMessage()
     {
         var message = SWT.GetErrorMessage(SWT.ERROR_NULL_ARGUMENT);

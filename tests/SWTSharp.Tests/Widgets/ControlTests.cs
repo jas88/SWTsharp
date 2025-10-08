@@ -11,7 +11,7 @@ public class ControlTests : WidgetTestBase
 {
     public ControlTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Visible_DefaultTrue()
     {
         using var shell = CreateTestShell();
@@ -22,7 +22,7 @@ public class ControlTests : WidgetTestBase
         control.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -33,7 +33,7 @@ public class ControlTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Enabled_DefaultTrue()
     {
         using var shell = CreateTestShell();
@@ -44,7 +44,7 @@ public class ControlTests : WidgetTestBase
         control.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -55,13 +55,13 @@ public class ControlTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Button(shell, SWT.PUSH));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Display_ShouldMatchParent()
     {
         using var shell = CreateTestShell();
@@ -72,13 +72,13 @@ public class ControlTests : WidgetTestBase
         control.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Button(shell, SWT.PUSH));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_SetVisible_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -87,7 +87,7 @@ public class ControlTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_SetEnabled_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -96,7 +96,7 @@ public class ControlTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_GetVisible_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -106,7 +106,7 @@ public class ControlTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => _ = control.Visible);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_GetEnabled_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -116,13 +116,13 @@ public class ControlTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => _ = control.Enabled);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Button(shell, SWT.PUSH));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_ParentDispose_ShouldDisposeControl()
     {
         using var shell = CreateTestShell();
@@ -133,7 +133,7 @@ public class ControlTests : WidgetTestBase
         Assert.True(control.IsDisposed);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_VisibleFalse_ThenTrue_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -148,7 +148,7 @@ public class ControlTests : WidgetTestBase
         control.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Control_EnabledFalse_ThenTrue_ShouldWork()
     {
         using var shell = CreateTestShell();

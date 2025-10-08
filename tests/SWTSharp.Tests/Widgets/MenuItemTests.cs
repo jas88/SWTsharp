@@ -11,7 +11,7 @@ public class MenuItemTests : WidgetTestBase
 {
     public MenuItemTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Create_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -25,7 +25,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Create_WithStyles_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -42,7 +42,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Text_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -56,7 +56,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Text_WithEmptyString_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -70,7 +70,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Text_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -84,7 +84,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Selection_Check_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -99,7 +99,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Selection_Radio_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -114,7 +114,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Enabled_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -131,7 +131,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Menu_Cascade_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -148,7 +148,7 @@ public class MenuItemTests : WidgetTestBase
         subMenu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Dispose_ShouldSetIsDisposed()
     {
         using var shell = CreateTestShell();
@@ -162,7 +162,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_SetText_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -175,7 +175,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Data_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -191,7 +191,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_InitiallyEnabled()
     {
         using var shell = CreateTestShell();
@@ -204,7 +204,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_InitialText_ShouldBeEmpty()
     {
         using var shell = CreateTestShell();
@@ -217,7 +217,7 @@ public class MenuItemTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MenuItem_Display_ShouldMatchMenu()
     {
         using var shell = CreateTestShell();

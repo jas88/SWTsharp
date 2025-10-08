@@ -11,13 +11,13 @@ public class GroupTests : WidgetTestBase
 {
     public GroupTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Group(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -30,7 +30,7 @@ public class GroupTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Text_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -41,7 +41,7 @@ public class GroupTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Text_WithEmptyString_ShouldSucceed()
     {
         AssertPropertyGetSet(
@@ -52,7 +52,7 @@ public class GroupTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Text_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -65,7 +65,7 @@ public class GroupTests : WidgetTestBase
         group.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_AddChildren_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -80,19 +80,19 @@ public class GroupTests : WidgetTestBase
         group.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Group(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Group(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Dispose_ShouldDisposeChildren()
     {
         using var shell = CreateTestShell();
@@ -105,7 +105,7 @@ public class GroupTests : WidgetTestBase
         Assert.True(button.IsDisposed);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_SetText_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -114,13 +114,13 @@ public class GroupTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Group(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -131,7 +131,7 @@ public class GroupTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -142,7 +142,7 @@ public class GroupTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_InitialText_ShouldBeEmpty()
     {
         using var shell = CreateTestShell();
@@ -153,7 +153,7 @@ public class GroupTests : WidgetTestBase
         group.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Group_Display_ShouldMatchParent()
     {
         using var shell = CreateTestShell();

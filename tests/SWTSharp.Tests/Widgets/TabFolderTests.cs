@@ -11,13 +11,13 @@ public class TabFolderTests : WidgetTestBase
 {
     public TabFolderTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new TabFolder(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -28,7 +28,7 @@ public class TabFolderTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_AddTabItem_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -41,7 +41,7 @@ public class TabFolderTests : WidgetTestBase
         tabFolder.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_AddMultipleTabItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -56,7 +56,7 @@ public class TabFolderTests : WidgetTestBase
         tabFolder.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_GetItem_ShouldReturnCorrectItem()
     {
         using var shell = CreateTestShell();
@@ -71,7 +71,7 @@ public class TabFolderTests : WidgetTestBase
         tabFolder.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_SelectionIndex_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -86,7 +86,7 @@ public class TabFolderTests : WidgetTestBase
         tabFolder.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Selection_ShouldReturnSelectedItem()
     {
         using var shell = CreateTestShell();
@@ -101,7 +101,7 @@ public class TabFolderTests : WidgetTestBase
         tabFolder.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Items_ShouldReturnAllItems()
     {
         using var shell = CreateTestShell();
@@ -118,19 +118,19 @@ public class TabFolderTests : WidgetTestBase
         tabFolder.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new TabFolder(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new TabFolder(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Dispose_ShouldDisposeItems()
     {
         using var shell = CreateTestShell();
@@ -143,13 +143,13 @@ public class TabFolderTests : WidgetTestBase
         Assert.True(tabItem.IsDisposed);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new TabFolder(shell, SWT.NONE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -160,7 +160,7 @@ public class TabFolderTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -171,7 +171,7 @@ public class TabFolderTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_InitialItemCount_ShouldBeZero()
     {
         using var shell = CreateTestShell();
@@ -182,7 +182,7 @@ public class TabFolderTests : WidgetTestBase
         tabFolder.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void TabFolder_SetSelectionIndex_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(

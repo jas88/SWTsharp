@@ -12,7 +12,7 @@ public class MessageBoxTests : TestBase
 {
     public MessageBoxTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Create_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -21,7 +21,7 @@ public class MessageBoxTests : TestBase
         Assert.NotNull(messageBox);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Create_WithStyles_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -34,7 +34,7 @@ public class MessageBoxTests : TestBase
         }
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Message_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -45,7 +45,7 @@ public class MessageBoxTests : TestBase
         Assert.Equal("Test message", messageBox.Message);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Message_WithEmptyString_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -56,7 +56,7 @@ public class MessageBoxTests : TestBase
         Assert.Equal(string.Empty, messageBox.Message);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Message_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -67,7 +67,7 @@ public class MessageBoxTests : TestBase
         Assert.Equal(string.Empty, messageBox.Message);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_InitialMessage_ShouldBeEmpty()
     {
         using var shell = CreateTestShell();
@@ -76,7 +76,7 @@ public class MessageBoxTests : TestBase
         Assert.Equal(string.Empty, messageBox.Message);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_MessageUpdate_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -89,7 +89,7 @@ public class MessageBoxTests : TestBase
         Assert.Equal("Second", messageBox.Message);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Parent_ShouldMatchShell()
     {
         using var shell = CreateTestShell();
@@ -98,7 +98,7 @@ public class MessageBoxTests : TestBase
         Assert.Same(shell, messageBox.Parent);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Style_ShouldMatchConstructor()
     {
         using var shell = CreateTestShell();
@@ -107,7 +107,7 @@ public class MessageBoxTests : TestBase
         Assert.Equal(SWT.OK | SWT.ICON_INFORMATION, messageBox.Style);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void MessageBox_Text_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();

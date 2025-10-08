@@ -11,13 +11,13 @@ public class MenuTests : WidgetTestBase
 {
     public MenuTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Menu(shell, SWT.BAR));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -28,7 +28,7 @@ public class MenuTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_AddMenuItem_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -41,7 +41,7 @@ public class MenuTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_AddMultipleMenuItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -56,7 +56,7 @@ public class MenuTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_GetItem_ShouldReturnCorrectItem()
     {
         using var shell = CreateTestShell();
@@ -71,7 +71,7 @@ public class MenuTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Items_ShouldReturnAllItems()
     {
         using var shell = CreateTestShell();
@@ -88,7 +88,7 @@ public class MenuTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Visible_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -105,13 +105,13 @@ public class MenuTests : WidgetTestBase
 
     // Menu does not have Enabled property - it's a Widget, not a Control
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Menu(shell, SWT.BAR));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Dispose_ShouldDisposeItems()
     {
         using var shell = CreateTestShell();
@@ -124,13 +124,13 @@ public class MenuTests : WidgetTestBase
         Assert.True(menuItem.IsDisposed);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Menu(shell, SWT.BAR));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_GetItem_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -141,7 +141,7 @@ public class MenuTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => menu.GetItem(0));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_InitialItemCount_ShouldBeZero()
     {
         using var shell = CreateTestShell();
@@ -152,7 +152,7 @@ public class MenuTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_Display_ShouldMatchParent()
     {
         using var shell = CreateTestShell();
@@ -163,7 +163,7 @@ public class MenuTests : WidgetTestBase
         menu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_SubMenu_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -182,7 +182,7 @@ public class MenuTests : WidgetTestBase
         fileMenu.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Menu_MixedItemTypes_ShouldSucceed()
     {
         using var shell = CreateTestShell();

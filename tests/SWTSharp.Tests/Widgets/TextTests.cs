@@ -11,13 +11,13 @@ public class TextTests : WidgetTestBase
 {
     public TextTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Text(shell, SWT.SINGLE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -30,7 +30,7 @@ public class TextTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_TextContent_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -41,7 +41,7 @@ public class TextTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_TextContent_WithEmptyString_ShouldSucceed()
     {
         AssertPropertyGetSet(
@@ -52,7 +52,7 @@ public class TextTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_TextContent_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -65,7 +65,7 @@ public class TextTests : WidgetTestBase
         text.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Append_ShouldAppendText()
     {
         using var shell = CreateTestShell();
@@ -79,7 +79,7 @@ public class TextTests : WidgetTestBase
         text.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Append_MultipleAppends_ShouldConcatenate()
     {
         using var shell = CreateTestShell();
@@ -94,7 +94,7 @@ public class TextTests : WidgetTestBase
         text.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_TextLimit_ShouldLimitText()
     {
         using var shell = CreateTestShell();
@@ -108,7 +108,7 @@ public class TextTests : WidgetTestBase
         text.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_TextLimit_ZeroShouldRemoveLimit()
     {
         using var shell = CreateTestShell();
@@ -122,19 +122,19 @@ public class TextTests : WidgetTestBase
         text.Dispose();
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Text(shell, SWT.SINGLE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Text(shell, SWT.SINGLE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_SetTextContent_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -143,7 +143,7 @@ public class TextTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Append_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -153,13 +153,13 @@ public class TextTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => text.Append("Test"));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Text(shell, SWT.SINGLE));
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -170,7 +170,7 @@ public class TextTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void Text_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(

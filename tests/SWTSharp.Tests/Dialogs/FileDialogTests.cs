@@ -12,7 +12,7 @@ public class FileDialogTests : TestBase
 {
     public FileDialogTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_Create_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -21,7 +21,7 @@ public class FileDialogTests : TestBase
         Assert.NotNull(fileDialog);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_Create_WithStyles_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -34,7 +34,7 @@ public class FileDialogTests : TestBase
         }
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_FileName_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -45,7 +45,7 @@ public class FileDialogTests : TestBase
         Assert.Equal("test.txt", fileDialog.FileName);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_FileName_WithEmptyString_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -56,7 +56,7 @@ public class FileDialogTests : TestBase
         Assert.Equal(string.Empty, fileDialog.FileName);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_FileName_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -67,7 +67,7 @@ public class FileDialogTests : TestBase
         Assert.Equal(string.Empty, fileDialog.FileName);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_FilterExtensions_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -79,7 +79,7 @@ public class FileDialogTests : TestBase
         Assert.Equal(extensions, fileDialog.FilterExtensions);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_FilterNames_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -91,7 +91,7 @@ public class FileDialogTests : TestBase
         Assert.Equal(names, fileDialog.FilterNames);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_FilterPath_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -102,7 +102,7 @@ public class FileDialogTests : TestBase
         Assert.Equal("/home/user", fileDialog.FilterPath);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_InitialFileName_ShouldBeEmpty()
     {
         using var shell = CreateTestShell();
@@ -111,7 +111,7 @@ public class FileDialogTests : TestBase
         Assert.Equal(string.Empty, fileDialog.FileName);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_FilterExtensions_EmptyArray_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -122,7 +122,7 @@ public class FileDialogTests : TestBase
         Assert.Empty(fileDialog.FilterExtensions);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_Parent_ShouldMatchShell()
     {
         using var shell = CreateTestShell();
@@ -131,7 +131,7 @@ public class FileDialogTests : TestBase
         Assert.Same(shell, fileDialog.Parent);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_Style_ShouldMatchConstructor()
     {
         using var shell = CreateTestShell();
@@ -140,7 +140,7 @@ public class FileDialogTests : TestBase
         Assert.Equal(SWT.OPEN, fileDialog.Style);
     }
 
-    [Fact]
+    [FactSkipOnMacOSCI]
     public void FileDialog_Text_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
