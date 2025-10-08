@@ -46,4 +46,14 @@
     <ProjectReference Include="..\..\src\SWTSharp\SWTSharp.csproj" />
   </ItemGroup>
 
+  <!-- Copy custom test adapter DLL to output directory for VSTest auto-discovery -->
+  <!-- VSTest looks for adapters in the test assembly's output directory -->
+  <Target Name="CopyTestAdapter" AfterTargets="Build">
+    <ItemGroup>
+      <AdapterFiles Include="..\SWTSharp.TestAdapter\bin\$(Configuration)\netstandard2.0\SWTSharp.TestAdapter.dll" />
+      <AdapterFiles Include="..\SWTSharp.TestAdapter\bin\$(Configuration)\netstandard2.0\SWTSharp.TestAdapter.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(AdapterFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>
