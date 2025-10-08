@@ -10,8 +10,7 @@ internal partial class MacOSPlatform
     // Label operations
     public IntPtr CreateLabel(IntPtr parent, int style, int alignment, bool wrap)
     {
-        // Initialize selectors and cached class pointers
-        InitializeTextSelectors();
+        var objc = ObjCRuntime.Instance;
 
         // Use NSTextField with non-editable and non-selectable properties for labels
         // For separators, use NSBox with separator style
@@ -19,9 +18,8 @@ internal partial class MacOSPlatform
         if ((style & SWT.SEPARATOR) != 0)
         {
             // Create NSBox for separator
-            IntPtr nsBoxClass = objc_getClass("NSBox");
-            IntPtr separatorAlloc = objc_msgSend(nsBoxClass, _selAlloc);
-            IntPtr separator = objc_msgSend(separatorAlloc, _selInit);
+            IntPtr separatorAlloc = objc_msgSend(objc.NSBox, objc.SelAlloc);
+            IntPtr separator = objc_msgSend(separatorAlloc, objc.SelInit);
 
             // Set box type to separator (NSBoxSeparator = 2)
             IntPtr selSetBoxType = sel_registerName("setBoxType:");
@@ -30,9 +28,9 @@ internal partial class MacOSPlatform
             return separator;
         }
 
-        // Create NSTextField for text label (using cached class pointer)
-        IntPtr labelAlloc = objc_msgSend(_nsTextFieldClass, _selAlloc);
-        IntPtr label = objc_msgSend(labelAlloc, _selInit);
+        // Create NSTextField for text label (using singleton class pointer)
+        IntPtr labelAlloc = objc_msgSend(objc.NSTextField, objc.SelAlloc);
+        IntPtr label = objc_msgSend(labelAlloc, objc.SelInit);
 
         // Make it non-editable and non-selectable (label behavior)
         IntPtr selSetEditable = sel_registerName("setEditable:");

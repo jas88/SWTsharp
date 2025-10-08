@@ -124,6 +124,8 @@ internal partial class MacOSPlatform : IPlatform
 
     public MacOSPlatform()
     {
+        // Ensure ObjC runtime is initialized on UI thread
+        ObjCRuntime.EnsureInitialized();
         Initialize();
     }
 
@@ -735,6 +737,7 @@ internal partial class MacOSPlatform : IPlatform
 
     public IntPtr CreateText(IntPtr parent, int style)
     {
+        var objc = ObjCRuntime.Instance;
         InitializeTextSelectors();
 
         IntPtr textControl;
@@ -742,18 +745,18 @@ internal partial class MacOSPlatform : IPlatform
         if ((style & SWT.PASSWORD) != 0)
         {
             // Create NSSecureTextField for password fields
-            textControl = objc_msgSend(_nsSecureTextFieldClass, _selAlloc);
-            textControl = objc_msgSend(textControl, _selInit);
+            textControl = objc_msgSend(objc.NSSecureTextField, objc.SelAlloc);
+            textControl = objc_msgSend(textControl, objc.SelInit);
         }
         else if ((style & SWT.MULTI) != 0)
         {
             // Create NSScrollView with NSTextView for multi-line text
-            IntPtr scrollView = objc_msgSend(_nsScrollViewClass, _selAlloc);
-            scrollView = objc_msgSend(scrollView, _selInit);
+            IntPtr scrollView = objc_msgSend(objc.NSScrollView, objc.SelAlloc);
+            scrollView = objc_msgSend(scrollView, objc.SelInit);
 
             // Create NSTextView
-            IntPtr textView = objc_msgSend(_nsTextViewClass, _selAlloc);
-            textView = objc_msgSend(textView, _selInit);
+            IntPtr textView = objc_msgSend(objc.NSTextView, objc.SelAlloc);
+            textView = objc_msgSend(textView, objc.SelInit);
 
             // Set up scroll view
             IntPtr selSetDocumentView = sel_registerName("setDocumentView:");
@@ -773,8 +776,8 @@ internal partial class MacOSPlatform : IPlatform
         else
         {
             // Create NSTextField for single-line text
-            textControl = objc_msgSend(_nsTextFieldClass, _selAlloc);
-            textControl = objc_msgSend(textControl, _selInit);
+            textControl = objc_msgSend(objc.NSTextField, objc.SelAlloc);
+            textControl = objc_msgSend(textControl, objc.SelInit);
         }
 
         // Set default frame
