@@ -884,16 +884,27 @@ internal partial class MacOSPlatform : IPlatform
         InitializeTextSelectors();
         IntPtr nsText = CreateNSString(text ?? string.Empty);
 
-        // Check if it's a scroll view (multi-line)
-        IntPtr documentView = objc_msgSend(handle, _selDocumentView);
-        if (documentView != IntPtr.Zero)
+        // Check if it's a scroll view (multi-line) by checking if it responds to documentView
+        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+        bool respondsToDocumentView = objc_msgSend_bool(handle, selRespondsToSelector, _selDocumentView);
+
+        if (respondsToDocumentView)
         {
-            // It's a scroll view, set text on the text view
-            objc_msgSend(documentView, _selSetString, nsText);
+            // It's a scroll view, get documentView and set text on the text view
+            IntPtr documentView = objc_msgSend(handle, _selDocumentView);
+            if (documentView != IntPtr.Zero)
+            {
+                objc_msgSend(documentView, _selSetString, nsText);
+            }
+            else
+            {
+                // Scroll view exists but no document view yet, use setStringValue as fallback
+                objc_msgSend(handle, _selSetStringValue, nsText);
+            }
         }
         else
         {
-            // Single-line or password field
+            // Single-line text field or password field
             objc_msgSend(handle, _selSetStringValue, nsText);
         }
     }
@@ -902,18 +913,28 @@ internal partial class MacOSPlatform : IPlatform
     {
         InitializeTextSelectors();
 
-        // Check if it's a scroll view (multi-line)
-        IntPtr documentView = objc_msgSend(handle, _selDocumentView);
+        // Check if it's a scroll view (multi-line) by checking if it responds to documentView
+        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+        bool respondsToDocumentView = objc_msgSend_bool(handle, selRespondsToSelector, _selDocumentView);
         IntPtr nsString;
 
-        if (documentView != IntPtr.Zero)
+        if (respondsToDocumentView)
         {
-            // It's a scroll view, get text from the text view
-            nsString = objc_msgSend(documentView, _selString);
+            // It's a scroll view, get text from the document view
+            IntPtr documentView = objc_msgSend(handle, _selDocumentView);
+            if (documentView != IntPtr.Zero)
+            {
+                nsString = objc_msgSend(documentView, _selString);
+            }
+            else
+            {
+                // Scroll view exists but no document view yet, use stringValue as fallback
+                nsString = objc_msgSend(handle, _selStringValue);
+            }
         }
         else
         {
-            // Single-line or password field
+            // Single-line text field or password field
             nsString = objc_msgSend(handle, _selStringValue);
         }
 
@@ -924,11 +945,18 @@ internal partial class MacOSPlatform : IPlatform
     {
         InitializeTextSelectors();
 
-        // Get the text view
-        IntPtr textView = objc_msgSend(handle, _selDocumentView);
-        if (textView == IntPtr.Zero)
+        // Get the text view - check if it responds to documentView first
+        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+        bool respondsToDocumentView = objc_msgSend_bool(handle, selRespondsToSelector, _selDocumentView);
+
+        IntPtr textView = handle;
+        if (respondsToDocumentView)
         {
-            textView = handle; // Single-line field
+            IntPtr documentView = objc_msgSend(handle, _selDocumentView);
+            if (documentView != IntPtr.Zero)
+            {
+                textView = documentView;
+            }
         }
 
         var range = new NSRange(start, end - start);
@@ -943,11 +971,18 @@ internal partial class MacOSPlatform : IPlatform
     {
         InitializeTextSelectors();
 
-        // Get the text view
-        IntPtr textView = objc_msgSend(handle, _selDocumentView);
-        if (textView == IntPtr.Zero)
+        // Get the text view - check if it responds to documentView first
+        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+        bool respondsToDocumentView = objc_msgSend_bool(handle, selRespondsToSelector, _selDocumentView);
+
+        IntPtr textView = handle;
+        if (respondsToDocumentView)
         {
-            textView = handle; // Single-line field
+            IntPtr documentView = objc_msgSend(handle, _selDocumentView);
+            if (documentView != IntPtr.Zero)
+            {
+                textView = documentView;
+            }
         }
 
         NSRange range;
@@ -973,11 +1008,18 @@ internal partial class MacOSPlatform : IPlatform
     {
         InitializeTextSelectors();
 
-        // Get the text view
-        IntPtr textView = objc_msgSend(handle, _selDocumentView);
-        if (textView == IntPtr.Zero)
+        // Get the text view - check if it responds to documentView first
+        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+        bool respondsToDocumentView = objc_msgSend_bool(handle, selRespondsToSelector, _selDocumentView);
+
+        IntPtr textView = handle;
+        if (respondsToDocumentView)
         {
-            textView = handle; // Single-line field
+            IntPtr documentView = objc_msgSend(handle, _selDocumentView);
+            if (documentView != IntPtr.Zero)
+            {
+                textView = documentView;
+            }
         }
 
         objc_msgSend_void(textView, _selSetEditable_text, !readOnly);
