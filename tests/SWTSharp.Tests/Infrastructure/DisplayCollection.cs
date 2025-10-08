@@ -24,36 +24,13 @@ public class DisplayFixture : IDisposable
 
     public DisplayFixture()
     {
-        // CRITICAL: macOS requires ALL UI operations on the process's FIRST thread
-        // Use MainThreadDispatcher to execute on the correct thread
-        Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}, Main thread = {MainThreadDispatcher.MainThreadId}");
+        // xUnit.StaFact's [UIFact] attribute handles macOS main thread requirements automatically
+        // Tests using [UIFact] will run on the UI thread
+        Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}");
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            // Initialize Display on the main thread via dispatcher
-            MainThreadDispatcher.Invoke(() =>
-            {
-                Console.WriteLine($"DisplayFixture.Initialize: Running on Thread {Thread.CurrentThread.ManagedThreadId}");
-                Display = Display.Default;
-                _uiThread = Thread.CurrentThread;
-
-                // CRITICAL: Override Display.AsyncExec to use MainThreadDispatcher
-                // This makes Display.SyncExec() work correctly with our test dispatcher
-                Console.WriteLine("DisplayFixture: Setting custom async executor to use MainThreadDispatcher");
-                Display.SetAsyncExecutor(action =>
-                {
-                    Console.WriteLine($"CustomAsyncExecutor: Marshaling action to Thread {MainThreadDispatcher.MainThreadId} from Thread {Thread.CurrentThread.ManagedThreadId}");
-                    MainThreadDispatcher.Invoke(action);
-                    Console.WriteLine("CustomAsyncExecutor: Action completed");
-                });
-            });
-        }
-        else
-        {
-            // On other platforms, initialize directly
-            Display = Display.Default;
-            _uiThread = Thread.CurrentThread;
-        }
+        // Initialize Display directly - tests with [UIFact] will already be on the correct thread
+        Display = Display.Default;
+        _uiThread = Thread.CurrentThread;
     }
 
     public void Dispose()
