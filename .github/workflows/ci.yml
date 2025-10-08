@@ -75,8 +75,10 @@ jobs:
       - name: Run tests with coverage
         run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
         env:
-          # Enable custom VSTest adapter for macOS to provide Thread 1 support
-          SWTSHARP_USE_CUSTOM_ADAPTER: "1"
+          # Custom VSTest adapter is work-in-progress
+          # For now, UI tests are skipped on macOS CI via FactSkipOnMacOSCI
+          # TODO: Enable custom adapter when TestHost integration is complete
+          # SWTSHARP_USE_CUSTOM_ADAPTER: "1"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
