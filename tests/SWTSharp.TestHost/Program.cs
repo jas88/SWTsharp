@@ -43,9 +43,11 @@ public class Program
     {
         Console.WriteLine("[INFO] SWTSharp TestHost: Using macOS Thread 1 dispatcher");
 
-        // Initialize MainThreadDispatcher on Thread 1
-        // Note: We'd need to copy MainThreadDispatcher from test project
-        // For now, document that this requires proper setup
+        // Initialize MainThreadDispatcher on Thread 1 (the main process thread)
+        MainThreadDispatcher.Initialize();
+
+        // Hook into SWTSharp's MacOSPlatform to route ExecuteOnMainThread through our dispatcher
+        SWTSharp.Platform.MacOSPlatform.CustomMainThreadExecutor = MainThreadDispatcher.Invoke;
 
         var exitCode = 0;
         var completionSignal = new ManualResetEventSlim(false);
@@ -67,6 +69,7 @@ public class Program
             {
                 completionSignal.Set();
                 // Signal dispatcher to stop
+                MainThreadDispatcher.Stop();
             }
         })
         {
@@ -76,8 +79,11 @@ public class Program
 
         testThread.Start();
 
-        // TODO: Start MainThreadDispatcher.RunLoop() here on Thread 1
-        // For now, just wait for completion
+        // Run the dispatch loop on Thread 1
+        // This will block until tests complete and call Stop()
+        MainThreadDispatcher.RunLoop();
+
+        // Wait for test thread to finish cleanup
         completionSignal.Wait();
 
         return exitCode;

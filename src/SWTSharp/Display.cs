@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("SWTSharp.Tests")]
+[assembly: InternalsVisibleTo("SWTSharp.TestHost")]
 
 namespace SWTSharp;
 

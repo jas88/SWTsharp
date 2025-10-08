@@ -7,6 +7,13 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class MacOSPlatform : IPlatform
 {
+    /// <summary>
+    /// Optional custom main thread executor for testing scenarios.
+    /// When set, ExecuteOnMainThread will use this instead of GCD.
+    /// This allows TestHost to route execution through MainThreadDispatcher.
+    /// </summary>
+    internal static Action<Action>? CustomMainThreadExecutor { get; set; }
+
     private const string ObjCLibrary = "/usr/lib/libobjc.A.dylib";
     private const string AppKitFramework = "/System/Library/Frameworks/AppKit.framework/AppKit";
     private const string FoundationFramework = "/System/Library/Frameworks/Foundation.framework/Foundation";
@@ -479,6 +486,13 @@ internal partial class MacOSPlatform : IPlatform
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action));
+
+        // If a custom executor is set (e.g., by TestHost), use it instead of GCD
+        if (CustomMainThreadExecutor != null)
+        {
+            CustomMainThreadExecutor(action);
+            return;
+        }
 
         var mainQueue = dispatch_get_main_queue();
         Exception? caughtException = null;
