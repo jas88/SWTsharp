@@ -10,6 +10,9 @@ internal partial class MacOSPlatform
     // Label operations
     public IntPtr CreateLabel(IntPtr parent, int style, int alignment, bool wrap)
     {
+        // Initialize selectors and cached class pointers
+        InitializeTextSelectors();
+
         // Use NSTextField with non-editable and non-selectable properties for labels
         // For separators, use NSBox with separator style
 
@@ -27,9 +30,8 @@ internal partial class MacOSPlatform
             return separator;
         }
 
-        // Create NSTextField for text label
-        IntPtr nsTextFieldClass = objc_getClass("NSTextField");
-        IntPtr labelAlloc = objc_msgSend(nsTextFieldClass, _selAlloc);
+        // Create NSTextField for text label (using cached class pointer)
+        IntPtr labelAlloc = objc_msgSend(_nsTextFieldClass, _selAlloc);
         IntPtr label = objc_msgSend(labelAlloc, _selInit);
 
         // Make it non-editable and non-selectable (label behavior)
