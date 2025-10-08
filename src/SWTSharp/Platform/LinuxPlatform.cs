@@ -249,9 +249,10 @@ internal partial class LinuxPlatform : IPlatform
 
     public void WakeEventLoop()
     {
-        // Wake up the main loop by quitting it
-        // This will cause gtk_main_iteration_do(true) to return
-        gtk_main_quit();
+        // On Linux/GTK, we don't use gtk_main() so gtk_main_quit() is invalid
+        // The gtk_main_iteration_do(true) in WaitForEvent() will naturally wake up
+        // when events are posted via AsyncExec -> Wake() -> ProcessEvent() cycle
+        // No explicit wake mechanism needed - GTK handles this internally
     }
 
     public void ExecuteOnMainThread(Action action)
@@ -518,10 +519,19 @@ internal partial class LinuxPlatform : IPlatform
 
     void IPlatform.SetShellMenuBar(IntPtr shellHandle, IntPtr menuHandle)
     {
-        // Create a vertical box to hold menu bar and content
-        // This is simplified - in production you'd need proper container management
-        gtk_container_add(shellHandle, menuHandle);
-        gtk_widget_show(menuHandle);
+        // Add menu bar to the window's container, not directly to the window
+        // GtkWindow can only contain one child, so we use the container
+        if (_widgetContainers.TryGetValue(shellHandle, out IntPtr container))
+        {
+            gtk_container_add(container, menuHandle);
+            gtk_widget_show(menuHandle);
+        }
+        else
+        {
+            // Fallback: try adding directly (will fail if window already has content)
+            gtk_container_add(shellHandle, menuHandle);
+            gtk_widget_show(menuHandle);
+        }
     }
 
     void IPlatform.SetMenuVisible(IntPtr handle, bool visible)
