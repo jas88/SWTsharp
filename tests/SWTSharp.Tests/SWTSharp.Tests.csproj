@@ -11,10 +11,20 @@
 
   <ItemGroup>
     <!-- Restore MainThreadDispatcher for macOS support -->
-    <!-- Program.cs and ModuleInitializer remain excluded - not needed for library test project -->
+    <!-- Program.cs, ModuleInitializer, and TestRunner excluded by default for library mode -->
+    <!-- TestRunner can be enabled with RunTestRunner=true property -->
     <Compile Remove="Program.cs" />
     <Compile Remove="ModuleInitializer.cs" />
+    <Compile Remove="TestRunner.cs" Condition="'$(RunTestRunner)' != 'true'" />
   </ItemGroup>
+
+  <!-- Optional: Enable TestRunner mode for macOS local testing.
+       Usage: dotnet build -p:RunTestRunner=true
+       Default: Library mode for VSTest (dotnet test) -->
+  <PropertyGroup Condition="'$(RunTestRunner)' == 'true'">
+    <OutputType>Exe</OutputType>
+    <StartupObject>SWTSharp.Tests.TestRunner</StartupObject>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
