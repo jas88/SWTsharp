@@ -1,4 +1,7 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+[assembly: InternalsVisibleTo("SWTSharp.Tests")]
 
 namespace SWTSharp;
 
@@ -20,6 +23,7 @@ public class Display : IDisposable
     private readonly List<Shell> _shells = new();
     private bool _running;
     private readonly Queue<Action> _asyncActions = new Queue<Action>();
+    private Action<Action>? _customAsyncExecutor = null;
 
     /// <summary>
     /// Gets the default display for the application.
@@ -213,13 +217,52 @@ public class Display : IDisposable
         }
         else
         {
-            // Queue for execution on UI thread
-            lock (_asyncActions)
+            // If a custom async executor is registered (for testing), use it
+            if (_customAsyncExecutor != null)
             {
-                _asyncActions.Enqueue(action);
+                _customAsyncExecutor(action);
             }
-            Wake();
+            else
+            {
+                // Queue for execution on UI thread
+                lock (_asyncActions)
+                {
+                    _asyncActions.Enqueue(action);
+                }
+                Wake();
+            }
         }
+    }
+
+    /// <summary>
+    /// Sets a custom async executor for testing purposes.
+    /// This allows tests to override the default async execution mechanism.
+    /// </summary>
+    internal void SetAsyncExecutor(Action<Action> executor)
+    {
+        _customAsyncExecutor = executor;
+    }
+
+    /// <summary>
+    /// Executes an action on the platform's main thread.
+    /// On macOS, this uses Grand Central Dispatch to execute on the actual process main thread,
+    /// which is required for NSWindow and other AppKit operations.
+    /// On other platforms, this may execute directly or on the UI thread.
+    /// Note: This does NOT check if you're on the Display's UI thread, because the whole point
+    /// is to execute on a different thread (the process main thread on macOS).
+    /// </summary>
+    /// <param name="action">The action to execute on the main thread</param>
+    /// <exception cref="ArgumentNullException">If action is null</exception>
+    public void ExecuteOnMainThread(Action action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action));
+
+        // Don't call CheckDisplay() - we might be calling from a different thread
+        if (_disposed)
+            throw new SWTDisposedException("Display has been disposed");
+
+        SWTSharp.Platform.PlatformFactory.Instance.ExecuteOnMainThread(action);
     }
 
     /// <summary>

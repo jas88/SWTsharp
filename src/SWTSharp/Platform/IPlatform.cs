@@ -55,6 +55,12 @@ public partial interface IPlatform
     /// </summary>
     void WakeEventLoop();
 
+    /// <summary>
+    /// Executes an action on the platform's main thread (macOS only - uses GCD main queue).
+    /// On other platforms, this may execute on the UI thread.
+    /// </summary>
+    void ExecuteOnMainThread(Action action);
+
     // Container operations
 
     /// <summary>

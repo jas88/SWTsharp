@@ -39,6 +39,7 @@ public abstract class TestBase : IDisposable
 
     /// <summary>
     /// Creates a test shell for widget testing.
+    /// Uses Display.SyncExec to ensure creation happens on the UI thread.
     /// </summary>
     protected Shell CreateTestShell()
     {
@@ -48,6 +49,28 @@ public abstract class TestBase : IDisposable
             shell = new Shell(Display);
         });
         return shell!;
+    }
+
+    /// <summary>
+    /// Executes an action on the UI thread.
+    /// Use this to wrap all widget operations in tests.
+    /// </summary>
+    protected void RunOnUIThread(Action action)
+    {
+        Display.SyncExec(action);
+    }
+
+    /// <summary>
+    /// Executes a function on the UI thread and returns the result.
+    /// </summary>
+    protected T RunOnUIThread<T>(Func<T> func)
+    {
+        T? result = default;
+        Display.SyncExec(() =>
+        {
+            result = func();
+        });
+        return result!;
     }
 
     /// <summary>
@@ -79,16 +102,14 @@ public abstract class TestBase : IDisposable
             if (disposing)
             {
                 // Cleanup shells created by this test
+                // We're already on the main thread, no need for ExecuteOnMainThread
                 try
                 {
-                    Display?.SyncExec(() =>
+                    var shells = Display.GetShells();
+                    foreach (var shell in shells)
                     {
-                        var shells = Display.GetShells();
-                        foreach (var shell in shells)
-                        {
-                            shell?.Dispose();
-                        }
-                    });
+                        shell?.Dispose();
+                    }
                 }
                 catch
                 {

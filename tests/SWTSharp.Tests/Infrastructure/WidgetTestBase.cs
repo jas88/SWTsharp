@@ -15,15 +15,18 @@ public abstract class WidgetTestBase : TestBase
     /// </summary>
     protected void AssertWidgetCreation<T>(Func<Shell, T> factory) where T : Widget
     {
-        using var shell = CreateTestShell();
-        var widget = factory(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var widget = factory(shell);
 
-        Assert.NotNull(widget);
-        AssertNotDisposed(widget);
-        Assert.Same(shell.Display, widget.Display);
+            Assert.NotNull(widget);
+            AssertNotDisposed(widget);
+            Assert.Same(shell.Display, widget.Display);
 
-        widget.Dispose();
-        AssertDisposed(widget);
+            widget.Dispose();
+            AssertDisposed(widget);
+        });
     }
 
     /// <summary>
@@ -31,13 +34,16 @@ public abstract class WidgetTestBase : TestBase
     /// </summary>
     protected void AssertControlParent<T>(Func<Shell, T> factory) where T : Control
     {
-        using var shell = CreateTestShell();
-        var control = factory(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = factory(shell);
 
-        Assert.NotNull(control);
-        Assert.Same(shell, control.Parent);
+            Assert.NotNull(control);
+            Assert.Same(shell, control.Parent);
 
-        control.Dispose();
+            control.Dispose();
+        });
     }
 
     /// <summary>
@@ -45,16 +51,19 @@ public abstract class WidgetTestBase : TestBase
     /// </summary>
     protected void AssertWidgetDisposal<T>(Func<Shell, T> factory) where T : Widget
     {
-        using var shell = CreateTestShell();
-        var widget = factory(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var widget = factory(shell);
 
-        AssertNotDisposed(widget);
-        Assert.False(widget.IsDisposed);
+            AssertNotDisposed(widget);
+            Assert.False(widget.IsDisposed);
 
-        widget.Dispose();
+            widget.Dispose();
 
-        AssertDisposed(widget);
-        Assert.True(widget.IsDisposed);
+            AssertDisposed(widget);
+            Assert.True(widget.IsDisposed);
+        });
     }
 
     /// <summary>
@@ -62,11 +71,14 @@ public abstract class WidgetTestBase : TestBase
     /// </summary>
     protected void AssertThrowsAfterDisposal<T>(Func<Shell, T> factory, Action<T> operation) where T : Widget
     {
-        using var shell = CreateTestShell();
-        var widget = factory(shell);
-        widget.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var widget = factory(shell);
+            widget.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => operation(widget));
+            Assert.Throws<SWTDisposedException>(() => operation(widget));
+        });
     }
 
     /// <summary>
@@ -78,15 +90,18 @@ public abstract class WidgetTestBase : TestBase
         Action<T, TProp> setter,
         TProp testValue) where T : Widget
     {
-        using var shell = CreateTestShell();
-        var widget = factory(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var widget = factory(shell);
 
-        setter(widget, testValue);
-        var actualValue = getter(widget);
+            setter(widget, testValue);
+            var actualValue = getter(widget);
 
-        Assert.Equal(testValue, actualValue);
+            Assert.Equal(testValue, actualValue);
 
-        widget.Dispose();
+            widget.Dispose();
+        });
     }
 
     /// <summary>
@@ -94,15 +109,18 @@ public abstract class WidgetTestBase : TestBase
     /// </summary>
     protected void AssertWidgetStyles<T>(Func<Shell, int, T> factory, params int[] styles) where T : Widget
     {
-        using var shell = CreateTestShell();
-
-        foreach (var style in styles)
+        RunOnUIThread(() =>
         {
-            var widget = factory(shell, style);
-            Assert.NotNull(widget);
-            AssertNotDisposed(widget);
-            widget.Dispose();
-        }
+            using var shell = CreateTestShell();
+
+            foreach (var style in styles)
+            {
+                var widget = factory(shell, style);
+                Assert.NotNull(widget);
+                AssertNotDisposed(widget);
+                widget.Dispose();
+            }
+        });
     }
 
     /// <summary>
@@ -110,14 +128,17 @@ public abstract class WidgetTestBase : TestBase
     /// </summary>
     protected void AssertWidgetData<T>(Func<Shell, T> factory) where T : Widget
     {
-        using var shell = CreateTestShell();
-        var widget = factory(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var widget = factory(shell);
 
-        var testData = new { Name = "Test", Value = 42 };
-        widget.Data = testData;
+            var testData = new { Name = "Test", Value = 42 };
+            widget.Data = testData;
 
-        Assert.Same(testData, widget.Data);
+            Assert.Same(testData, widget.Data);
 
-        widget.Dispose();
+            widget.Dispose();
+        });
     }
 }

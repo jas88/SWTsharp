@@ -10,6 +10,7 @@ internal partial class MacOSPlatform : IPlatform
     private const string ObjCLibrary = "/usr/lib/libobjc.A.dylib";
     private const string AppKitFramework = "/System/Library/Frameworks/AppKit.framework/AppKit";
     private const string FoundationFramework = "/System/Library/Frameworks/Foundation.framework/Foundation";
+    private const string LibSystem = "/usr/lib/libSystem.dylib";
 
     // Objective-C runtime functions
     [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
@@ -52,7 +53,24 @@ internal partial class MacOSPlatform : IPlatform
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect_bool(IntPtr receiver, IntPtr selector, CGRect rect, bool display);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_size(IntPtr receiver, IntPtr selector, CGSize size);
+
+    // Grand Central Dispatch (GCD) functions for main thread execution
+    // These are part of libSystem on macOS
+    [DllImport(LibSystem)]
+    private static extern IntPtr dispatch_get_main_queue();
+
+    [DllImport(LibSystem)]
+    private static extern void dispatch_sync_f(IntPtr queue, IntPtr context, IntPtr work);
+
+    [DllImport(LibSystem)]
+    private static extern void dispatch_async_f(IntPtr queue, IntPtr context, IntPtr work);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void DispatchWorkDelegate(IntPtr context);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct CGRect
@@ -92,7 +110,8 @@ internal partial class MacOSPlatform : IPlatform
     private IntPtr _selMakeKeyAndOrderFront;
     private IntPtr _selOrderOut;
     private IntPtr _selClose;
-    private IntPtr _selSetFrame;
+    private IntPtr _selSetFrame;         // NSView setFrame: (single parameter)
+    private IntPtr _selSetFrameDisplay;  // NSWindow setFrame:display: (two parameters)
     private IntPtr _selFrame;
     private IntPtr _selSharedApplication;
     private IntPtr _selRun;
@@ -125,6 +144,7 @@ internal partial class MacOSPlatform : IPlatform
     public MacOSPlatform()
     {
         // Ensure ObjC runtime is initialized on UI thread
+        // ObjCRuntime now calls NSApplicationLoad() before class lookups
         ObjCRuntime.EnsureInitialized();
         Initialize();
     }
@@ -139,7 +159,8 @@ internal partial class MacOSPlatform : IPlatform
         _selMakeKeyAndOrderFront = sel_registerName("makeKeyAndOrderFront:");
         _selOrderOut = sel_registerName("orderOut:");
         _selClose = sel_registerName("close");
-        _selSetFrame = sel_registerName("setFrame:display:");
+        _selSetFrame = sel_registerName("setFrame:");           // NSView method
+        _selSetFrameDisplay = sel_registerName("setFrame:display:");  // NSWindow method
         _selFrame = sel_registerName("frame");
         _selSharedApplication = sel_registerName("sharedApplication");
         _selRun = sel_registerName("run");
@@ -266,7 +287,22 @@ internal partial class MacOSPlatform : IPlatform
     {
         if (handle != IntPtr.Zero)
         {
-            objc_msgSend_void(handle, _selClose);
+            // Check if this is an NSWindow or an NSView
+            // NSWindow has the close method, NSView does not
+            IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+            bool respondsToClose = objc_msgSend_bool(handle, selRespondsToSelector, _selClose);
+
+            if (respondsToClose)
+            {
+                // It's an NSWindow, use close
+                objc_msgSend_void(handle, _selClose);
+            }
+            else
+            {
+                // It's an NSView, remove from superview
+                IntPtr selRemoveFromSuperview = sel_registerName("removeFromSuperview");
+                objc_msgSend_void(handle, selRemoveFromSuperview);
+            }
         }
     }
 
@@ -313,8 +349,8 @@ internal partial class MacOSPlatform : IPlatform
         frame.width = width;
         frame.height = height;
 
-        // Set new frame
-        objc_msgSend_rect(handle, _selSetFrame, frame);
+        // Set new frame (NSWindow uses setFrame:display:)
+        objc_msgSend_rect_bool(handle, _selSetFrameDisplay, frame, true);
     }
 
     public void SetWindowLocation(IntPtr handle, int x, int y)
@@ -326,8 +362,8 @@ internal partial class MacOSPlatform : IPlatform
         frame.x = x;
         frame.y = y;
 
-        // Set new frame
-        objc_msgSend_rect(handle, _selSetFrame, frame);
+        // Set new frame (NSWindow uses setFrame:display:)
+        objc_msgSend_rect_bool(handle, _selSetFrameDisplay, frame, true);
     }
 
     public bool ProcessEvent()
@@ -391,6 +427,67 @@ internal partial class MacOSPlatform : IPlatform
     {
         // Stop the event loop
         objc_msgSend(_nsApplication, _selStop, _nsApplication);
+    }
+
+    /// <summary>
+    /// Executes an action synchronously on the macOS main thread using GCD.
+    /// This is required for NSWindow and other AppKit operations that MUST run on the process's first thread.
+    /// </summary>
+    public void ExecuteOnMainThread(Action action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action));
+
+        var mainQueue = dispatch_get_main_queue();
+        Exception? caughtException = null;
+        var completed = new ManualResetEventSlim(false);
+
+        // Create a GCHandle to prevent the action from being garbage collected
+        var handle = GCHandle.Alloc(action);
+
+        try
+        {
+            // Create a wrapper that executes the action and signals completion
+            DispatchWorkDelegate work = (context) =>
+            {
+                try
+                {
+                    var actionToRun = (Action)GCHandle.FromIntPtr(context).Target!;
+                    actionToRun();
+                }
+                catch (Exception ex)
+                {
+                    caughtException = ex;
+                }
+                finally
+                {
+                    completed.Set();
+                }
+            };
+
+            // Pin the delegate to prevent it from being garbage collected
+            var workHandle = GCHandle.Alloc(work);
+            try
+            {
+                var workPtr = Marshal.GetFunctionPointerForDelegate(work);
+                dispatch_sync_f(mainQueue, GCHandle.ToIntPtr(handle), workPtr);
+            }
+            finally
+            {
+                workHandle.Free();
+            }
+
+            // Wait for completion
+            completed.Wait();
+
+            if (caughtException != null)
+                throw new InvalidOperationException("Exception occurred on main thread", caughtException);
+        }
+        finally
+        {
+            handle.Free();
+            completed.Dispose();
+        }
     }
 
     public IntPtr CreateComposite(IntPtr parent, int style)
@@ -689,11 +786,7 @@ internal partial class MacOSPlatform : IPlatform
 
     // Label operations - implemented in MacOSPlatform_Label.cs
 
-    // Text control operations - selectors
-    private IntPtr _nsTextFieldClass;
-    private IntPtr _nsTextViewClass;
-    private IntPtr _nsSecureTextFieldClass;
-    private IntPtr _nsScrollViewClass;
+    // Text control operations - selectors only (class pointers are in ObjCRuntime)
     private IntPtr _selStringValue;
     private IntPtr _selSetStringValue;
     private IntPtr _selDocumentView;
@@ -718,12 +811,8 @@ internal partial class MacOSPlatform : IPlatform
 
     private void InitializeTextSelectors()
     {
-        if (_nsTextFieldClass == IntPtr.Zero)
+        if (_selStringValue == IntPtr.Zero)
         {
-            _nsTextFieldClass = objc_getClass("NSTextField");
-            _nsTextViewClass = objc_getClass("NSTextView");
-            _nsSecureTextFieldClass = objc_getClass("NSSecureTextField");
-            _nsScrollViewClass = objc_getClass("NSScrollView");
             _selStringValue = sel_registerName("stringValue");
             _selSetStringValue = sel_registerName("setStringValue:");
             _selDocumentView = sel_registerName("documentView");

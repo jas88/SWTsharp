@@ -107,10 +107,10 @@ internal partial class LinuxPlatform
         // Initialize row tracking for this list
         _listBoxRows[scrolledWindow] = new List<IntPtr>();
 
-        // Add to parent if provided
+        // Add to parent if provided (use helper to handle GtkWindow containers)
         if (parentHandle != IntPtr.Zero)
         {
-            gtk_container_add(parentHandle, scrolledWindow);
+            AddChildToParent(parentHandle, scrolledWindow);
         }
 
         gtk_widget_show(scrolledWindow);

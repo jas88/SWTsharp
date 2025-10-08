@@ -25,12 +25,20 @@ internal partial class MacOSPlatform
             IntPtr selSetBoxType = sel_registerName("setBoxType:");
             objc_msgSend(separator, selSetBoxType, (IntPtr)2);
 
+            // Add to parent before returning
+            AddChildToParent(parent, separator);
             return separator;
         }
 
         // Create NSTextField for text label (using singleton class pointer)
         IntPtr labelAlloc = objc_msgSend(objc.NSTextField, objc.SelAlloc);
         IntPtr label = objc_msgSend(labelAlloc, objc.SelInit);
+
+        // Verify label was created
+        if (label == IntPtr.Zero)
+        {
+            throw new InvalidOperationException($"Failed to allocate/initialize NSTextField. NSTextField class: {objc.NSTextField:X}, alloc: {objc.SelAlloc:X}, init: {objc.SelInit:X}");
+        }
 
         // Make it non-editable and non-selectable (label behavior)
         IntPtr selSetEditable = sel_registerName("setEditable:");

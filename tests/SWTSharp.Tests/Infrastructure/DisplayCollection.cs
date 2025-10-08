@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace SWTSharp.Tests.Infrastructure;
@@ -16,63 +17,66 @@ public class DisplayCollection : ICollectionFixture<DisplayFixture>
 /// </summary>
 public class DisplayFixture : IDisposable
 {
-    private readonly Thread _uiThread;
+    private Thread _uiThread = null!;
     private bool _disposed;
 
     public Display Display { get; private set; } = null!;
 
     public DisplayFixture()
     {
-        // Create ONE UI thread for ALL tests
-        var displayReady = new ManualResetEventSlim(false);
-        _uiThread = new Thread(() =>
+        // CRITICAL: macOS requires ALL UI operations on the process's FIRST thread
+        // Use MainThreadDispatcher to execute on the correct thread
+        Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}, Main thread = {MainThreadDispatcher.MainThreadId}");
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            Display = Display.Default;
-            displayReady.Set();
-
-            // Run event loop until disposed
-            while (!_disposed)
+            // Initialize Display on the main thread via dispatcher
+            MainThreadDispatcher.Invoke(() =>
             {
-                try
-                {
-                    Display.ReadAndDispatch();
-                }
-                catch
-                {
-                    // Swallow exceptions in event loop
-                }
-                Thread.Sleep(10);
-            }
-        });
-        _uiThread.IsBackground = true;
-        _uiThread.Start();
+                Console.WriteLine($"DisplayFixture.Initialize: Running on Thread {Thread.CurrentThread.ManagedThreadId}");
+                Display = Display.Default;
+                _uiThread = Thread.CurrentThread;
 
-        displayReady.Wait();
+                // CRITICAL: Override Display.AsyncExec to use MainThreadDispatcher
+                // This makes Display.SyncExec() work correctly with our test dispatcher
+                Console.WriteLine("DisplayFixture: Setting custom async executor to use MainThreadDispatcher");
+                Display.SetAsyncExecutor(action =>
+                {
+                    Console.WriteLine($"CustomAsyncExecutor: Marshaling action to Thread {MainThreadDispatcher.MainThreadId} from Thread {Thread.CurrentThread.ManagedThreadId}");
+                    MainThreadDispatcher.Invoke(action);
+                    Console.WriteLine("CustomAsyncExecutor: Action completed");
+                });
+            });
+        }
+        else
+        {
+            // On other platforms, initialize directly
+            Display = Display.Default;
+            _uiThread = Thread.CurrentThread;
+        }
     }
 
     public void Dispose()
     {
         if (!_disposed)
         {
-            // Cleanup all shells
+            _disposed = true;
+
+            // Cleanup all shells directly on current thread
+            // Since DisplayFixture runs on xUnit's thread, and that's where we initialized Display,
+            // we're already on the correct thread for macOS
             try
             {
-                Display?.SyncExec(() =>
+                var shells = Display.GetShells();
+                foreach (var shell in shells)
                 {
-                    var shells = Display.GetShells();
-                    foreach (var shell in shells)
-                    {
-                        shell?.Dispose();
-                    }
-                });
+                    shell?.Dispose();
+                }
             }
             catch
             {
                 // Swallow exceptions during disposal
             }
-
-            _disposed = true;
-            _uiThread?.Join(1000);
         }
     }
 }

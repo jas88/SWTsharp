@@ -254,6 +254,13 @@ internal partial class LinuxPlatform : IPlatform
         gtk_main_quit();
     }
 
+    public void ExecuteOnMainThread(Action action)
+    {
+        // On Linux/GTK, there's no separate "main thread" requirement like macOS
+        // GTK is generally flexible with threading, so just execute directly
+        action();
+    }
+
     public IntPtr CreateComposite(IntPtr parent, int style)
     {
         // Create a GtkFixed container widget (allows absolute positioning)

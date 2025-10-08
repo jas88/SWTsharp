@@ -401,6 +401,13 @@ internal partial class Win32Platform : IPlatform
         PostQuitMessage(0);
     }
 
+    public void ExecuteOnMainThread(Action action)
+    {
+        // On Windows, there's no separate "main thread" requirement like macOS
+        // Just execute directly
+        action();
+    }
+
     public IntPtr CreateComposite(IntPtr parent, int style)
     {
         // Create a child window that acts as a container

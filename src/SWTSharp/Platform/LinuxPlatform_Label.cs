@@ -69,10 +69,10 @@ internal partial class LinuxPlatform
             throw new InvalidOperationException("Failed to create GTK label");
         }
 
-        // Add to parent if provided
+        // Add to parent if provided (use helper to handle GtkWindow containers)
         if (parent != IntPtr.Zero)
         {
-            gtk_container_add(parent, widget);
+            AddChildToParent(parent, widget);
         }
 
         gtk_widget_show(widget);

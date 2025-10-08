@@ -11,6 +11,11 @@ internal sealed class ObjCRuntime
     private static readonly Lazy<ObjCRuntime> _instance = new(() => new ObjCRuntime());
     public static ObjCRuntime Instance => _instance.Value;
 
+    private const string AppKit = "/System/Library/Frameworks/AppKit.framework/AppKit";
+
+    [DllImport(AppKit)]
+    private static extern void NSApplicationLoad();
+
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern IntPtr objc_getClass(string name);
 
@@ -57,6 +62,10 @@ internal sealed class ObjCRuntime
 
     private ObjCRuntime()
     {
+        // CRITICAL: Load AppKit framework first
+        // This makes all Cocoa/AppKit classes available via objc_getClass
+        NSApplicationLoad();
+
         // Initialize all selectors first
         SelAlloc = sel_registerName("alloc");
         SelInit = sel_registerName("init");
@@ -64,7 +73,7 @@ internal sealed class ObjCRuntime
         SelRetain = sel_registerName("retain");
         SelAutorelease = sel_registerName("autorelease");
 
-        // Initialize all class pointers
+        // Initialize all class pointers (now that AppKit is loaded)
         NSApplication = objc_getClass("NSApplication");
         NSWindow = objc_getClass("NSWindow");
         NSView = objc_getClass("NSView");

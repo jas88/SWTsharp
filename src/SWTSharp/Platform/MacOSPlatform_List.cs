@@ -50,11 +50,6 @@ internal partial class MacOSPlatform
             _nsTableColumnClass = objc_getClass("NSTableColumn");
             _nsIndexSetClass = objc_getClass("NSIndexSet");
 
-            if (_nsScrollViewClass == IntPtr.Zero)
-            {
-                _nsScrollViewClass = objc_getClass("NSScrollView");
-            }
-
             _selReloadData = sel_registerName("reloadData");
             _selNumberOfRows = sel_registerName("numberOfRows");
             _selSelectRowIndexes = sel_registerName("selectRowIndexes:byExtendingSelection:");
@@ -106,11 +101,12 @@ internal partial class MacOSPlatform
 
     public IntPtr CreateList(IntPtr parentHandle, int style)
     {
+        var objc = ObjCRuntime.Instance;
         InitializeListSelectors();
 
         // Create NSScrollView to contain the table
-        IntPtr scrollView = objc_msgSend(_nsScrollViewClass, _selAlloc);
-        scrollView = objc_msgSend(scrollView, _selInit);
+        IntPtr scrollView = objc_msgSend(objc.NSScrollView, objc.SelAlloc);
+        scrollView = objc_msgSend(scrollView, objc.SelInit);
 
         // Create NSTableView
         IntPtr tableView = objc_msgSend(_nsTableViewClass, _selAlloc);

@@ -89,10 +89,10 @@ internal partial class LinuxPlatform
         IntPtr funcPtr = Marshal.GetFunctionPointerForDelegate(drawHandler);
         g_signal_connect_data(canvas, "draw", funcPtr, IntPtr.Zero, IntPtr.Zero, 0);
 
-        // Add to parent if provided
+        // Add to parent if provided (use helper to handle GtkWindow containers)
         if (parent != IntPtr.Zero)
         {
-            gtk_container_add(parent, canvas);
+            AddChildToParent(parent, canvas);
         }
 
         gtk_widget_show(canvas);

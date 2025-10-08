@@ -1,6 +1,11 @@
 using Xunit;
+using Xunit.Sdk;
 using SWTSharp;
 using SWTSharp.Tests.Infrastructure;
+
+// Use UIFact for cross-platform UI thread support
+// On macOS, this should run tests on the main thread
+using CocoaFact = Xunit.UIFactAttribute;
 
 namespace SWTSharp.Tests.Widgets;
 
@@ -11,13 +16,13 @@ public class LabelTests : WidgetTestBase
 {
     public LabelTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Label(shell, SWT.NONE));
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -30,7 +35,7 @@ public class LabelTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Text_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -41,7 +46,7 @@ public class LabelTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Text_WithEmptyString_ShouldSucceed()
     {
         AssertPropertyGetSet(
@@ -52,7 +57,7 @@ public class LabelTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Text_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -65,7 +70,7 @@ public class LabelTests : WidgetTestBase
         label.Dispose();
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Text_MultipleUpdates_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -83,19 +88,19 @@ public class LabelTests : WidgetTestBase
         label.Dispose();
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Label(shell, SWT.NONE));
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Label(shell, SWT.NONE));
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_SetText_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -104,7 +109,7 @@ public class LabelTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_GetText_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -114,13 +119,13 @@ public class LabelTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => _ = label.Text);
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Label(shell, SWT.NONE));
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -131,7 +136,7 @@ public class LabelTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -142,7 +147,7 @@ public class LabelTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_Display_ShouldMatchParent()
     {
         using var shell = CreateTestShell();
@@ -153,7 +158,7 @@ public class LabelTests : WidgetTestBase
         label.Dispose();
     }
 
-    [Fact]
+    [CocoaFact]
     public void Label_InitialText_ShouldBeEmpty()
     {
         using var shell = CreateTestShell();

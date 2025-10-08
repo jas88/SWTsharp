@@ -94,10 +94,10 @@ internal partial class LinuxPlatform
             gtk_notebook_set_tab_pos(notebook, GtkPositionType.Top);
         }
 
-        // Add to parent if provided
+        // Add to parent if provided (use helper to handle GtkWindow containers)
         if (parent != IntPtr.Zero)
         {
-            gtk_container_add(parent, notebook);
+            AddChildToParent(parent, notebook);
         }
 
         // Track the tab folder

@@ -65,8 +65,9 @@ internal partial class MacOSPlatform
         containerView = objc_msgSend(containerView, _selInit);
 
         // Create NSTextField for displaying/editing value
-        IntPtr textField = objc_msgSend(_nsTextFieldClass, _selAlloc);
-        textField = objc_msgSend(textField, _selInit);
+        var objc = ObjCRuntime.Instance;
+        IntPtr textField = objc_msgSend(objc.NSTextField, objc.SelAlloc);
+        textField = objc_msgSend(textField, objc.SelInit);
 
         // Create NSStepper for increment/decrement buttons
         IntPtr stepper = objc_msgSend(_nsStepperClass, _selAlloc);

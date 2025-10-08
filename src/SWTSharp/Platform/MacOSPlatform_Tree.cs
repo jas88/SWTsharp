@@ -57,11 +57,12 @@ internal partial class MacOSPlatform
 
     public IntPtr CreateTree(IntPtr parent, int style)
     {
+        var objc = ObjCRuntime.Instance;
         InitializeTreeSelectors();
 
         // Create NSScrollView to contain the outline view
-        IntPtr scrollView = objc_msgSend(_nsScrollViewClass, _selAlloc);
-        scrollView = objc_msgSend(scrollView, _selInit);
+        IntPtr scrollView = objc_msgSend(objc.NSScrollView, objc.SelAlloc);
+        scrollView = objc_msgSend(scrollView, objc.SelInit);
 
         // Create NSOutlineView
         IntPtr outlineView = objc_msgSend(_nsOutlineViewClass, _selAlloc);

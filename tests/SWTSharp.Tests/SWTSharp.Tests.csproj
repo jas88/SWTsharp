@@ -5,14 +5,21 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <EnableMSTestRunner>false</EnableMSTestRunner>
+    <!-- Disable xUnit auto-generated entry point so we can provide custom Program.Main -->
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+    <!-- Specify our Program.Main as the entry point, not xUnit's auto-generated one -->
+    <StartupObject>SWTSharp.Tests.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Xunit.StaFact" Version="3.0.13" />
+    <PackageReference Include="xunit.v3" Version="3.1.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -65,10 +65,10 @@ internal partial class LinuxPlatform
             throw new InvalidOperationException("Failed to create GTK combo box");
         }
 
-        // Add to parent if provided
+        // Add to parent if provided (use helper to handle GtkWindow containers)
         if (parentHandle != IntPtr.Zero)
         {
-            gtk_container_add(parentHandle, combo);
+            AddChildToParent(parentHandle, combo);
         }
 
         gtk_widget_show(combo);
