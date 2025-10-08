@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Exclude custom Program.cs and MainThreadDispatcher - using [UIFact] instead -->
+    <!-- Restore MainThreadDispatcher for macOS support -->
+    <!-- Program.cs and ModuleInitializer remain excluded - not needed for library test project -->
     <Compile Remove="Program.cs" />
-    <Compile Remove="MainThreadDispatcher.cs" />
     <Compile Remove="ModuleInitializer.cs" />
   </ItemGroup>
 

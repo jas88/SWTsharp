@@ -27,15 +27,10 @@ public static class MainThreadDispatcher
     /// <summary>
     /// Starts the dispatcher loop on the CURRENT thread.
     /// This will block until the dispatcher is stopped.
-    /// Only call this from the main thread (Thread 1).
+    /// The first thread to call this becomes the "main" thread for dispatching.
     /// </summary>
     public static void RunLoop()
     {
-        if (Thread.CurrentThread != _mainThread)
-        {
-            throw new InvalidOperationException("RunLoop() must be called from the main thread");
-        }
-
         Console.WriteLine($"MainThreadDispatcher.RunLoop: Starting dispatch loop on Thread {Thread.CurrentThread.ManagedThreadId}");
 
         // Run the dispatch loop on THIS thread
