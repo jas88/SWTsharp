@@ -11,13 +11,13 @@ public class CompositeTests : WidgetTestBase
 {
     public CompositeTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Composite(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -27,13 +27,13 @@ public class CompositeTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Composite(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Dispose_ShouldDisposeChildren()
     {
         using var shell = CreateTestShell();
@@ -46,7 +46,7 @@ public class CompositeTests : WidgetTestBase
         Assert.True(button.IsDisposed);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_AddChild_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -59,7 +59,7 @@ public class CompositeTests : WidgetTestBase
         composite.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_AddMultipleChildren_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -75,7 +75,7 @@ public class CompositeTests : WidgetTestBase
         composite.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -86,7 +86,7 @@ public class CompositeTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -97,19 +97,19 @@ public class CompositeTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Composite(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Composite(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_AfterDispose_PropertyAccess_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -118,7 +118,7 @@ public class CompositeTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_NestedComposites_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -133,7 +133,7 @@ public class CompositeTests : WidgetTestBase
         composite1.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_Display_ShouldMatchParent()
     {
         using var shell = CreateTestShell();
@@ -144,7 +144,7 @@ public class CompositeTests : WidgetTestBase
         composite.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_InitiallyVisible()
     {
         using var shell = CreateTestShell();
@@ -155,7 +155,7 @@ public class CompositeTests : WidgetTestBase
         composite.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Composite_InitiallyEnabled()
     {
         using var shell = CreateTestShell();

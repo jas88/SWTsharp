@@ -11,13 +11,13 @@ public class ShellTests : WidgetTestBase
 {
     public ShellTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Create_WithDisplay_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Shell(shell.Display!));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Create_WithDefaultConstructor_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -30,7 +30,7 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Create_WithParentShell_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -45,7 +45,7 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Text_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -56,7 +56,7 @@ public class ShellTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Text_WithEmptyString_ShouldSucceed()
     {
         AssertPropertyGetSet(
@@ -67,7 +67,7 @@ public class ShellTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Text_WithNull_ShouldSetEmptyString()
     {
         RunOnUIThread(() =>
@@ -79,13 +79,13 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => shell);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Dispose_ShouldDisposeChildren()
     {
         RunOnUIThread(() =>
@@ -100,7 +100,7 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_SetText_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -109,7 +109,7 @@ public class ShellTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_GetText_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -121,13 +121,13 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => shell);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_Display_ShouldReturnSameDisplay()
     {
         RunOnUIThread(() =>
@@ -142,7 +142,7 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_IsDisposed_InitiallyFalse()
     {
         RunOnUIThread(() =>
@@ -153,7 +153,7 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_MultipleDispose_ShouldNotThrow()
     {
         RunOnUIThread(() =>
@@ -166,7 +166,7 @@ public class ShellTests : WidgetTestBase
         });
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Shell_CheckWidget_WhileValid_ShouldNotThrow()
     {
         RunOnUIThread(() =>

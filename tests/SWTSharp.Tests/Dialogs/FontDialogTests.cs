@@ -13,7 +13,7 @@ public class FontDialogTests : TestBase
 {
     public FontDialogTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_Create_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -22,7 +22,7 @@ public class FontDialogTests : TestBase
         Assert.NotNull(fontDialog);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_Create_WithStyles_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -35,7 +35,7 @@ public class FontDialogTests : TestBase
         }
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_FontData_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -47,7 +47,7 @@ public class FontDialogTests : TestBase
         Assert.Equal(fontData, fontDialog.FontData);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_FontData_WithBold_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -59,7 +59,7 @@ public class FontDialogTests : TestBase
         Assert.Equal(fontData, fontDialog.FontData);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_FontData_WithItalic_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -71,7 +71,7 @@ public class FontDialogTests : TestBase
         Assert.Equal(fontData, fontDialog.FontData);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_RGB_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -83,7 +83,7 @@ public class FontDialogTests : TestBase
         Assert.Equal(rgb, fontDialog.RGB);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_FontDataUpdate_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -98,7 +98,7 @@ public class FontDialogTests : TestBase
         Assert.Equal(font2, fontDialog.FontData);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_InitialFontData_ShouldNotBeNull()
     {
         using var shell = CreateTestShell();
@@ -107,7 +107,7 @@ public class FontDialogTests : TestBase
         Assert.NotNull(fontDialog.FontData);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_Parent_ShouldMatchShell()
     {
         using var shell = CreateTestShell();
@@ -116,7 +116,7 @@ public class FontDialogTests : TestBase
         Assert.Same(shell, fontDialog.Parent);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_Style_ShouldMatchConstructor()
     {
         using var shell = CreateTestShell();
@@ -125,7 +125,7 @@ public class FontDialogTests : TestBase
         Assert.Equal(SWT.NONE, fontDialog.Style);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void FontDialog_Text_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();

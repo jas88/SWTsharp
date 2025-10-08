@@ -11,13 +11,13 @@ public class CanvasTests : WidgetTestBase
 {
     public CanvasTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Canvas(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -27,25 +27,25 @@ public class CanvasTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Canvas(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Canvas(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Canvas(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -56,7 +56,7 @@ public class CanvasTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -67,7 +67,7 @@ public class CanvasTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_Display_ShouldMatchParent()
     {
         using var shell = CreateTestShell();
@@ -78,7 +78,7 @@ public class CanvasTests : WidgetTestBase
         canvas.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_SetVisible_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -87,7 +87,7 @@ public class CanvasTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_GetVisible_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -97,7 +97,7 @@ public class CanvasTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => _ = canvas.Visible);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_InitiallyVisible()
     {
         using var shell = CreateTestShell();
@@ -108,7 +108,7 @@ public class CanvasTests : WidgetTestBase
         canvas.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_InitiallyEnabled()
     {
         using var shell = CreateTestShell();
@@ -119,7 +119,7 @@ public class CanvasTests : WidgetTestBase
         canvas.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_ParentDispose_ShouldDisposeCanvas()
     {
         using var shell = CreateTestShell();
@@ -130,7 +130,7 @@ public class CanvasTests : WidgetTestBase
         Assert.True(canvas.IsDisposed);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_MultipleDispose_ShouldNotThrow()
     {
         var shell = CreateTestShell();
@@ -143,7 +143,7 @@ public class CanvasTests : WidgetTestBase
         shell.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Canvas_IsComposite_ShouldAcceptChildren()
     {
         using var shell = CreateTestShell();

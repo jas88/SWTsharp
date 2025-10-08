@@ -11,13 +11,13 @@ public class TableTests : WidgetTestBase
 {
     public TableTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Table(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -30,7 +30,7 @@ public class TableTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_AddColumn_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -43,7 +43,7 @@ public class TableTests : WidgetTestBase
         table.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_AddMultipleColumns_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -58,7 +58,7 @@ public class TableTests : WidgetTestBase
         table.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_AddItem_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -71,7 +71,7 @@ public class TableTests : WidgetTestBase
         table.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_AddMultipleItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -86,7 +86,7 @@ public class TableTests : WidgetTestBase
         table.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_GetItem_ShouldReturnCorrectItem()
     {
         using var shell = CreateTestShell();
@@ -101,7 +101,7 @@ public class TableTests : WidgetTestBase
         table.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_GetColumn_ShouldReturnCorrectColumn()
     {
         using var shell = CreateTestShell();
@@ -116,7 +116,7 @@ public class TableTests : WidgetTestBase
         table.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_HeaderVisible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -127,7 +127,7 @@ public class TableTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_LinesVisible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -138,7 +138,7 @@ public class TableTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_SelectionIndex_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -154,19 +154,19 @@ public class TableTests : WidgetTestBase
         table.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Table(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Table(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Dispose_ShouldDisposeItemsAndColumns()
     {
         using var shell = CreateTestShell();
@@ -181,13 +181,13 @@ public class TableTests : WidgetTestBase
         Assert.True(item.IsDisposed);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Table(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -198,7 +198,7 @@ public class TableTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Table_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(

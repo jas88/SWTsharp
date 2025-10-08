@@ -11,13 +11,13 @@ public class ProgressBarTests : WidgetTestBase
 {
     public ProgressBarTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new ProgressBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -30,7 +30,7 @@ public class ProgressBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Minimum_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -41,7 +41,7 @@ public class ProgressBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Maximum_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -52,7 +52,7 @@ public class ProgressBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Selection_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -63,7 +63,7 @@ public class ProgressBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Selection_ClampedToMinimum()
     {
         using var shell = CreateTestShell();
@@ -77,7 +77,7 @@ public class ProgressBarTests : WidgetTestBase
         progressBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Selection_ClampedToMaximum()
     {
         using var shell = CreateTestShell();
@@ -91,7 +91,7 @@ public class ProgressBarTests : WidgetTestBase
         progressBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_DefaultValues_ShouldBeCorrect()
     {
         using var shell = CreateTestShell();
@@ -104,19 +104,19 @@ public class ProgressBarTests : WidgetTestBase
         progressBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new ProgressBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new ProgressBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_SetSelection_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -125,13 +125,13 @@ public class ProgressBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new ProgressBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -142,7 +142,7 @@ public class ProgressBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -153,7 +153,7 @@ public class ProgressBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ProgressBar_RangeChange_ShouldAdjustSelection()
     {
         using var shell = CreateTestShell();

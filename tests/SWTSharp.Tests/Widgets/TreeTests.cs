@@ -11,13 +11,13 @@ public class TreeTests : WidgetTestBase
 {
     public TreeTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Tree(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -29,7 +29,7 @@ public class TreeTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_AddRootItem_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -42,7 +42,7 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_AddMultipleRootItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -57,7 +57,7 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_AddChildItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -72,7 +72,7 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_GetItem_ShouldReturnCorrectItem()
     {
         using var shell = CreateTestShell();
@@ -87,7 +87,7 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_SelectionIndex_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -103,7 +103,7 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Selection_ShouldReturnSelectedItem()
     {
         using var shell = CreateTestShell();
@@ -118,7 +118,7 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Items_ShouldReturnRootItems()
     {
         using var shell = CreateTestShell();
@@ -135,19 +135,19 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Tree(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Tree(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Dispose_ShouldDisposeItems()
     {
         using var shell = CreateTestShell();
@@ -160,13 +160,13 @@ public class TreeTests : WidgetTestBase
         Assert.True(item.IsDisposed);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Tree(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -177,7 +177,7 @@ public class TreeTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -188,7 +188,7 @@ public class TreeTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_InitialItemCount_ShouldBeZero()
     {
         using var shell = CreateTestShell();
@@ -199,7 +199,7 @@ public class TreeTests : WidgetTestBase
         tree.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Tree_NestedHierarchy_ShouldWork()
     {
         using var shell = CreateTestShell();

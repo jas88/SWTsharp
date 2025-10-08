@@ -11,13 +11,13 @@ public class ListTests : WidgetTestBase
 {
     public ListTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new List(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -28,7 +28,7 @@ public class ListTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Add_SingleItem_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -42,7 +42,7 @@ public class ListTests : WidgetTestBase
         list.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Add_MultipleItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -60,7 +60,7 @@ public class ListTests : WidgetTestBase
         list.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Remove_ShouldRemoveItem()
     {
         using var shell = CreateTestShell();
@@ -77,7 +77,7 @@ public class ListTests : WidgetTestBase
         list.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_RemoveAll_ShouldClearList()
     {
         using var shell = CreateTestShell();
@@ -93,7 +93,7 @@ public class ListTests : WidgetTestBase
         list.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_SelectionIndex_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -109,7 +109,7 @@ public class ListTests : WidgetTestBase
         list.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_SelectionIndices_MultiSelect_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -129,7 +129,7 @@ public class ListTests : WidgetTestBase
         list.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Items_ShouldReturnAllItems()
     {
         using var shell = CreateTestShell();
@@ -148,19 +148,19 @@ public class ListTests : WidgetTestBase
         list.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new List(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new List(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Add_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -170,13 +170,13 @@ public class ListTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => list.Add("Item"));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new List(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -187,7 +187,7 @@ public class ListTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -198,7 +198,7 @@ public class ListTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void List_InitialItemCount_ShouldBeZero()
     {
         using var shell = CreateTestShell();

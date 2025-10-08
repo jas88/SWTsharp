@@ -11,13 +11,13 @@ public class ButtonTests : WidgetTestBase
 {
     public ButtonTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Button(shell, SWT.PUSH));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -30,7 +30,7 @@ public class ButtonTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Text_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -41,7 +41,7 @@ public class ButtonTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Text_WithEmptyString_ShouldSucceed()
     {
         AssertPropertyGetSet(
@@ -52,7 +52,7 @@ public class ButtonTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Text_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -65,7 +65,7 @@ public class ButtonTests : WidgetTestBase
         button.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Selection_Check_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -82,7 +82,7 @@ public class ButtonTests : WidgetTestBase
         button.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Selection_Radio_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -96,7 +96,7 @@ public class ButtonTests : WidgetTestBase
         button.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Selection_Toggle_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -110,19 +110,19 @@ public class ButtonTests : WidgetTestBase
         button.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Button(shell, SWT.PUSH));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Button(shell, SWT.PUSH));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_SetText_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -131,7 +131,7 @@ public class ButtonTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_GetText_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -141,7 +141,7 @@ public class ButtonTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => _ = button.Text);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_SetSelection_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -150,13 +150,13 @@ public class ButtonTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Button(shell, SWT.PUSH));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Button_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(

@@ -11,13 +11,13 @@ public class ComboTests : WidgetTestBase
 {
     public ComboTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Combo(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -29,7 +29,7 @@ public class ComboTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Add_SingleItem_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -43,7 +43,7 @@ public class ComboTests : WidgetTestBase
         combo.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Add_MultipleItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -58,7 +58,7 @@ public class ComboTests : WidgetTestBase
         combo.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Remove_ShouldRemoveItem()
     {
         using var shell = CreateTestShell();
@@ -74,7 +74,7 @@ public class ComboTests : WidgetTestBase
         combo.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_RemoveAll_ShouldClearCombo()
     {
         using var shell = CreateTestShell();
@@ -89,7 +89,7 @@ public class ComboTests : WidgetTestBase
         combo.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Text_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -100,7 +100,7 @@ public class ComboTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_SelectionIndex_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -116,7 +116,7 @@ public class ComboTests : WidgetTestBase
         combo.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Items_ShouldReturnAllItems()
     {
         using var shell = CreateTestShell();
@@ -132,19 +132,19 @@ public class ComboTests : WidgetTestBase
         combo.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Combo(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Combo(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Add_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -154,13 +154,13 @@ public class ComboTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => combo.Add("Item"));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Combo(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -171,7 +171,7 @@ public class ComboTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -182,7 +182,7 @@ public class ComboTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Combo_TextLimit_ShouldLimitText()
     {
         using var shell = CreateTestShell();

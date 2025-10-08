@@ -11,13 +11,13 @@ public class ScaleTests : WidgetTestBase
 {
     public ScaleTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Scale(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -28,7 +28,7 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Minimum_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -39,7 +39,7 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Maximum_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -50,7 +50,7 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Selection_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -61,7 +61,7 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Increment_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -72,7 +72,7 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_PageIncrement_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -83,7 +83,7 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Selection_ClampedToMinimum()
     {
         using var shell = CreateTestShell();
@@ -97,7 +97,7 @@ public class ScaleTests : WidgetTestBase
         scale.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Selection_ClampedToMaximum()
     {
         using var shell = CreateTestShell();
@@ -111,7 +111,7 @@ public class ScaleTests : WidgetTestBase
         scale.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_DefaultValues_ShouldBeCorrect()
     {
         using var shell = CreateTestShell();
@@ -124,19 +124,19 @@ public class ScaleTests : WidgetTestBase
         scale.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Scale(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Scale(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_SetSelection_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -145,13 +145,13 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Scale(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -162,7 +162,7 @@ public class ScaleTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void Scale_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(

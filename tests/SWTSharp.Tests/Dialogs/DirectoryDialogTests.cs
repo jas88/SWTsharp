@@ -12,7 +12,7 @@ public class DirectoryDialogTests : TestBase
 {
     public DirectoryDialogTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_Create_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -21,7 +21,7 @@ public class DirectoryDialogTests : TestBase
         Assert.NotNull(directoryDialog);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_Create_WithStyles_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -34,7 +34,7 @@ public class DirectoryDialogTests : TestBase
         }
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_FilterPath_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -45,7 +45,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Equal("/home/user", directoryDialog.FilterPath);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_FilterPath_WithEmptyString_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -56,7 +56,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Equal(string.Empty, directoryDialog.FilterPath);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_FilterPath_WithNull_ShouldSetEmptyString()
     {
         using var shell = CreateTestShell();
@@ -67,7 +67,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Equal(string.Empty, directoryDialog.FilterPath);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_Message_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -78,7 +78,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Equal("Select a directory", directoryDialog.Message);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_InitialFilterPath_ShouldBeEmpty()
     {
         using var shell = CreateTestShell();
@@ -87,7 +87,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Equal(string.Empty, directoryDialog.FilterPath);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_MessageUpdate_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -100,7 +100,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Equal("Second", directoryDialog.Message);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_Parent_ShouldMatchShell()
     {
         using var shell = CreateTestShell();
@@ -109,7 +109,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Same(shell, directoryDialog.Parent);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_Style_ShouldMatchConstructor()
     {
         using var shell = CreateTestShell();
@@ -118,7 +118,7 @@ public class DirectoryDialogTests : TestBase
         Assert.Equal(SWT.NONE, directoryDialog.Style);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void DirectoryDialog_Text_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();

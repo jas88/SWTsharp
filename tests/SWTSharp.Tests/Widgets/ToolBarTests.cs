@@ -11,13 +11,13 @@ public class ToolBarTests : WidgetTestBase
 {
     public ToolBarTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new ToolBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -29,7 +29,7 @@ public class ToolBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_AddToolItem_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -42,7 +42,7 @@ public class ToolBarTests : WidgetTestBase
         toolBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_AddMultipleToolItems_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -57,7 +57,7 @@ public class ToolBarTests : WidgetTestBase
         toolBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_GetItem_ShouldReturnCorrectItem()
     {
         using var shell = CreateTestShell();
@@ -72,7 +72,7 @@ public class ToolBarTests : WidgetTestBase
         toolBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Items_ShouldReturnAllItems()
     {
         using var shell = CreateTestShell();
@@ -89,19 +89,19 @@ public class ToolBarTests : WidgetTestBase
         toolBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new ToolBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new ToolBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Dispose_ShouldDisposeItems()
     {
         using var shell = CreateTestShell();
@@ -114,13 +114,13 @@ public class ToolBarTests : WidgetTestBase
         Assert.True(toolItem.IsDisposed);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new ToolBar(shell, SWT.NONE));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -131,7 +131,7 @@ public class ToolBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -142,7 +142,7 @@ public class ToolBarTests : WidgetTestBase
         );
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_InitialItemCount_ShouldBeZero()
     {
         using var shell = CreateTestShell();
@@ -153,7 +153,7 @@ public class ToolBarTests : WidgetTestBase
         toolBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_GetItem_AfterDispose_ShouldThrow()
     {
         using var shell = CreateTestShell();
@@ -164,7 +164,7 @@ public class ToolBarTests : WidgetTestBase
         Assert.Throws<SWTDisposedException>(() => toolBar.GetItem(0));
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_Display_ShouldMatchParent()
     {
         using var shell = CreateTestShell();
@@ -175,7 +175,7 @@ public class ToolBarTests : WidgetTestBase
         toolBar.Dispose();
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ToolBar_MixedItemTypes_ShouldSucceed()
     {
         using var shell = CreateTestShell();

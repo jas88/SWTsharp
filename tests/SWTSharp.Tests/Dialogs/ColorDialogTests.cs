@@ -13,7 +13,7 @@ public class ColorDialogTests : TestBase
 {
     public ColorDialogTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_Create_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -22,7 +22,7 @@ public class ColorDialogTests : TestBase
         Assert.NotNull(colorDialog);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_Create_WithStyles_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -35,7 +35,7 @@ public class ColorDialogTests : TestBase
         }
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_RGB_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -47,7 +47,7 @@ public class ColorDialogTests : TestBase
         Assert.Equal(rgb, colorDialog.RGB);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_RGB_WithBlack_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -59,7 +59,7 @@ public class ColorDialogTests : TestBase
         Assert.Equal(black, colorDialog.RGB);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_RGB_WithWhite_ShouldSucceed()
     {
         using var shell = CreateTestShell();
@@ -71,7 +71,7 @@ public class ColorDialogTests : TestBase
         Assert.Equal(white, colorDialog.RGB);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_RGBUpdate_ShouldWork()
     {
         using var shell = CreateTestShell();
@@ -86,7 +86,7 @@ public class ColorDialogTests : TestBase
         Assert.Equal(color2, colorDialog.RGB);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_InitialRGB_ShouldHaveDefaultValue()
     {
         using var shell = CreateTestShell();
@@ -96,7 +96,7 @@ public class ColorDialogTests : TestBase
         Assert.NotEqual(default(RGB), colorDialog.RGB);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_RGBs_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -113,7 +113,7 @@ public class ColorDialogTests : TestBase
         Assert.Equal(customColors, colorDialog.RGBs);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_Text_ShouldGetAndSet()
     {
         using var shell = CreateTestShell();
@@ -124,7 +124,7 @@ public class ColorDialogTests : TestBase
         Assert.Equal("Select a Color", colorDialog.Text);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_Parent_ShouldMatchShell()
     {
         using var shell = CreateTestShell();
@@ -133,7 +133,7 @@ public class ColorDialogTests : TestBase
         Assert.Same(shell, colorDialog.Parent);
     }
 
-    [FactSkipOnMacOSCI]
+    [Fact]
     public void ColorDialog_Style_ShouldMatchConstructor()
     {
         using var shell = CreateTestShell();
