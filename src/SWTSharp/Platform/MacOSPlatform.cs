@@ -160,8 +160,12 @@ internal partial class MacOSPlatform : IPlatform
         // Get or create shared application
         _nsApplication = objc_msgSend(_nsApplicationClass, _selSharedApplication);
 
-        // CRITICAL: Activate the application so AppKit GUI elements can be created
-        // Without this, widget creation returns IntPtr.Zero on CI environments
+        // CRITICAL: Set activation policy to allow GUI elements in headless environment
+        // NSApplicationActivationPolicyRegular = 0, Accessory = 1, Prohibited = 2
+        IntPtr selSetActivationPolicy = sel_registerName("setActivationPolicy:");
+        objc_msgSend(_nsApplication, selSetActivationPolicy, (IntPtr)0); // Regular
+
+        // Finish launching and activate
         IntPtr selFinishLaunching = sel_registerName("finishLaunching");
         IntPtr selActivateIgnoringOtherApps = sel_registerName("activateIgnoringOtherApps:");
 

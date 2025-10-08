@@ -134,6 +134,18 @@ internal partial class LinuxPlatform : IPlatform
         gtk_window_set_title(window, title);
         gtk_window_set_default_size(window, 800, 600);
 
+        // CRITICAL: GtkWindow is a GtkBin and can only contain ONE child widget.
+        // Create a GtkFixed container to hold multiple widgets, like NSWindow's contentView.
+        IntPtr container = gtk_fixed_new();
+        if (container != IntPtr.Zero)
+        {
+            gtk_container_add(window, container);
+            gtk_widget_show(container);
+
+            // Map window -> container for child widget additions
+            _widgetContainers[window] = container;
+        }
+
         // Connect destroy signal to quit application when window is closed
         // For now, we'll skip signal handling to keep it simple
         // In production, you'd want: g_signal_connect_data(window, "destroy", callback, ...)
@@ -141,11 +153,33 @@ internal partial class LinuxPlatform : IPlatform
         return window;
     }
 
+    /// <summary>
+    /// Helper to add a child widget to parent, handling GtkWindow -> container mapping.
+    /// GtkWindow can only contain one child, so we use the container we created.
+    /// </summary>
+    private void AddChildToParent(IntPtr parent, IntPtr child)
+    {
+        if (parent == IntPtr.Zero) return;
+
+        // Check if parent is a window with a container
+        if (_widgetContainers.TryGetValue(parent, out IntPtr container))
+        {
+            // Parent is a GtkWindow, add to its container
+            gtk_container_add(container, child);
+        }
+        else
+        {
+            // Parent is a regular container widget
+            gtk_container_add(parent, child);
+        }
+    }
+
     public void DestroyWindow(IntPtr handle)
     {
         if (handle != IntPtr.Zero)
         {
             gtk_widget_destroy(handle);
+            _widgetContainers.Remove(handle);
         }
     }
 
@@ -214,10 +248,7 @@ internal partial class LinuxPlatform : IPlatform
             gtk_widget_show(composite);
 
             // Add to parent if provided
-            if (parent != IntPtr.Zero)
-            {
-                gtk_container_add(parent, composite);
-            }
+            AddChildToParent(parent, composite);
         }
 
         return composite;
@@ -329,7 +360,7 @@ internal partial class LinuxPlatform : IPlatform
         {
             // GTK requires a container for absolute positioning
             // We'll use gtk_fixed for simple layout
-            gtk_container_add(parent, button);
+            AddChildToParent(parent, button);
         }
 
         gtk_widget_show(button);
@@ -650,10 +681,7 @@ internal partial class LinuxPlatform : IPlatform
         }
 
         // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            gtk_container_add(parent, widget);
-        }
+        AddChildToParent(parent, widget);
 
         gtk_widget_show(widget);
 
@@ -950,10 +978,7 @@ internal partial class LinuxPlatform : IPlatform
         _progressBarRanges[progressBar] = (0, 100);
 
         // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            gtk_container_add(parent, progressBar);
-        }
+        AddChildToParent(parent, progressBar);
 
         gtk_widget_show(progressBar);
 
