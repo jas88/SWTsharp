@@ -20,6 +20,64 @@ internal partial class MacOSPlatform : IPlatform
     private const string LibSystem = "/usr/lib/libSystem.dylib";
 
     // Objective-C runtime functions
+#if NET7_0_OR_GREATER
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_getClass")]
+    private static partial IntPtr objc_getClass([MarshalAs(UnmanagedType.LPUTF8Str)] string name);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "sel_registerName")]
+    private static partial IntPtr sel_registerName([MarshalAs(UnmanagedType.LPUTF8Str)] string name);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg1);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg1, IntPtr arg2);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void objc_msgSend_void(IntPtr receiver, IntPtr selector, [MarshalAs(UnmanagedType.Bool)] bool arg1);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void objc_msgSend_void(IntPtr receiver, IntPtr selector);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool objc_msgSend_bool(IntPtr receiver, IntPtr selector, IntPtr arg1);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial long objc_msgSend_long(IntPtr receiver, IntPtr selector);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial double objc_msgSend_double(IntPtr receiver, IntPtr selector);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
+    private static partial void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void objc_msgSend_rect_bool(IntPtr receiver, IntPtr selector, CGRect rect, [MarshalAs(UnmanagedType.Bool)] bool display);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void objc_msgSend_size(IntPtr receiver, IntPtr selector, CGSize size);
+
+    // Grand Central Dispatch (GCD) functions for main thread execution
+    // These are part of libSystem on macOS
+    [LibraryImport(LibSystem)]
+    private static partial IntPtr dispatch_get_main_queue();
+
+    [LibraryImport(LibSystem)]
+    private static partial void dispatch_sync_f(IntPtr queue, IntPtr context, IntPtr work);
+
+    [LibraryImport(LibSystem)]
+    private static partial void dispatch_async_f(IntPtr queue, IntPtr context, IntPtr work);
+#else
     [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string name);
 
@@ -75,6 +133,7 @@ internal partial class MacOSPlatform : IPlatform
 
     [DllImport(LibSystem)]
     private static extern void dispatch_async_f(IntPtr queue, IntPtr context, IntPtr work);
+#endif
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void DispatchWorkDelegate(IntPtr context);
@@ -83,8 +142,13 @@ internal partial class MacOSPlatform : IPlatform
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void NSUncaughtExceptionHandlerDelegate(IntPtr exception);
 
+#if NET7_0_OR_GREATER
+    [LibraryImport(FoundationFramework)]
+    private static partial void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandlerDelegate handler);
+#else
     [DllImport(FoundationFramework)]
     private static extern void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandlerDelegate handler);
+#endif
 
     [StructLayout(LayoutKind.Sequential)]
     private struct CGRect
@@ -1106,8 +1170,13 @@ internal partial class MacOSPlatform : IPlatform
         return ((int)range.location, (int)(range.location + range.length));
     }
 
+#if NET7_0_OR_GREATER
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
+    private static partial void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector);
+#else
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
     private static extern void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector);
+#endif
 
     public void SetTextLimit(IntPtr handle, int limit)
     {
