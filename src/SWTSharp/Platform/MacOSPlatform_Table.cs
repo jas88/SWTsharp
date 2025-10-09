@@ -12,6 +12,8 @@ internal partial class MacOSPlatform
     private IntPtr _selRemoveTableColumn;
     private IntPtr _selTableColumns;
     private IntPtr _selObjectAtIndex;
+    private IntPtr _selTableHeaderView;
+    private IntPtr _nsTableHeaderViewClass;
 
     // NSTableView grid style constants
     private const int NSTableViewGridNone = 0;
@@ -44,6 +46,8 @@ internal partial class MacOSPlatform
             _selRemoveTableColumn = sel_registerName("removeTableColumn:");
             _selTableColumns = sel_registerName("tableColumns");
             _selObjectAtIndex = sel_registerName("objectAtIndex:");
+            _selTableHeaderView = sel_registerName("tableHeaderView");
+            _nsTableHeaderViewClass = objc_getClass("NSTableHeaderView");
         }
     }
 
@@ -104,14 +108,12 @@ internal partial class MacOSPlatform
         if (visible)
         {
             // Create default header view if needed
-            IntPtr selTableHeaderView = sel_registerName("tableHeaderView");
-            IntPtr currentHeader = objc_msgSend(data.TableView, selTableHeaderView);
+            IntPtr currentHeader = objc_msgSend(data.TableView, _selTableHeaderView);
 
             if (currentHeader == IntPtr.Zero)
             {
                 // Create new header view
-                IntPtr nsTableHeaderViewClass = objc_getClass("NSTableHeaderView");
-                IntPtr headerView = objc_msgSend(nsTableHeaderViewClass, _selAlloc);
+                IntPtr headerView = objc_msgSend(_nsTableHeaderViewClass, _selAlloc);
                 headerView = objc_msgSend(headerView, _selInit);
                 objc_msgSend(data.TableView, _selSetHeaderView, headerView);
             }
