@@ -255,6 +255,10 @@ internal partial class MacOSPlatform : IPlatform
         _selSetMinValue = sel_registerName("setMinValue:");
         _selSetMaxValue = sel_registerName("setMaxValue:");
         _selSetDoubleValue = sel_registerName("setDoubleValue:");
+        _selIsKindOfClass = sel_registerName("isKindOfClass:");
+        _selContentView = sel_registerName("contentView");
+        _selRespondsToSelector = sel_registerName("respondsToSelector:");
+        _selClass = sel_registerName("class");
 
         // Get classes
         _nsApplicationClass = objc_getClass("NSApplication");
@@ -311,28 +315,19 @@ internal partial class MacOSPlatform : IPlatform
     {
         if (parent == IntPtr.Zero) return;
 
-        // Lazy initialize _selAddSubview if needed
-        if (_selAddSubview == IntPtr.Zero)
+        // Get class of parent object
+        IntPtr parentClass = objc_msgSend(parent, _selClass);
+
+        // Check if it's NSWindow by comparing class pointers
+        IntPtr targetView = parent;
+        if (parentClass == _nsWindowClass)
         {
-            _selAddSubview = sel_registerName("addSubview:");
+            // Parent is NSWindow, get contentView
+            targetView = objc_msgSend(parent, _selContentView);
         }
 
-        // Check if parent is an NSWindow (has contentView) or NSView (direct subview)
-        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
-        IntPtr selContentView = sel_registerName("contentView");
-        bool hasContentView = objc_msgSend_bool(parent, selRespondsToSelector, selContentView);
-
-        if (hasContentView)
-        {
-            // Parent is NSWindow, add to contentView
-            IntPtr contentView = objc_msgSend(parent, selContentView);
-            objc_msgSend(contentView, _selAddSubview, child);
-        }
-        else
-        {
-            // Parent is NSView, add directly
-            objc_msgSend(parent, _selAddSubview, child);
-        }
+        // Add child to target view
+        objc_msgSend(targetView, _selAddSubview, child);
     }
 
     // Helper method for creating index sets (used by Table and other widgets)
@@ -353,28 +348,36 @@ internal partial class MacOSPlatform : IPlatform
 
     public IntPtr CreateWindow(int style, string title)
     {
-        // Determine window style mask
-        ulong styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable;
+        IntPtr result = IntPtr.Zero;
 
-        if ((style & SWT.RESIZE) != 0)
+        // NSWindow MUST be created on the main thread
+        ExecuteOnMainThread(() =>
         {
-            styleMask |= NSWindowStyleMaskResizable;
-        }
+            // Determine window style mask
+            ulong styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable;
 
-        // Create window frame
-        var frame = new CGRect(100, 100, 800, 600);
+            if ((style & SWT.RESIZE) != 0)
+            {
+                styleMask |= NSWindowStyleMaskResizable;
+            }
 
-        // Allocate and initialize window
-        IntPtr window = objc_msgSend(_nsWindowClass, _selAlloc);
+            // Create window frame
+            var frame = new CGRect(100, 100, 800, 600);
 
-        // initWithContentRect:styleMask:backing:defer:
-        // This is a complex call - we need to pass multiple arguments
-        window = InitWindow(window, frame, styleMask);
+            // Allocate and initialize window
+            IntPtr window = objc_msgSend(_nsWindowClass, _selAlloc);
 
-        // Set title
-        SetWindowText(window, title);
+            // initWithContentRect:styleMask:backing:defer:
+            // This is a complex call - we need to pass multiple arguments
+            window = InitWindow(window, frame, styleMask);
 
-        return window;
+            // Set title
+            SetWindowText(window, title);
+
+            result = window;
+        });
+
+        return result;
     }
 
     private IntPtr InitWindow(IntPtr window, CGRect frame, ulong styleMask)
@@ -688,6 +691,10 @@ internal partial class MacOSPlatform : IPlatform
     private IntPtr _selSetFrameOrigin;
     private IntPtr _selSetFrameSize;
     private IntPtr _selAddSubview;
+    private IntPtr _selIsKindOfClass;
+    private IntPtr _selContentView;
+    private IntPtr _selRespondsToSelector;
+    private IntPtr _selClass;
 
     // NSButton types
     private const int NSButtonTypeMomentaryLight = 0;
