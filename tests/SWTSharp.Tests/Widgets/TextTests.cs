@@ -55,71 +55,86 @@ public class TextTests : WidgetTestBase
     [Fact]
     public void Text_TextContent_WithNull_ShouldSetEmptyString()
     {
-        using var shell = CreateTestShell();
-        var text = new Text(shell, SWT.SINGLE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var text = new Text(shell, SWT.SINGLE);
 
-        text.TextContent = null!;
+            text.TextContent = null!;
 
-        Assert.Equal(string.Empty, text.TextContent);
+            Assert.Equal(string.Empty, text.TextContent);
 
-        text.Dispose();
+            text.Dispose();
+        });
     }
 
     [Fact]
     public void Text_Append_ShouldAppendText()
     {
-        using var shell = CreateTestShell();
-        var text = new Text(shell, SWT.MULTI);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var text = new Text(shell, SWT.MULTI);
 
-        text.TextContent = "Hello";
-        text.Append(" World");
+            text.TextContent = "Hello";
+            text.Append(" World");
 
-        Assert.Equal("Hello World", text.TextContent);
+            Assert.Equal("Hello World", text.TextContent);
 
-        text.Dispose();
+            text.Dispose();
+        });
     }
 
     [Fact]
     public void Text_Append_MultipleAppends_ShouldConcatenate()
     {
-        using var shell = CreateTestShell();
-        var text = new Text(shell, SWT.MULTI);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var text = new Text(shell, SWT.MULTI);
 
-        text.TextContent = "A";
-        text.Append("B");
-        text.Append("C");
+            text.TextContent = "A";
+            text.Append("B");
+            text.Append("C");
 
-        Assert.Equal("ABC", text.TextContent);
+            Assert.Equal("ABC", text.TextContent);
 
-        text.Dispose();
+            text.Dispose();
+        });
     }
 
     [Fact]
     public void Text_TextLimit_ShouldLimitText()
     {
-        using var shell = CreateTestShell();
-        var text = new Text(shell, SWT.SINGLE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var text = new Text(shell, SWT.SINGLE);
 
-        text.TextLimit = 5;
-        text.TextContent = "1234567890";
+            text.TextLimit = 5;
+            text.TextContent = "1234567890";
 
-        Assert.Equal("12345", text.TextContent);
+            Assert.Equal("12345", text.TextContent);
 
-        text.Dispose();
+            text.Dispose();
+        });
     }
 
     [Fact]
     public void Text_TextLimit_ZeroShouldRemoveLimit()
     {
-        using var shell = CreateTestShell();
-        var text = new Text(shell, SWT.SINGLE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var text = new Text(shell, SWT.SINGLE);
 
-        text.TextLimit = 0;
-        text.TextContent = "This is a long text without limit";
+            text.TextLimit = 0;
+            text.TextContent = "This is a long text without limit";
 
-        Assert.Equal("This is a long text without limit", text.TextContent);
+            Assert.Equal("This is a long text without limit", text.TextContent);
 
-        text.Dispose();
+            text.Dispose();
+        });
     }
 
     [Fact]
@@ -146,11 +161,14 @@ public class TextTests : WidgetTestBase
     [Fact]
     public void Text_Append_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var text = new Text(shell, SWT.MULTI);
-        text.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var text = new Text(shell, SWT.MULTI);
+            text.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => text.Append("Test"));
+            Assert.Throws<SWTDisposedException>(() => text.Append("Test"));
+        });
     }
 
     [Fact]

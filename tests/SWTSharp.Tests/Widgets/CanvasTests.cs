@@ -70,12 +70,15 @@ public class CanvasTests : WidgetTestBase
     [Fact]
     public void Canvas_Display_ShouldMatchParent()
     {
-        using var shell = CreateTestShell();
-        var canvas = new Canvas(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var canvas = new Canvas(shell, SWT.NONE);
 
-        Assert.Same(shell.Display, canvas.Display);
+            Assert.Same(shell.Display, canvas.Display);
 
-        canvas.Dispose();
+            canvas.Dispose();
+        });
     }
 
     [Fact]
@@ -90,68 +93,86 @@ public class CanvasTests : WidgetTestBase
     [Fact]
     public void Canvas_GetVisible_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var canvas = new Canvas(shell, SWT.NONE);
-        canvas.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var canvas = new Canvas(shell, SWT.NONE);
+            canvas.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => _ = canvas.Visible);
+            Assert.Throws<SWTDisposedException>(() => _ = canvas.Visible);
+        });
     }
 
     [Fact]
     public void Canvas_InitiallyVisible()
     {
-        using var shell = CreateTestShell();
-        var canvas = new Canvas(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var canvas = new Canvas(shell, SWT.NONE);
 
-        Assert.True(canvas.Visible);
+            Assert.True(canvas.Visible);
 
-        canvas.Dispose();
+            canvas.Dispose();
+        });
     }
 
     [Fact]
     public void Canvas_InitiallyEnabled()
     {
-        using var shell = CreateTestShell();
-        var canvas = new Canvas(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var canvas = new Canvas(shell, SWT.NONE);
 
-        Assert.True(canvas.Enabled);
+            Assert.True(canvas.Enabled);
 
-        canvas.Dispose();
+            canvas.Dispose();
+        });
     }
 
     [Fact]
     public void Canvas_ParentDispose_ShouldDisposeCanvas()
     {
-        using var shell = CreateTestShell();
-        var canvas = new Canvas(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var canvas = new Canvas(shell, SWT.NONE);
 
-        shell.Dispose();
+            shell.Dispose();
 
-        Assert.True(canvas.IsDisposed);
+            Assert.True(canvas.IsDisposed);
+        });
     }
 
     [Fact]
     public void Canvas_MultipleDispose_ShouldNotThrow()
     {
-        var shell = CreateTestShell();
-        var canvas = new Canvas(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            var shell = CreateTestShell();
+            var canvas = new Canvas(shell, SWT.NONE);
 
-        canvas.Dispose();
-        canvas.Dispose(); // Should not throw
+            canvas.Dispose();
+            canvas.Dispose(); // Should not throw
 
-        Assert.True(canvas.IsDisposed);
-        shell.Dispose();
+            Assert.True(canvas.IsDisposed);
+            shell.Dispose();
+        });
     }
 
     [Fact]
     public void Canvas_IsComposite_ShouldAcceptChildren()
     {
-        using var shell = CreateTestShell();
-        var canvas = new Canvas(shell, SWT.NONE);
-        var button = new Button(canvas, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var canvas = new Canvas(shell, SWT.NONE);
+            var button = new Button(canvas, SWT.PUSH);
 
-        Assert.Same(canvas, button.Parent);
+            Assert.Same(canvas, button.Parent);
 
-        canvas.Dispose();
+            canvas.Dispose();
+        });
     }
 }

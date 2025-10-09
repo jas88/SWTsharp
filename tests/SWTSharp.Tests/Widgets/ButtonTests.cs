@@ -55,59 +55,71 @@ public class ButtonTests : WidgetTestBase
     [Fact]
     public void Button_Text_WithNull_ShouldSetEmptyString()
     {
-        using var shell = CreateTestShell();
-        var button = new Button(shell, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var button = new Button(shell, SWT.PUSH);
 
-        button.Text = null!;
+            button.Text = null!;
 
-        Assert.Equal(string.Empty, button.Text);
+            Assert.Equal(string.Empty, button.Text);
 
-        button.Dispose();
+            button.Dispose();
+        });
     }
 
     [Fact]
     public void Button_Selection_Check_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var button = new Button(shell, SWT.CHECK);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var button = new Button(shell, SWT.CHECK);
 
-        Assert.False(button.Selection);
+            Assert.False(button.Selection);
 
-        button.Selection = true;
-        Assert.True(button.Selection);
+            button.Selection = true;
+            Assert.True(button.Selection);
 
-        button.Selection = false;
-        Assert.False(button.Selection);
+            button.Selection = false;
+            Assert.False(button.Selection);
 
-        button.Dispose();
+            button.Dispose();
+        });
     }
 
     [Fact]
     public void Button_Selection_Radio_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var button = new Button(shell, SWT.RADIO);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var button = new Button(shell, SWT.RADIO);
 
-        // GTK radio buttons may start selected if they're the first in a group
-        // Just verify we can set and get the selection state
-        button.Selection = true;
-        Assert.True(button.Selection);
+            // GTK radio buttons may start selected if they're the first in a group
+            // Just verify we can set and get the selection state
+            button.Selection = true;
+            Assert.True(button.Selection);
 
-        button.Dispose();
+            button.Dispose();
+        });
     }
 
     [Fact]
     public void Button_Selection_Toggle_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var button = new Button(shell, SWT.TOGGLE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var button = new Button(shell, SWT.TOGGLE);
 
-        Assert.False(button.Selection);
+            Assert.False(button.Selection);
 
-        button.Selection = true;
-        Assert.True(button.Selection);
+            button.Selection = true;
+            Assert.True(button.Selection);
 
-        button.Dispose();
+            button.Dispose();
+        });
     }
 
     [Fact]
@@ -134,11 +146,14 @@ public class ButtonTests : WidgetTestBase
     [Fact]
     public void Button_GetText_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var button = new Button(shell, SWT.PUSH);
-        button.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var button = new Button(shell, SWT.PUSH);
+            button.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => _ = button.Text);
+            Assert.Throws<SWTDisposedException>(() => _ = button.Text);
+        });
     }
 
     [Fact]
