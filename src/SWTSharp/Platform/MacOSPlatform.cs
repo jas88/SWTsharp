@@ -79,6 +79,13 @@ internal partial class MacOSPlatform : IPlatform
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void DispatchWorkDelegate(IntPtr context);
 
+    // Objective-C exception handling
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void NSUncaughtExceptionHandlerDelegate(IntPtr exception);
+
+    [DllImport(FoundationFramework)]
+    private static extern void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandlerDelegate handler);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct CGRect
     {
@@ -139,6 +146,9 @@ internal partial class MacOSPlatform : IPlatform
     private IntPtr _nsApplication;
     private IntPtr _nsProgressIndicatorClass;
     private IntPtr _nsControlClass;
+    private IntPtr _selName;
+    private IntPtr _selReason;
+    private IntPtr _selUTF8String;
 
     // Window style masks
     private const ulong NSWindowStyleMaskTitled = 1 << 0;
@@ -191,6 +201,42 @@ internal partial class MacOSPlatform : IPlatform
 
         // Get or create shared application
         _nsApplication = objc_msgSend(_nsApplicationClass, _selSharedApplication);
+
+        // Set up exception handler to catch ObjC exceptions and convert to managed exceptions
+        _selName = sel_registerName("name");
+        _selReason = sel_registerName("reason");
+        _selUTF8String = sel_registerName("UTF8String");
+        NSSetUncaughtExceptionHandler(HandleUncaughtException);
+    }
+
+    private static void HandleUncaughtException(IntPtr exception)
+    {
+        try
+        {
+            var platform = PlatformFactory.Instance as MacOSPlatform;
+            if (platform == null) return;
+
+            // Get exception name
+            IntPtr namePtr = objc_msgSend(exception, platform._selName);
+            IntPtr nameUTF8 = objc_msgSend(namePtr, platform._selUTF8String);
+            string name = Marshal.PtrToStringAnsi(nameUTF8) ?? "Unknown";
+
+            // Get exception reason
+            IntPtr reasonPtr = objc_msgSend(exception, platform._selReason);
+            IntPtr reasonUTF8 = objc_msgSend(reasonPtr, platform._selUTF8String);
+            string reason = Marshal.PtrToStringAnsi(reasonUTF8) ?? "Unknown reason";
+
+            // Log to stderr for test detection
+            Console.Error.WriteLine($"Objective-C Exception: {name}");
+            Console.Error.WriteLine($"Reason: {reason}");
+
+            // Throw managed exception to fail the test
+            throw new InvalidOperationException($"Objective-C Exception: {name} - {reason}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to handle ObjC exception: {ex.Message}");
+        }
     }
 
     /// <summary>
