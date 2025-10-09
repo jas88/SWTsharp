@@ -46,10 +46,11 @@ internal partial class MacOSPlatform
         IntPtr selSetBezeled = sel_registerName("setBezeled:");
         IntPtr selSetDrawsBackground = sel_registerName("setDrawsBackground:");
 
-        objc_msgSend_void(label, selSetEditable, false);
-        objc_msgSend_void(label, selSetSelectable, false);
-        objc_msgSend_void(label, selSetBezeled, false);
-        objc_msgSend_void(label, selSetDrawsBackground, false);
+        // Use IntPtr.Zero/1 for BOOL parameters (ObjC BOOL = signed char)
+        objc_msgSend(label, selSetEditable, IntPtr.Zero);
+        objc_msgSend(label, selSetSelectable, IntPtr.Zero);
+        objc_msgSend(label, selSetBezeled, IntPtr.Zero);
+        objc_msgSend(label, selSetDrawsBackground, IntPtr.Zero);
 
         // Set alignment
         IntPtr selSetAlignment = sel_registerName("setAlignment:");
