@@ -80,17 +80,22 @@ internal partial class MacOSPlatform
         if (_nsTabViewClass == IntPtr.Zero)
         {
             _nsTabViewClass = objc_getClass("NSTabView");
-            _nsTabViewItemClass = objc_getClass("NSTabViewItem");
+            if (_nsTabViewClass == IntPtr.Zero)
+                throw new InvalidOperationException("Failed to get NSTabView class from Objective-C runtime");
 
-            _selAddTabViewItem = sel_registerName("addTabViewItem:");
-            _selRemoveTabViewItem = sel_registerName("removeTabViewItem:");
-            _selSelectTabViewItemAtIndex = sel_registerName("selectTabViewItemAtIndex:");
-            _selIndexOfTabViewItem = sel_registerName("indexOfTabViewItem:");
-            _selNumberOfTabViewItems = sel_registerName("numberOfTabViewItems");
-            _selTabViewItemAtIndex = sel_registerName("tabViewItemAtIndex:");
-            _selSelectedTabViewItem = sel_registerName("selectedTabViewItem");
-            _selSetLabel = sel_registerName("setLabel:");
-            _selSetView = sel_registerName("setView:");
+            _nsTabViewItemClass = objc_getClass("NSTabViewItem");
+            if (_nsTabViewItemClass == IntPtr.Zero)
+                throw new InvalidOperationException("Failed to get NSTabViewItem class from Objective-C runtime");
+
+            _selAddTabViewItem = RegisterSelector("addTabViewItem:");
+            _selRemoveTabViewItem = RegisterSelector("removeTabViewItem:");
+            _selSelectTabViewItemAtIndex = RegisterSelector("selectTabViewItemAtIndex:");
+            _selIndexOfTabViewItem = RegisterSelector("indexOfTabViewItem:");
+            _selNumberOfTabViewItems = RegisterSelector("numberOfTabViewItems");
+            _selTabViewItemAtIndex = RegisterSelector("tabViewItemAtIndex:");
+            _selSelectedTabViewItem = RegisterSelector("selectedTabViewItem");
+            _selSetLabel = RegisterSelector("setLabel:");
+            _selSetView = RegisterSelector("setView:");
         }
     }
 
@@ -227,30 +232,30 @@ internal partial class MacOSPlatform
         InitializeTabFolderSelectors();
 
         // Remove the control from its current parent
-        IntPtr selSuperview = sel_registerName("superview");
+        IntPtr selSuperview = _registeredSelectors.TryGetValue("superview", out var superview)
+            ? superview
+            : RegisterSelector("superview");
         IntPtr currentParent = objc_msgSend(controlHandle, selSuperview);
         if (currentParent != IntPtr.Zero)
         {
-            IntPtr selRemoveFromSuperview = sel_registerName("removeFromSuperview");
+            IntPtr selRemoveFromSuperview = _registeredSelectors.TryGetValue("removeFromSuperview", out var removeFromSuperview)
+                ? removeFromSuperview
+                : RegisterSelector("removeFromSuperview");
             objc_msgSend(controlHandle, selRemoveFromSuperview);
         }
 
         // Add control to the tab's content view
-            // Lazy initialize _selAddSubview if not already done
-            if (_selAddSubview == IntPtr.Zero)
-            {
-                _selAddSubview = sel_registerName("addSubview:");
-            }
+        // _selAddSubview should already be initialized in main Initialize() method
+        if (_selAddSubview == IntPtr.Zero)
+            throw new InvalidOperationException("_selAddSubview was not initialized. This indicates MacOSPlatform.Initialize() was not called.");
 
         objc_msgSend(data.ContentView, _selAddSubview, controlHandle);
 
         // Make the control fill the content view
-        IntPtr selFrame = sel_registerName("frame");
-        objc_msgSend_stret(out CGRect parentFrame, data.ContentView, selFrame);
+        objc_msgSend_stret(out CGRect parentFrame, data.ContentView, _selFrame);
 
-        IntPtr selSetFrame = sel_registerName("setFrame:");
         CGRect controlFrame = new CGRect(0, 0, parentFrame.width, parentFrame.height);
-        objc_msgSend_rect(controlHandle, selSetFrame, controlFrame);
+        objc_msgSend_rect(controlHandle, _selSetFrame, controlFrame);
     }
 
     public void SetTabItemToolTip(IntPtr handle, string toolTip)
@@ -260,7 +265,9 @@ internal partial class MacOSPlatform
 
         InitializeTabFolderSelectors();
 
-        IntPtr selSetToolTip = sel_registerName("setToolTip:");
+        IntPtr selSetToolTip = _registeredSelectors.TryGetValue("setToolTip:", out var setToolTip)
+            ? setToolTip
+            : RegisterSelector("setToolTip:");
         IntPtr toolTipString = CreateNSString(toolTip ?? "");
         objc_msgSend(data.TabViewItem, selSetToolTip, toolTipString);
     }
@@ -270,27 +277,61 @@ internal partial class MacOSPlatform
         if (_nsToolbarClass == IntPtr.Zero)
         {
             _nsToolbarClass = objc_getClass("NSToolbar");
-            _nsToolbarItemClass = objc_getClass("NSToolbarItem");
+            if (_nsToolbarClass == IntPtr.Zero)
+                throw new InvalidOperationException("Failed to get NSToolbar class from Objective-C runtime");
 
-            _selSetToolbar = sel_registerName("setToolbar:");
-            _selSetAllowsUserCustomization = sel_registerName("setAllowsUserCustomization:");
-            _selSetAutosavesConfiguration = sel_registerName("setAutosavesConfiguration:");
-            _selSetDisplayMode = sel_registerName("setDisplayMode:");
-            _selInsertItemWithItemIdentifier = sel_registerName("insertItemWithItemIdentifier:atIndex:");
-            _selToolbarRemoveItemAtIndex = sel_registerName("removeItemAtIndex:");
-            _selSetImage = sel_registerName("setImage:");
-            _selSetMinSize = sel_registerName("setMinSize:");
-            _selSetMaxSize = sel_registerName("setMaxSize:");
-            _selSetMenu = sel_registerName("setMenu:");
-            _selShowsMenu = sel_registerName("setShowsMenu:");
+            _nsToolbarItemClass = objc_getClass("NSToolbarItem");
+            if (_nsToolbarItemClass == IntPtr.Zero)
+                throw new InvalidOperationException("Failed to get NSToolbarItem class from Objective-C runtime");
+
+            _selSetToolbar = RegisterSelector("setToolbar:");
+            _selSetAllowsUserCustomization = RegisterSelector("setAllowsUserCustomization:");
+            _selSetAutosavesConfiguration = RegisterSelector("setAutosavesConfiguration:");
+            _selSetDisplayMode = RegisterSelector("setDisplayMode:");
+            _selInsertItemWithItemIdentifier = RegisterSelector("insertItemWithItemIdentifier:atIndex:");
+            _selToolbarRemoveItemAtIndex = RegisterSelector("removeItemAtIndex:");
+            _selSetImage = RegisterSelector("setImage:");
+            _selSetMinSize = RegisterSelector("setMinSize:");
+            _selSetMaxSize = RegisterSelector("setMaxSize:");
+            _selSetMenu = RegisterSelector("setMenu:");
+            _selShowsMenu = RegisterSelector("setShowsMenu:");
         }
 
         // Ensure button selectors are initialized (they're in MacOSPlatform.cs)
+        // These selectors are shared - always check if they're already registered
         if (_selSetAction == IntPtr.Zero)
         {
-            _selSetAction = sel_registerName("setAction:");
-            _selSetTarget = sel_registerName("setTarget:");
-            _selSetEnabled = sel_registerName("setEnabled:");
+            // These may be registered by InitializeButtonSelectors, so always try to reuse first
+            if (_registeredSelectors.TryGetValue("setAction:", out var selAction))
+            {
+                _selSetAction = selAction;
+            }
+            else
+            {
+                _selSetAction = RegisterSelector("setAction:");
+            }
+        }
+        if (_selSetTarget == IntPtr.Zero)
+        {
+            if (_registeredSelectors.TryGetValue("setTarget:", out var selTarget))
+            {
+                _selSetTarget = selTarget;
+            }
+            else
+            {
+                _selSetTarget = RegisterSelector("setTarget:");
+            }
+        }
+        if (_selSetEnabled == IntPtr.Zero)
+        {
+            if (_registeredSelectors.TryGetValue("setEnabled:", out var selEnabled))
+            {
+                _selSetEnabled = selEnabled;
+            }
+            else
+            {
+                _selSetEnabled = RegisterSelector("setEnabled:");
+            }
         }
     }
 

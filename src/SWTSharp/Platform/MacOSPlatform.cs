@@ -209,35 +209,83 @@ internal partial class MacOSPlatform : IPlatform
         Initialize();
     }
 
+    // Selector validation tracking
+    private readonly Dictionary<string, IntPtr> _registeredSelectors = new Dictionary<string, IntPtr>();
+    private bool _initialized = false;
+    private readonly object _initLock = new object();
+
+    /// <summary>
+    /// Register a selector with validation and duplicate detection.
+    /// Throws InvalidOperationException if selector registration fails or if duplicate detected.
+    /// </summary>
+    private IntPtr RegisterSelector(string selectorName)
+    {
+        if (string.IsNullOrEmpty(selectorName))
+            throw new ArgumentException("Selector name cannot be null or empty", nameof(selectorName));
+
+        // Check for duplicate registration
+        if (_registeredSelectors.TryGetValue(selectorName, out IntPtr existing))
+        {
+            throw new InvalidOperationException(
+                $"Selector '{selectorName}' has already been registered with pointer {existing:X}. " +
+                "This indicates a duplicate selector initialization attempt.");
+        }
+
+        // Register the selector
+        IntPtr selector = sel_registerName(selectorName);
+
+        // Validate registration succeeded
+        if (selector == IntPtr.Zero)
+        {
+            throw new InvalidOperationException(
+                $"Failed to register selector '{selectorName}'. " +
+                "The Objective-C runtime returned a null selector pointer.");
+        }
+
+        // Track registered selector
+        _registeredSelectors[selectorName] = selector;
+
+        return selector;
+    }
+
     public void Initialize()
     {
-        // Initialize selectors
-        _selAlloc = sel_registerName("alloc");
-        _selInit = sel_registerName("init");
-        _selInitWithContentRect = sel_registerName("initWithContentRect:styleMask:backing:defer:");
-        _selSetTitle = sel_registerName("setTitle:");
-        _selMakeKeyAndOrderFront = sel_registerName("makeKeyAndOrderFront:");
-        _selOrderOut = sel_registerName("orderOut:");
-        _selClose = sel_registerName("close");
-        _selSetFrame = sel_registerName("setFrame:");           // NSView method
-        _selSetFrameDisplay = sel_registerName("setFrame:display:");  // NSWindow method
-        _selFrame = sel_registerName("frame");
-        _selSharedApplication = sel_registerName("sharedApplication");
-        _selRun = sel_registerName("run");
-        _selStop = sel_registerName("stop:");
-        _selNextEventMatchingMask = sel_registerName("nextEventMatchingMask:untilDate:inMode:dequeue:");
-        _selSendEvent = sel_registerName("sendEvent:");
-        _selUpdateWindows = sel_registerName("updateWindows");
+        // Make Initialize() idempotent - can be called multiple times safely
+        if (_initialized)
+            return;
+
+        lock (_initLock)
+        {
+            if (_initialized)
+                return;
+
+            // Initialize selectors with validation
+            _selAlloc = RegisterSelector("alloc");
+        _selInit = RegisterSelector("init");
+        _selInitWithContentRect = RegisterSelector("initWithContentRect:styleMask:backing:defer:");
+        _selSetTitle = RegisterSelector("setTitle:");
+        _selMakeKeyAndOrderFront = RegisterSelector("makeKeyAndOrderFront:");
+        _selOrderOut = RegisterSelector("orderOut:");
+        _selClose = RegisterSelector("close");
+        _selSetFrame = RegisterSelector("setFrame:");           // NSView method
+        _selSetFrameDisplay = RegisterSelector("setFrame:display:");  // NSWindow method
+        _selFrame = RegisterSelector("frame");
+        _selSharedApplication = RegisterSelector("sharedApplication");
+        _selRun = RegisterSelector("run");
+        _selStop = RegisterSelector("stop:");
+        _selNextEventMatchingMask = RegisterSelector("nextEventMatchingMask:untilDate:inMode:dequeue:");
+        _selSendEvent = RegisterSelector("sendEvent:");
+        _selUpdateWindows = RegisterSelector("updateWindows");
 
         // Initialize shared widget selectors
-        _selSetMinValue = sel_registerName("setMinValue:");
-        _selSetMaxValue = sel_registerName("setMaxValue:");
-        _selSetDoubleValue = sel_registerName("setDoubleValue:");
-        _selIsKindOfClass = sel_registerName("isKindOfClass:");
-        _selContentView = sel_registerName("contentView");
-        _selRespondsToSelector = sel_registerName("respondsToSelector:");
-        _selClass = sel_registerName("class");
-        _selAddSubview = sel_registerName("addSubview:");
+        _selSetMinValue = RegisterSelector("setMinValue:");
+        _selSetMaxValue = RegisterSelector("setMaxValue:");
+        _selSetDoubleValue = RegisterSelector("setDoubleValue:");
+        _selIsKindOfClass = RegisterSelector("isKindOfClass:");
+        _selContentView = RegisterSelector("contentView");
+        _selRespondsToSelector = RegisterSelector("respondsToSelector:");
+        _selClass = RegisterSelector("class");
+        _selAddSubview = RegisterSelector("addSubview:");
 
         // Get classes
         _nsApplicationClass = objc_getClass("NSApplication");
@@ -262,6 +310,9 @@ internal partial class MacOSPlatform : IPlatform
         InitializeButtonSelectors();
         InitializeMenuSelectors();
         InitializeTextSelectors();
+
+            _initialized = true;
+        }
     }
 
     private static void HandleUncaughtException(IntPtr exception)
@@ -683,16 +734,19 @@ internal partial class MacOSPlatform : IPlatform
         if (_nsButtonClass == IntPtr.Zero)
         {
             _nsButtonClass = objc_getClass("NSButton");
-            _selButtonWithTitle = sel_registerName("buttonWithTitle:target:action:");
-            _selSetButtonType = sel_registerName("setButtonType:");
-            _selSetState = sel_registerName("setState:");
-            _selState = sel_registerName("state");
-            _selSetTarget = sel_registerName("setTarget:");
-            _selSetAction = sel_registerName("setAction:");
-            _selSetEnabled = sel_registerName("setEnabled:");
-            _selSetHidden = sel_registerName("setHidden:");
-            _selSetFrameOrigin = sel_registerName("setFrameOrigin:");
-            _selSetFrameSize = sel_registerName("setFrameSize:");
+            if (_nsButtonClass == IntPtr.Zero)
+                throw new InvalidOperationException("Failed to get NSButton class from Objective-C runtime");
+
+            _selButtonWithTitle = RegisterSelector("buttonWithTitle:target:action:");
+            _selSetButtonType = RegisterSelector("setButtonType:");
+            _selSetState = RegisterSelector("setState:");
+            _selState = RegisterSelector("state");
+            _selSetTarget = RegisterSelector("setTarget:");
+            _selSetAction = RegisterSelector("setAction:");
+            _selSetEnabled = RegisterSelector("setEnabled:");
+            _selSetHidden = RegisterSelector("setHidden:");
+            _selSetFrameOrigin = RegisterSelector("setFrameOrigin:");
+            _selSetFrameSize = RegisterSelector("setFrameSize:");
             // Note: _selAddSubview is now initialized in main Initialize() method
         }
     }
@@ -811,14 +865,24 @@ internal partial class MacOSPlatform : IPlatform
         if (_nsMenuClass == IntPtr.Zero)
         {
             _nsMenuClass = objc_getClass("NSMenu");
+            if (_nsMenuClass == IntPtr.Zero)
+                throw new InvalidOperationException("Failed to get NSMenu class from Objective-C runtime");
+
             _nsMenuItemClass = objc_getClass("NSMenuItem");
-            _selAddItem = sel_registerName("addItem:");
-            _selSetSubmenu = sel_registerName("setSubmenu:");
-            _selSetTitle_item = sel_registerName("setTitle:");
-            _selSetState = sel_registerName("setState:");
-            _selSetEnabled_item = sel_registerName("setEnabled:");
-            _selSetMainMenu = sel_registerName("setMainMenu:");
-            _selPopUpMenuPositioningItem = sel_registerName("popUpMenuPositioningItem:atLocation:inView:");
+            if (_nsMenuItemClass == IntPtr.Zero)
+                throw new InvalidOperationException("Failed to get NSMenuItem class from Objective-C runtime");
+
+            _selAddItem = RegisterSelector("addItem:");
+            _selSetSubmenu = RegisterSelector("setSubmenu:");
+            // Reuse _selSetTitle_item as setTitle: already registered
+            _selSetTitle_item = _registeredSelectors["setTitle:"];
+            // Skip _selSetState as setState: already registered in button selectors
+            // Reuse setEnabled: if already registered (from button selectors)
+            _selSetEnabled_item = _registeredSelectors.TryGetValue("setEnabled:", out var setEnabled)
+                ? setEnabled
+                : RegisterSelector("setEnabled:");
+            _selSetMainMenu = RegisterSelector("setMainMenu:");
+            _selPopUpMenuPositioningItem = RegisterSelector("popUpMenuPositioningItem:atLocation:inView:");
         }
     }
 
@@ -939,14 +1003,14 @@ internal partial class MacOSPlatform : IPlatform
     {
         if (_selStringValue == IntPtr.Zero)
         {
-            _selStringValue = sel_registerName("stringValue");
-            _selSetStringValue = sel_registerName("setStringValue:");
-            _selDocumentView = sel_registerName("documentView");
-            _selString = sel_registerName("string");
-            _selSetString = sel_registerName("setString:");
-            _selSetEditable_text = sel_registerName("setEditable:");
-            _selSelectedRange = sel_registerName("selectedRange");
-            _selSetSelectedRange = sel_registerName("setSelectedRange:");
+            _selStringValue = RegisterSelector("stringValue");
+            _selSetStringValue = RegisterSelector("setStringValue:");
+            _selDocumentView = RegisterSelector("documentView");
+            _selString = RegisterSelector("string");
+            _selSetString = RegisterSelector("setString:");
+            _selSetEditable_text = RegisterSelector("setEditable:");
+            _selSelectedRange = RegisterSelector("selectedRange");
+            _selSetSelectedRange = RegisterSelector("setSelectedRange:");
         }
     }
 
