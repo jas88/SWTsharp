@@ -237,6 +237,7 @@ internal partial class MacOSPlatform : IPlatform
         _selContentView = sel_registerName("contentView");
         _selRespondsToSelector = sel_registerName("respondsToSelector:");
         _selClass = sel_registerName("class");
+        _selAddSubview = sel_registerName("addSubview:");
 
         // Get classes
         _nsApplicationClass = objc_getClass("NSApplication");
