@@ -138,6 +138,7 @@ internal partial class MacOSPlatform : IPlatform
     private IntPtr _nsStringClass;
     private IntPtr _nsApplication;
     private IntPtr _nsProgressIndicatorClass;
+    private IntPtr _nsControlClass;
 
     // Window style masks
     private const ulong NSWindowStyleMaskTitled = 1 << 0;
@@ -186,6 +187,7 @@ internal partial class MacOSPlatform : IPlatform
         _nsWindowClass = objc_getClass("NSWindow");
         _nsStringClass = objc_getClass("NSString");
         _nsProgressIndicatorClass = objc_getClass("NSProgressIndicator");
+        _nsControlClass = objc_getClass("NSControl");
 
         // Get or create shared application
         _nsApplication = objc_msgSend(_nsApplicationClass, _selSharedApplication);
@@ -699,7 +701,15 @@ internal partial class MacOSPlatform : IPlatform
 
     public void SetControlEnabled(IntPtr handle, bool enabled)
     {
-        objc_msgSend_void(handle, _selSetEnabled, enabled);
+        // Only NSControl and its subclasses have setEnabled:
+        // NSView (used by Canvas) does not support this method
+        IntPtr selIsKindOfClass = sel_registerName("isKindOfClass:");
+        if (objc_msgSend_bool(handle, selIsKindOfClass, _nsControlClass))
+        {
+            objc_msgSend_void(handle, _selSetEnabled, enabled);
+        }
+        // For NSView, we could set alpha or userInteractionEnabled, but SWT typically
+        // just ignores setEnabled on non-control widgets like Canvas
     }
 
     public void SetControlVisible(IntPtr handle, bool visible)
