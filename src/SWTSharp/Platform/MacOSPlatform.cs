@@ -254,6 +254,25 @@ internal partial class MacOSPlatform : IPlatform
         _selReason = sel_registerName("reason");
         _selUTF8String = sel_registerName("UTF8String");
         NSSetUncaughtExceptionHandler(HandleUncaughtException);
+
+        // Initialize all widget-specific selectors upfront to avoid lazy initialization issues
+        // This ensures all selectors are registered early and any missing selectors fail fast
+        InitializeButtonSelectors();
+        InitializeMenuSelectors();
+        InitializeTextSelectors();
+        InitializeCanvasSelectors();
+        InitializeComboSelectors();
+        InitializeGroupSelectors();
+        InitializeListSelectors();
+        InitializeProgressBarSelectors();
+        InitializeScaleSelectors();
+        InitializeSliderSelectors();
+        InitializeSpinnerSelectors();
+        InitializeTabFolderSelectors();
+        InitializeToolBarSelectors();
+        InitializeTableSelectors();
+        InitializeColumnSelectors();
+        InitializeTreeSelectors();
     }
 
     private static void HandleUncaughtException(IntPtr exception)
