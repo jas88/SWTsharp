@@ -49,53 +49,10 @@ public class Program
         // Hook into SWTSharp's MacOSPlatform to route ExecuteOnMainThread through our dispatcher
         SWTSharp.Platform.MacOSPlatform.CustomMainThreadExecutor = MainThreadDispatcher.Invoke;
 
-        var exitCode = 0;
-        var completionSignal = new ManualResetEventSlim(false);
-
-        // Run tests on background thread
-        var testThread = new Thread(() =>
-        {
-            try
-            {
-                exitCode = RunTests(testAssemblyPath, testFilter);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[ERROR] SWTSharp TestHost: {ex.Message}");
-                Console.Error.WriteLine(ex.StackTrace);
-                exitCode = 1;
-            }
-            finally
-            {
-                Console.WriteLine("[INFO] SWTSharp TestHost: Test thread completing...");
-                // Signal dispatcher to stop FIRST
-                MainThreadDispatcher.Stop();
-                // Then signal completion
-                completionSignal.Set();
-            }
-        })
-        {
-            Name = "Test Execution Thread",
-            IsBackground = false // Foreground thread to ensure it completes
-        };
-
-        testThread.Start();
-
-        // Run the dispatch loop on Thread 1
-        // This will block until tests complete and call Stop()
-        Console.WriteLine("[INFO] SWTSharp TestHost: Starting main thread dispatch loop...");
-        MainThreadDispatcher.RunLoop();
-
-        // Wait for test thread to finish cleanup (with timeout)
-        Console.WriteLine("[INFO] SWTSharp TestHost: Waiting for test thread completion...");
-        if (!completionSignal.Wait(TimeSpan.FromSeconds(10)))
-        {
-            Console.Error.WriteLine("[ERROR] SWTSharp TestHost: Test thread did not complete in time");
-            return 1;
-        }
-
-        Console.WriteLine("[INFO] SWTSharp TestHost: Exiting with code " + exitCode);
-        return exitCode;
+        // Run tests DIRECTLY on Thread 1 (no background thread needed)
+        // This allows SyncExec to execute immediately when already on UI thread
+        Console.WriteLine("[INFO] SWTSharp TestHost: Running tests on Thread 1...");
+        return RunTests(testAssemblyPath, testFilter);
     }
 
     private static int RunTestsDefault(string testAssemblyPath, string[] testFilter)

@@ -40,6 +40,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SWTSharp\SWTSharp.csproj" />
+    <ProjectReference Include="..\SWTSharp.TestHost\SWTSharp.TestHost.csproj" />
   </ItemGroup>
 
   <!-- Copy custom test adapter DLL to output directory for VSTest auto-discovery -->

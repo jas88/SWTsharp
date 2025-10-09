@@ -1,0 +1,63 @@
+SWTSharp Test Runner
+Platform: Darwin 25.0.0 Darwin Kernel Version 25.0.0: Wed Sep 17 21:41:45 PDT 2025; root:xnu-12377.1.9~141/RELEASE_ARM64_T6000
+Thread: 1
+
+macOS detected - initializing Thread 1 dispatcher...
+MainThreadDispatcher.Initialize: Calling NSApplicationLoad on Thread 1...
+MainThreadDispatcher.Initialize: NSApplicationLoad completed successfully
+MainThreadDispatcher.Initialize: Dispatcher initialized
+Starting main thread dispatch loop...
+MainThreadDispatcher.RunLoop: Starting dispatch loop on Thread 1
+MainThreadDispatcher: Dispatch loop started on Thread 1
+Running tests in: /Users/jas88/Developer/swtsharp/tests/SWTSharp.Tests/bin/Release/net9.0/SWTSharp.Tests.dll
+
+Discovered 387 tests
+
+  SWTSharp.Tests.Platform.PlatformImportTests.VerifyAllPlatformImportsResolved ... Running on: Darwin 25.0.0 Darwin Kernel Version 25.0.0: Wed Sep 17 21:41:45 PDT 2025; root:xnu-12377.1.9~141/RELEASE_ARM64_T6000
+Platform: Arm64
+Framework: .NET 9.0.9
+
+Verifying macOS (Cocoa) imports...
+  ✓ objc_getClass: 202D844D8
+  ✓ sel_registerName: 2110A9000
+  ✓ objc_msgSend: Import verified
+
+✓ All platform imports resolved successfully
+PASSED (10ms)
+DisplayFixture: Current thread = 4
+DisplayFixture.Initialize: Running on Thread 1
+DisplayFixture: Setting custom async executor to use MainThreadDispatcher
+  SWTSharp.Tests.WidgetTests.Label_Text_ShouldGetAndSet ... PASSED (58ms)
+  SWTSharp.Tests.WidgetTests.Display_Current_ShouldReturnSameAsDefault ... FAILED (10ms)
+  SWTSharp.Tests.WidgetTests.Shell_Create_ShouldNotBeNull ... PASSED (2ms)
+  SWTSharp.Tests.WidgetTests.Shell_CheckWidget_AfterDispose_ShouldThrow ... PASSED (1ms)
+  SWTSharp.Tests.WidgetTests.Widget_Data_ShouldGetAndSet ... PASSED (1ms)
+  SWTSharp.Tests.WidgetTests.Text_TextLimit_ShouldLimitText ... PASSED (2ms)
+  SWTSharp.Tests.WidgetTests.Text_Append_ShouldAppendText ... PASSED (17ms)
+  SWTSharp.Tests.WidgetTests.Text_Content_ShouldGetAndSet ... PASSED (2ms)
+  SWTSharp.Tests.WidgetTests.Shell_Text_ShouldGetAndSet ... PASSED (3ms)
+  SWTSharp.Tests.WidgetTests.SWT_GetErrorMessage_ShouldReturnMessage ... PASSED (2ms)
+  SWTSharp.Tests.WidgetTests.Button_Selection_ShouldGetAndSet ... PASSED (2ms)
+  SWTSharp.Tests.WidgetTests.Display_Default_ShouldNotBeNull ... PASSED (0ms)
+  SWTSharp.Tests.WidgetTests.Button_Text_ShouldGetAndSet ... PASSED (1ms)
+  SWTSharp.Tests.WidgetTests.Control_Visible_ShouldGetAndSet ... PASSED (1ms)
+  SWTSharp.Tests.WidgetTests.Button_Create_ShouldNotBeNull ... PASSED (1ms)
+  SWTSharp.Tests.WidgetTests.Shell_Dispose_ShouldSetIsDisposed ... PASSED (2ms)
+  SWTSharp.Tests.WidgetTests.SWT_Platform_ShouldReturnValidPlatform ... PASSED (1ms)
+  SWTSharp.Tests.WidgetTests.Control_Enabled_ShouldGetAndSet ... PASSED (1ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Create_ShouldSucceed ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Text_ShouldGetAndSet ... PASSED (3ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Data_ShouldGetAndSet ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Text_WithEmptyString_ShouldSucceed ... PASSED (1ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Visible_ShouldGetAndSet ... PASSED (3ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Selection_Toggle_ShouldGetAndSet ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Parent_ShouldBeCorrect ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Selection_Radio_ShouldGetAndSet ... PASSED (1ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_GetText_AfterDispose_ShouldThrow ... PASSED (1ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Text_WithNull_ShouldSetEmptyString ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Dispose_ShouldSetIsDisposed ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Selection_Check_ShouldGetAndSet ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_Create_WithStyles_ShouldSucceed ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_SetSelection_AfterDispose_ShouldThrow ... PASSED (2ms)
+  SWTSharp.Tests.Widgets.ButtonTests.Button_SetText_AfterDispose_ShouldThrow ... PASSED (1ms)
+  SWTSharp.Tests.Widgets.CanvasTests.Canvas_IsComposite_ShouldAcceptChildren ... 

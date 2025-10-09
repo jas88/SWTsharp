@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using SWTSharp.TestHost;
 
 namespace SWTSharp.Tests;
 

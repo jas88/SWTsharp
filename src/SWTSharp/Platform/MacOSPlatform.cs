@@ -17,7 +17,7 @@ internal partial class MacOSPlatform : IPlatform
     private const string ObjCLibrary = "/usr/lib/libobjc.A.dylib";
     private const string AppKitFramework = "/System/Library/Frameworks/AppKit.framework/AppKit";
     private const string FoundationFramework = "/System/Library/Frameworks/Foundation.framework/Foundation";
-    private const string LibSystem = "/usr/lib/libSystem.dylib";
+    private const string LibSystem = "libSystem.dylib"; // Let macOS dynamic linker resolve the path
 
     // Objective-C runtime functions
 #if NET7_0_OR_GREATER
@@ -67,16 +67,6 @@ internal partial class MacOSPlatform : IPlatform
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static partial void objc_msgSend_size(IntPtr receiver, IntPtr selector, CGSize size);
 
-    // Grand Central Dispatch (GCD) functions for main thread execution
-    // These are part of libSystem on macOS
-    [LibraryImport(LibSystem)]
-    private static partial IntPtr dispatch_get_main_queue();
-
-    [LibraryImport(LibSystem)]
-    private static partial void dispatch_sync_f(IntPtr queue, IntPtr context, IntPtr work);
-
-    [LibraryImport(LibSystem)]
-    private static partial void dispatch_async_f(IntPtr queue, IntPtr context, IntPtr work);
 #else
     [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string name);
@@ -123,20 +113,8 @@ internal partial class MacOSPlatform : IPlatform
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_size(IntPtr receiver, IntPtr selector, CGSize size);
 
-    // Grand Central Dispatch (GCD) functions for main thread execution
-    // These are part of libSystem on macOS
-    [DllImport(LibSystem)]
-    private static extern IntPtr dispatch_get_main_queue();
-
-    [DllImport(LibSystem)]
-    private static extern void dispatch_sync_f(IntPtr queue, IntPtr context, IntPtr work);
-
-    [DllImport(LibSystem)]
-    private static extern void dispatch_async_f(IntPtr queue, IntPtr context, IntPtr work);
 #endif
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void DispatchWorkDelegate(IntPtr context);
 
     // Objective-C exception handling
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -609,56 +587,12 @@ internal partial class MacOSPlatform : IPlatform
             return;
         }
 
-        var mainQueue = dispatch_get_main_queue();
-        Exception? caughtException = null;
-        var completed = new ManualResetEventSlim(false);
-
-        // Create a GCHandle to prevent the action from being garbage collected
-        var handle = GCHandle.Alloc(action);
-
-        try
-        {
-            // Create a wrapper that executes the action and signals completion
-            DispatchWorkDelegate work = (context) =>
-            {
-                try
-                {
-                    var actionToRun = (Action)GCHandle.FromIntPtr(context).Target!;
-                    actionToRun();
-                }
-                catch (Exception ex)
-                {
-                    caughtException = ex;
-                }
-                finally
-                {
-                    completed.Set();
-                }
-            };
-
-            // Pin the delegate to prevent it from being garbage collected
-            var workHandle = GCHandle.Alloc(work);
-            try
-            {
-                var workPtr = Marshal.GetFunctionPointerForDelegate(work);
-                dispatch_sync_f(mainQueue, GCHandle.ToIntPtr(handle), workPtr);
-            }
-            finally
-            {
-                workHandle.Free();
-            }
-
-            // Wait for completion
-            completed.Wait();
-
-            if (caughtException != null)
-                throw new InvalidOperationException("Exception occurred on main thread", caughtException);
-        }
-        finally
-        {
-            handle.Free();
-            completed.Dispose();
-        }
+        // Without TestHost's CustomMainThreadExecutor, we can't guarantee main thread execution
+        // Tests MUST be run via TestHost which provides the main thread dispatcher
+        // If running directly without TestHost on macOS, execution will fail
+        throw new InvalidOperationException(
+            "macOS main thread execution requires TestHost. " +
+            "Run tests via: dotnet run --project tests/SWTSharp.TestHost -- tests/SWTSharp.Tests/bin/Debug/netX.0/SWTSharp.Tests.dll");
     }
 
     public IntPtr CreateComposite(IntPtr parent, int style)

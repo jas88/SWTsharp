@@ -20,8 +20,12 @@ public class WidgetTests : TestBase
     [Fact]
     public void Display_Current_ShouldReturnSameAsDefault()
     {
-        var current = Display.Current;
-        Assert.Same(Display, current);
+        // Display.Current checks thread affinity, so we must call it on the UI thread
+        RunOnUIThread(() =>
+        {
+            var current = Display.Current;
+            Assert.Same(Display, current);
+        });
     }
 
     [Fact]
@@ -118,15 +122,21 @@ public class WidgetTests : TestBase
     [Fact]
     public void Label_Text_ShouldGetAndSet()
     {
+        Console.WriteLine("Label_Text_ShouldGetAndSet: Before RunOnUIThread");
         RunOnUIThread(() =>
         {
+            Console.WriteLine("Label_Text_ShouldGetAndSet: Inside RunOnUIThread");
             var shell = new Shell();
+            Console.WriteLine("Label_Text_ShouldGetAndSet: Created shell");
             var label = new Label(shell, SWT.NONE);
+            Console.WriteLine("Label_Text_ShouldGetAndSet: Created label");
             label.Text = "Hello World";
             Assert.Equal("Hello World", label.Text);
             label.Dispose();
             shell.Dispose();
+            Console.WriteLine("Label_Text_ShouldGetAndSet: Completed");
         });
+        Console.WriteLine("Label_Text_ShouldGetAndSet: After RunOnUIThread");
     }
 
     [Fact]

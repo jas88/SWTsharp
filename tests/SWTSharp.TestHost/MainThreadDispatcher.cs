@@ -15,6 +15,7 @@ public static class MainThreadDispatcher
     private static readonly ManualResetEventSlim _initialized = new(false);
 
     public static int MainThreadId => _mainThread?.ManagedThreadId ?? -1;
+    public static bool IsInitialized => _initialized.IsSet;
 
     /// <summary>
     /// Initializes the dispatcher with the current thread as main thread.

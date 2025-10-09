@@ -350,3 +350,4 @@ NEVER create files unless they're absolutely necessary for achieving your goal.
 ALWAYS prefer editing an existing file to creating a new one.
 NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
 Never save working files, text/mds and tests to the root folder.
+- DO NOT PISS AROUND WITH GCD, IT DOES NOT HELP. If running on macos any way other than our TestHost with custom dispatcher, just abort, tests will never ever pass whatever you try.

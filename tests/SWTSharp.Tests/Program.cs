@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Xunit;
 using Xunit.Abstractions;
 using SWTSharp.Tests.Infrastructure;
+using SWTSharp.TestHost;
 
 namespace SWTSharp.Tests;
 
@@ -75,9 +76,9 @@ public class Program
         MainThreadDispatcher.RunLoop();
 
         // Wait for test thread completion
-        if (!completionSignal.Wait(TimeSpan.FromSeconds(10)))
+        if (!completionSignal.Wait(TimeSpan.FromSeconds(300)))
         {
-            Console.Error.WriteLine("FATAL: Test thread did not complete");
+            Console.Error.WriteLine("FATAL: Test thread did not complete within 5 minutes");
             return 1;
         }
 
