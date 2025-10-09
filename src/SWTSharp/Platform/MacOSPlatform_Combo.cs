@@ -99,16 +99,35 @@ internal partial class MacOSPlatform
         InitializeComboSelectors();
         IntPtr nsItem = CreateNSString(item ?? string.Empty);
 
+        // Check if this is an NSPopUpButton (READ_ONLY) or NSComboBox (editable)
+        bool isPopUpButton = objc_msgSend_bool(handle, _selIsKindOfClass, _nsPopUpButtonClass);
+
         if (index < 0)
         {
             // Append to end
-            objc_msgSend(handle, _selAddItemWithObjectValue, nsItem);
+            if (isPopUpButton)
+            {
+                IntPtr selAddItemWithTitle = sel_registerName("addItemWithTitle:");
+                objc_msgSend(handle, selAddItemWithTitle, nsItem);
+            }
+            else
+            {
+                objc_msgSend(handle, _selAddItemWithObjectValue, nsItem);
+            }
         }
         else
         {
             // Insert at specific index
-            IntPtr selInsertItemAtIndex = sel_registerName("insertItemWithObjectValue:atIndex:");
-            objc_msgSend(handle, selInsertItemAtIndex, nsItem, (IntPtr)index);
+            if (isPopUpButton)
+            {
+                IntPtr selInsertItemAtIndex = sel_registerName("insertItemWithTitle:atIndex:");
+                objc_msgSend(handle, selInsertItemAtIndex, nsItem, (IntPtr)index);
+            }
+            else
+            {
+                IntPtr selInsertItemAtIndex = sel_registerName("insertItemWithObjectValue:atIndex:");
+                objc_msgSend(handle, selInsertItemAtIndex, nsItem, (IntPtr)index);
+            }
         }
     }
 
