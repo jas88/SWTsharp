@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using Xunit;
-using SWTSharp.TestHost;
 
 namespace SWTSharp.Tests.Infrastructure;
 
