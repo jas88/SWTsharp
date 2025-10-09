@@ -667,6 +667,7 @@ internal partial class LinuxPlatform : IPlatform
     private static extern void gtk_scrolled_window_set_policy(IntPtr scrolled_window, int hscrollbar_policy, int vscrollbar_policy);
 
     private readonly Dictionary<IntPtr, bool> _textWidgetTypes = new Dictionary<IntPtr, bool>(); // true = TextView, false = Entry
+    private readonly Dictionary<IntPtr, IntPtr> _textViewWidgets = new Dictionary<IntPtr, IntPtr>(); // scrolledWindow -> textView
 
     // Text control operations
     public IntPtr CreateText(IntPtr parent, int style)
@@ -688,7 +689,8 @@ internal partial class LinuxPlatform : IPlatform
 
             widget = scrolledWindow;
             _textWidgetTypes[widget] = true; // Mark as TextView
-            _widgetContainers[textView] = scrolledWindow; // Store relationship
+            _widgetContainers[textView] = scrolledWindow; // Store relationship for disposal
+            _textViewWidgets[scrolledWindow] = textView; // Direct lookup for text operations
         }
         else
         {
@@ -726,18 +728,8 @@ internal partial class LinuxPlatform : IPlatform
         {
             if (isTextView)
             {
-                // Multi-line TextView - get actual TextView widget
-                IntPtr textView = IntPtr.Zero;
-                foreach (var kvp in _widgetContainers)
-                {
-                    if (kvp.Value == handle)
-                    {
-                        textView = kvp.Key;
-                        break;
-                    }
-                }
-
-                if (textView != IntPtr.Zero)
+                // Multi-line TextView - get actual TextView widget from scrolledWindow
+                if (_textViewWidgets.TryGetValue(handle, out IntPtr textView))
                 {
                     IntPtr buffer = gtk_text_view_get_buffer(textView);
                     gtk_text_buffer_set_text(buffer, text ?? string.Empty, -1);
@@ -765,18 +757,8 @@ internal partial class LinuxPlatform : IPlatform
         {
             if (isTextView)
             {
-                // Multi-line TextView
-                IntPtr textView = IntPtr.Zero;
-                foreach (var kvp in _widgetContainers)
-                {
-                    if (kvp.Value == handle)
-                    {
-                        textView = kvp.Key;
-                        break;
-                    }
-                }
-
-                if (textView != IntPtr.Zero)
+                // Multi-line TextView - get actual TextView widget from scrolledWindow
+                if (_textViewWidgets.TryGetValue(handle, out IntPtr textView))
                 {
                     IntPtr buffer = gtk_text_view_get_buffer(textView);
 
@@ -914,18 +896,8 @@ internal partial class LinuxPlatform : IPlatform
         {
             if (isTextView)
             {
-                // Multi-line TextView
-                IntPtr textView = IntPtr.Zero;
-                foreach (var kvp in _widgetContainers)
-                {
-                    if (kvp.Value == handle)
-                    {
-                        textView = kvp.Key;
-                        break;
-                    }
-                }
-
-                if (textView != IntPtr.Zero)
+                // Multi-line TextView - get actual TextView widget from scrolledWindow
+                if (_textViewWidgets.TryGetValue(handle, out IntPtr textView))
                 {
                     gtk_text_view_set_editable(textView, !readOnly);
                 }

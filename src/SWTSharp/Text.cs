@@ -169,7 +169,14 @@ public class Text : Control
         CheckWidget();
         if (text != null)
         {
-            TextContent = GetText() + text;
+            string currentText = GetText();
+            _text = currentText + text;
+            // Only truncate if limit > 0 (0 means unlimited)
+            if (_textLimit > 0 && _text.Length > _textLimit)
+            {
+                _text = _text.SliceToString(0, _textLimit);
+            }
+            UpdateText();
         }
     }
 
