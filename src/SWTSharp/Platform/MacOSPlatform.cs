@@ -255,24 +255,13 @@ internal partial class MacOSPlatform : IPlatform
         _selUTF8String = sel_registerName("UTF8String");
         NSSetUncaughtExceptionHandler(HandleUncaughtException);
 
-        // Initialize all widget-specific selectors upfront to avoid lazy initialization issues
-        // This ensures all selectors are registered early and any missing selectors fail fast
+        // Initialize common widget selectors upfront to avoid lazy initialization issues
+        // This ensures critical selectors are registered early and any missing selectors fail fast
+        // Note: Some selectors (ToolBar, Tree, etc.) are still lazily initialized to avoid
+        // loading unused Cocoa classes during startup
         InitializeButtonSelectors();
         InitializeMenuSelectors();
         InitializeTextSelectors();
-        InitializeCanvasSelectors();
-        InitializeComboSelectors();
-        InitializeGroupSelectors();
-        InitializeListSelectors();
-        InitializeProgressBarSelectors();
-        InitializeScaleSelectors();
-        InitializeSliderSelectors();
-        InitializeSpinnerSelectors();
-        InitializeTabFolderSelectors();
-        InitializeToolBarSelectors();
-        InitializeTableSelectors();
-        InitializeColumnSelectors();
-        InitializeTreeSelectors();
     }
 
     private static void HandleUncaughtException(IntPtr exception)
@@ -704,7 +693,7 @@ internal partial class MacOSPlatform : IPlatform
             _selSetHidden = sel_registerName("setHidden:");
             _selSetFrameOrigin = sel_registerName("setFrameOrigin:");
             _selSetFrameSize = sel_registerName("setFrameSize:");
-            _selAddSubview = sel_registerName("addSubview:");
+            // Note: _selAddSubview is now initialized in main Initialize() method
         }
     }
 
