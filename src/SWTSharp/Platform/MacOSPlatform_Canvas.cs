@@ -20,6 +20,8 @@ internal partial class MacOSPlatform
     private IntPtr _selSetNeedsDisplay;
     private IntPtr _selSetNeedsDisplayInRect;
     private IntPtr _selSetBackgroundColor;
+    private IntPtr _selContentView;
+    private IntPtr _selIsKindOfClass;
 
     private void InitializeCanvasSelectors()
     {
@@ -29,6 +31,14 @@ internal partial class MacOSPlatform
             _selSetNeedsDisplay = sel_registerName("setNeedsDisplay:");
             _selSetNeedsDisplayInRect = sel_registerName("setNeedsDisplayInRect:");
             _selSetBackgroundColor = sel_registerName("setBackgroundColor:");
+            _selContentView = sel_registerName("contentView");
+            _selIsKindOfClass = sel_registerName("isKindOfClass:");
+        }
+
+        // Ensure _nsWindowClass is initialized (defined in MacOSPlatform.cs)
+        if (_nsWindowClass == IntPtr.Zero)
+        {
+            _nsWindowClass = objc_getClass("NSWindow");
         }
     }
 
@@ -54,7 +64,16 @@ internal partial class MacOSPlatform
             {
                 _selAddSubview = sel_registerName("addSubview:");
             }
-            objc_msgSend(parent, _selAddSubview, view);
+
+            // Check if parent is an NSWindow - if so, use contentView
+            IntPtr targetView = parent;
+            if (objc_msgSend_bool(parent, _selIsKindOfClass, _nsWindowClass))
+            {
+                // Parent is NSWindow, get its contentView
+                targetView = objc_msgSend(parent, _selContentView);
+            }
+
+            objc_msgSend(targetView, _selAddSubview, view);
         }
 
         return view;
