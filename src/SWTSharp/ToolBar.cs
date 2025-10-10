@@ -8,6 +8,7 @@ namespace SWTSharp;
 public class ToolBar : Composite
 {
     private readonly List<ToolItem> _items = new();
+    private IntPtr _toolBarHandle;
 
     /// <summary>
     /// Gets an array of all items in the toolbar.
@@ -67,12 +68,28 @@ public class ToolBar : Composite
     }
 
     /// <summary>
+    /// Gets or sets the platform-specific toolbar handle.
+    /// Note: ToolBar uses its own internal handle instead of the inherited Handle property
+    /// to avoid conflicts with the Composite disposal chain.
+    /// </summary>
+    internal override IntPtr Handle
+    {
+        get => IntPtr.Zero; // Return Zero to prevent Composite.ReleaseWidget from destroying it
+        set { } // Ignore sets from base class
+    }
+
+    /// <summary>
+    /// Gets the actual platform-specific toolbar handle for use by ToolItem.
+    /// </summary>
+    internal IntPtr ToolBarHandle => _toolBarHandle;
+
+    /// <summary>
     /// Creates the platform-specific toolbar widget.
     /// </summary>
     protected override void CreateWidget()
     {
-        // Create platform-specific toolbar handle
-        Handle = Platform.PlatformFactory.Instance.CreateToolBar(Parent!.Handle, Style);
+        // Create platform-specific toolbar handle (stored separately from inherited Handle)
+        _toolBarHandle = Platform.PlatformFactory.Instance.CreateToolBar(Parent!.Handle, Style);
     }
 
     /// <summary>
@@ -198,17 +215,17 @@ public class ToolBar : Composite
 
     protected override void UpdateVisible()
     {
-        if (Handle != IntPtr.Zero)
+        if (_toolBarHandle != IntPtr.Zero)
         {
-            Platform.PlatformFactory.Instance.SetControlVisible(Handle, Visible);
+            Platform.PlatformFactory.Instance.SetControlVisible(_toolBarHandle, Visible);
         }
     }
 
     protected override void UpdateEnabled()
     {
-        if (Handle != IntPtr.Zero)
+        if (_toolBarHandle != IntPtr.Zero)
         {
-            Platform.PlatformFactory.Instance.SetControlEnabled(Handle, Enabled);
+            Platform.PlatformFactory.Instance.SetControlEnabled(_toolBarHandle, Enabled);
         }
     }
 
@@ -228,11 +245,10 @@ public class ToolBar : Composite
         }
 
         // Destroy platform toolbar handle
-        if (Handle != IntPtr.Zero)
+        if (_toolBarHandle != IntPtr.Zero)
         {
-            Platform.PlatformFactory.Instance.DestroyToolBar(Handle);
-            // Clear the handle to prevent base.ReleaseWidget from calling DestroyWindow on the pseudo-handle
-            Handle = IntPtr.Zero;
+            Platform.PlatformFactory.Instance.DestroyToolBar(_toolBarHandle);
+            _toolBarHandle = IntPtr.Zero;
         }
 
         base.ReleaseWidget();

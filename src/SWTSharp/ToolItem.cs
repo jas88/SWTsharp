@@ -268,8 +268,9 @@ public class ToolItem : Widget
         }
 
         // Create platform-specific tool item handle
+        // Use ToolBarHandle instead of Handle to get the actual toolbar pseudo-handle
         Handle = Platform.PlatformFactory.Instance.CreateToolItem(
-            _parent.Handle,
+            _parent.ToolBarHandle,
             Style,
             _id,
             index);
