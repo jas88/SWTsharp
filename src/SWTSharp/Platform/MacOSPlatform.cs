@@ -197,6 +197,9 @@ internal partial class MacOSPlatform : IPlatform
     private const ulong NSWindowStyleMaskClosable = 1 << 1;
     private const ulong NSWindowStyleMaskMiniaturizable = 1 << 2;
     private const ulong NSWindowStyleMaskResizable = 1 << 3;
+    private const ulong NSWindowStyleMaskUtilityWindow = 1 << 4;  // 0x10 - not supported, filtered out
+    private const ulong NSWindowStyleMaskDocModalWindow = 1 << 6;
+    private const ulong NSWindowStyleMaskNonactivatingPanel = 1 << 7;
 
     // Event masks
     private const ulong NSEventMaskAny = ulong.MaxValue;
@@ -398,6 +401,12 @@ internal partial class MacOSPlatform : IPlatform
             {
                 styleMask |= NSWindowStyleMaskResizable;
             }
+
+            // Filter out unsupported style masks for NSWindow
+            // NSWindow does not support NSWindowStyleMaskUtilityWindow (0x10)
+            styleMask &= ~NSWindowStyleMaskUtilityWindow;
+            styleMask &= ~NSWindowStyleMaskDocModalWindow;
+            styleMask &= ~NSWindowStyleMaskNonactivatingPanel;
 
             // Create window frame
             var frame = new CGRect(100, 100, 800, 600);
