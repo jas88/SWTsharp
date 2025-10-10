@@ -29,7 +29,7 @@ public static class TestRunner
         }
     }
 
-    private static async Task<int> RunWithMainThreadDispatcher(string[] args)
+    private static Task<int> RunWithMainThreadDispatcher(string[] args)
     {
         // Initialize MainThreadDispatcher on Thread 1
         MainThreadDispatcher.Initialize();
@@ -38,11 +38,11 @@ public static class TestRunner
         var completionSignal = new ManualResetEventSlim(false);
 
         // Run xUnit on a background thread
-        var xunitThread = new Thread(async () =>
+        var xunitThread = new Thread(() =>
         {
             try
             {
-                exitCode = await RunXUnit(args);
+                exitCode = RunXUnit(args).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -68,7 +68,7 @@ public static class TestRunner
 
         // Wait for xUnit to finish
         completionSignal.Wait();
-        return exitCode;
+        return Task.FromResult(exitCode);
     }
 
     private static Task<int> RunXUnit(string[] args)
