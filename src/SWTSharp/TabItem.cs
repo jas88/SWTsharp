@@ -10,6 +10,7 @@ public class TabItem : Widget
     private string _text = string.Empty;
     private string _toolTipText = string.Empty;
     private Control? _control;
+    private IntPtr _handle;
 
     /// <summary>
     /// Gets the parent TabFolder.
@@ -77,6 +78,16 @@ public class TabItem : Widget
     }
 
     /// <summary>
+    /// Gets or sets the platform-specific tab item handle.
+    /// TabItem uses its own internal handle instead of the inherited Handle property.
+    /// </summary>
+    internal override IntPtr Handle
+    {
+        get => _handle;
+        set => _handle = value;
+    }
+
+    /// <summary>
     /// Creates a new tab item and appends it to the parent TabFolder.
     /// </summary>
     /// <param name="parent">The parent TabFolder</param>
@@ -136,9 +147,9 @@ public class TabItem : Widget
         _control = control;
 
         // Update platform
-        if (Handle != IntPtr.Zero)
+        if (_handle != IntPtr.Zero)
         {
-            Platform.PlatformFactory.Instance.SetTabItemControl(Handle, control?.Handle ?? IntPtr.Zero);
+            Platform.PlatformFactory.Instance.SetTabItemControl(_handle, control?.Handle ?? IntPtr.Zero);
         }
 
         // Show control if this tab is currently selected
@@ -219,9 +230,9 @@ public class TabItem : Widget
     /// </summary>
     private void UpdateText()
     {
-        if (Handle != IntPtr.Zero)
+        if (_handle != IntPtr.Zero)
         {
-            Platform.PlatformFactory.Instance.SetTabItemText(Handle, _text);
+            Platform.PlatformFactory.Instance.SetTabItemText(_handle, _text);
         }
     }
 
@@ -230,9 +241,9 @@ public class TabItem : Widget
     /// </summary>
     private void UpdateToolTip()
     {
-        if (Handle != IntPtr.Zero)
+        if (_handle != IntPtr.Zero)
         {
-            Platform.PlatformFactory.Instance.SetTabItemToolTip(Handle, _toolTipText);
+            Platform.PlatformFactory.Instance.SetTabItemToolTip(_handle, _toolTipText);
         }
     }
 
