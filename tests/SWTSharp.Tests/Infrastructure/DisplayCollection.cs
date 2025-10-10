@@ -26,6 +26,27 @@ public class DisplayFixture : IDisposable
     {
         Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}");
 
+        // On macOS, tests MUST run through the custom test runner (Program.Main)
+        // which initializes MainThreadDispatcher on Thread 1
+        // If MainThreadDispatcher is not initialized, we're being run by 'dotnet test'
+        // which won't work on macOS - skip all tests by throwing
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            if (!SWTSharp.TestHost.MainThreadDispatcher.IsInitialized)
+            {
+                var message =
+                    "macOS tests must run through custom test runner.\n" +
+                    "Use: dotnet run --project tests/SWTSharp.Tests\n" +
+                    "NOT: dotnet test\n" +
+                    "\n" +
+                    "The MacOSRunnerTests.MacOS_Tests_Should_Run_Through_Custom_Runner test\n" +
+                    "will automatically launch the custom runner when you use 'dotnet test'.";
+
+                Console.Error.WriteLine($"ERROR: {message}");
+                throw new InvalidOperationException(message);
+            }
+        }
+
         // On macOS, Display must be created on Thread 1 (the main thread)
         // Use MainThreadDispatcher to ensure Display is created on Thread 1
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
