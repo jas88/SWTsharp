@@ -47,7 +47,7 @@ public class ToolBar : Composite
     /// <param name="style">The toolbar style bits (FLAT, WRAP, RIGHT, HORIZONTAL, VERTICAL, SHADOW_OUT).</param>
     public ToolBar(Composite parent, int style) : base(parent, CheckStyle(style))
     {
-        CreateWidget();
+        // CreateWidget is already called by base Composite constructor
     }
 
     private static int CheckStyle(int style)
