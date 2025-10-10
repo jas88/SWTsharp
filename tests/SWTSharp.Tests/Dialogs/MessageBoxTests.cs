@@ -15,106 +15,136 @@ public class MessageBoxTests : TestBase
     [Fact]
     public void MessageBox_Create_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        Assert.NotNull(messageBox);
+            Assert.NotNull(messageBox);
+        });
     }
 
     [Fact]
     public void MessageBox_Create_WithStyles_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var styles = new[] { SWT.OK, SWT.CANCEL, SWT.YES | SWT.NO, SWT.ICON_ERROR, SWT.ICON_INFORMATION };
-
-        foreach (var style in styles)
+        RunOnUIThread(() =>
         {
-            var messageBox = new MessageBox(shell, style);
-            Assert.NotNull(messageBox);
-        }
+            using var shell = CreateTestShell();
+            var styles = new[] { SWT.OK, SWT.CANCEL, SWT.YES | SWT.NO, SWT.ICON_ERROR, SWT.ICON_INFORMATION };
+
+            foreach (var style in styles)
+            {
+                var messageBox = new MessageBox(shell, style);
+                Assert.NotNull(messageBox);
+            }
+        });
     }
 
     [Fact]
     public void MessageBox_Message_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        messageBox.Message = "Test message";
+            messageBox.Message = "Test message";
 
-        Assert.Equal("Test message", messageBox.Message);
+            Assert.Equal("Test message", messageBox.Message);
+        });
     }
 
     [Fact]
     public void MessageBox_Message_WithEmptyString_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        messageBox.Message = string.Empty;
+            messageBox.Message = string.Empty;
 
-        Assert.Equal(string.Empty, messageBox.Message);
+            Assert.Equal(string.Empty, messageBox.Message);
+        });
     }
 
     [Fact]
     public void MessageBox_Message_WithNull_ShouldSetEmptyString()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        messageBox.Message = null!;
+            messageBox.Message = null!;
 
-        Assert.Equal(string.Empty, messageBox.Message);
+            Assert.Equal(string.Empty, messageBox.Message);
+        });
     }
 
     [Fact]
     public void MessageBox_InitialMessage_ShouldBeEmpty()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        Assert.Equal(string.Empty, messageBox.Message);
+            Assert.Equal(string.Empty, messageBox.Message);
+        });
     }
 
     [Fact]
     public void MessageBox_MessageUpdate_ShouldWork()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        messageBox.Message = "First";
-        Assert.Equal("First", messageBox.Message);
+            messageBox.Message = "First";
+            Assert.Equal("First", messageBox.Message);
 
-        messageBox.Message = "Second";
-        Assert.Equal("Second", messageBox.Message);
+            messageBox.Message = "Second";
+            Assert.Equal("Second", messageBox.Message);
+        });
     }
 
     [Fact]
     public void MessageBox_Parent_ShouldMatchShell()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        Assert.Same(shell, messageBox.Parent);
+            Assert.Same(shell, messageBox.Parent);
+        });
     }
 
     [Fact]
     public void MessageBox_Style_ShouldMatchConstructor()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell, SWT.OK | SWT.ICON_INFORMATION);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell, SWT.OK | SWT.ICON_INFORMATION);
 
-        Assert.Equal(SWT.OK | SWT.ICON_INFORMATION, messageBox.Style);
+            Assert.Equal(SWT.OK | SWT.ICON_INFORMATION, messageBox.Style);
+        });
     }
 
     [Fact]
     public void MessageBox_Text_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var messageBox = new MessageBox(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var messageBox = new MessageBox(shell);
 
-        messageBox.Text = "Dialog Title";
+            messageBox.Text = "Dialog Title";
 
-        Assert.Equal("Dialog Title", messageBox.Text);
+            Assert.Equal("Dialog Title", messageBox.Text);
+        });
     }
 }

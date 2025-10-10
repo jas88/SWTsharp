@@ -14,12 +14,15 @@ public class ControlTests : WidgetTestBase
     [Fact]
     public void Control_Visible_DefaultTrue()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
 
-        Assert.True(control.Visible);
+            Assert.True(control.Visible);
 
-        control.Dispose();
+            control.Dispose();
+        });
     }
 
     [Fact]
@@ -36,12 +39,15 @@ public class ControlTests : WidgetTestBase
     [Fact]
     public void Control_Enabled_DefaultTrue()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
 
-        Assert.True(control.Enabled);
+            Assert.True(control.Enabled);
 
-        control.Dispose();
+            control.Dispose();
+        });
     }
 
     [Fact]
@@ -64,12 +70,15 @@ public class ControlTests : WidgetTestBase
     [Fact]
     public void Control_Display_ShouldMatchParent()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
 
-        Assert.Same(shell.Display, control.Display);
+            Assert.Same(shell.Display, control.Display);
 
-        control.Dispose();
+            control.Dispose();
+        });
     }
 
     [Fact]
@@ -99,21 +108,27 @@ public class ControlTests : WidgetTestBase
     [Fact]
     public void Control_GetVisible_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
-        control.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
+            control.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => _ = control.Visible);
+            Assert.Throws<SWTDisposedException>(() => _ = control.Visible);
+        });
     }
 
     [Fact]
     public void Control_GetEnabled_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
-        control.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
+            control.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => _ = control.Enabled);
+            Assert.Throws<SWTDisposedException>(() => _ = control.Enabled);
+        });
     }
 
     [Fact]
@@ -125,41 +140,50 @@ public class ControlTests : WidgetTestBase
     [Fact]
     public void Control_ParentDispose_ShouldDisposeControl()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
 
-        shell.Dispose();
+            shell.Dispose();
 
-        Assert.True(control.IsDisposed);
+            Assert.True(control.IsDisposed);
+        });
     }
 
     [Fact]
     public void Control_VisibleFalse_ThenTrue_ShouldWork()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
 
-        control.Visible = false;
-        Assert.False(control.Visible);
+            control.Visible = false;
+            Assert.False(control.Visible);
 
-        control.Visible = true;
-        Assert.True(control.Visible);
+            control.Visible = true;
+            Assert.True(control.Visible);
 
-        control.Dispose();
+            control.Dispose();
+        });
     }
 
     [Fact]
     public void Control_EnabledFalse_ThenTrue_ShouldWork()
     {
-        using var shell = CreateTestShell();
-        var control = new Button(shell, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var control = new Button(shell, SWT.PUSH);
 
-        control.Enabled = false;
-        Assert.False(control.Enabled);
+            control.Enabled = false;
+            Assert.False(control.Enabled);
 
-        control.Enabled = true;
-        Assert.True(control.Enabled);
+            control.Enabled = true;
+            Assert.True(control.Enabled);
 
-        control.Dispose();
+            control.Dispose();
+        });
     }
 }

@@ -231,6 +231,8 @@ public class ToolBar : Composite
         if (Handle != IntPtr.Zero)
         {
             Platform.PlatformFactory.Instance.DestroyToolBar(Handle);
+            // Clear the handle to prevent base.ReleaseWidget from calling DestroyWindow on the pseudo-handle
+            Handle = IntPtr.Zero;
         }
 
         base.ReleaseWidget();

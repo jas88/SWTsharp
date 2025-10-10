@@ -86,42 +86,51 @@ public class ScaleTests : WidgetTestBase
     [Fact]
     public void Scale_Selection_ClampedToMinimum()
     {
-        using var shell = CreateTestShell();
-        var scale = new Scale(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var scale = new Scale(shell, SWT.NONE);
 
-        scale.Minimum = 10;
-        scale.Selection = 5;
+            scale.Minimum = 10;
+            scale.Selection = 5;
 
-        Assert.Equal(10, scale.Selection);
+            Assert.Equal(10, scale.Selection);
 
-        scale.Dispose();
+            scale.Dispose();
+        });
     }
 
     [Fact]
     public void Scale_Selection_ClampedToMaximum()
     {
-        using var shell = CreateTestShell();
-        var scale = new Scale(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var scale = new Scale(shell, SWT.NONE);
 
-        scale.Maximum = 100;
-        scale.Selection = 150;
+            scale.Maximum = 100;
+            scale.Selection = 150;
 
-        Assert.Equal(100, scale.Selection);
+            Assert.Equal(100, scale.Selection);
 
-        scale.Dispose();
+            scale.Dispose();
+        });
     }
 
     [Fact]
     public void Scale_DefaultValues_ShouldBeCorrect()
     {
-        using var shell = CreateTestShell();
-        var scale = new Scale(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var scale = new Scale(shell, SWT.NONE);
 
-        Assert.Equal(0, scale.Minimum);
-        Assert.Equal(100, scale.Maximum);
-        Assert.Equal(0, scale.Selection);
+            Assert.Equal(0, scale.Minimum);
+            Assert.Equal(100, scale.Maximum);
+            Assert.Equal(0, scale.Selection);
 
-        scale.Dispose();
+            scale.Dispose();
+        });
     }
 
     [Fact]

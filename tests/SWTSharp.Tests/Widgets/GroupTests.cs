@@ -55,29 +55,35 @@ public class GroupTests : WidgetTestBase
     [Fact]
     public void Group_Text_WithNull_ShouldSetEmptyString()
     {
-        using var shell = CreateTestShell();
-        var group = new Group(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var group = new Group(shell, SWT.NONE);
 
-        group.Text = null!;
+            group.Text = null!;
 
-        Assert.Equal(string.Empty, group.Text);
+            Assert.Equal(string.Empty, group.Text);
 
-        group.Dispose();
+            group.Dispose();
+        });
     }
 
     [Fact]
     public void Group_AddChildren_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var group = new Group(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var group = new Group(shell, SWT.NONE);
 
-        var button = new Button(group, SWT.PUSH);
-        var label = new Label(group, SWT.NONE);
+            var button = new Button(group, SWT.PUSH);
+            var label = new Label(group, SWT.NONE);
 
-        Assert.Same(group, button.Parent);
-        Assert.Same(group, label.Parent);
+            Assert.Same(group, button.Parent);
+            Assert.Same(group, label.Parent);
 
-        group.Dispose();
+            group.Dispose();
+        });
     }
 
     [Fact]
@@ -95,14 +101,17 @@ public class GroupTests : WidgetTestBase
     [Fact]
     public void Group_Dispose_ShouldDisposeChildren()
     {
-        using var shell = CreateTestShell();
-        var group = new Group(shell, SWT.NONE);
-        var button = new Button(group, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var group = new Group(shell, SWT.NONE);
+            var button = new Button(group, SWT.PUSH);
 
-        group.Dispose();
+            group.Dispose();
 
-        Assert.True(group.IsDisposed);
-        Assert.True(button.IsDisposed);
+            Assert.True(group.IsDisposed);
+            Assert.True(button.IsDisposed);
+        });
     }
 
     [Fact]
@@ -145,22 +154,28 @@ public class GroupTests : WidgetTestBase
     [Fact]
     public void Group_InitialText_ShouldBeEmpty()
     {
-        using var shell = CreateTestShell();
-        var group = new Group(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var group = new Group(shell, SWT.NONE);
 
-        Assert.Equal(string.Empty, group.Text);
+            Assert.Equal(string.Empty, group.Text);
 
-        group.Dispose();
+            group.Dispose();
+        });
     }
 
     [Fact]
     public void Group_Display_ShouldMatchParent()
     {
-        using var shell = CreateTestShell();
-        var group = new Group(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var group = new Group(shell, SWT.NONE);
 
-        Assert.Same(shell.Display, group.Display);
+            Assert.Same(shell.Display, group.Display);
 
-        group.Dispose();
+            group.Dispose();
+        });
     }
 }

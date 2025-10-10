@@ -32,61 +32,73 @@ public class ComboTests : WidgetTestBase
     [Fact]
     public void Combo_Add_SingleItem_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.NONE);
 
-        combo.Add("Item 1");
+            combo.Add("Item 1");
 
-        Assert.Equal(1, combo.ItemCount);
-        Assert.Contains("Item 1", combo.Items);
+            Assert.Equal(1, combo.ItemCount);
+            Assert.Contains("Item 1", combo.Items);
 
-        combo.Dispose();
+            combo.Dispose();
+        });
     }
 
     [Fact]
     public void Combo_Add_MultipleItems_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.NONE);
 
-        combo.Add("Item 1");
-        combo.Add("Item 2");
-        combo.Add("Item 3");
+            combo.Add("Item 1");
+            combo.Add("Item 2");
+            combo.Add("Item 3");
 
-        Assert.Equal(3, combo.ItemCount);
+            Assert.Equal(3, combo.ItemCount);
 
-        combo.Dispose();
+            combo.Dispose();
+        });
     }
 
     [Fact]
     public void Combo_Remove_ShouldRemoveItem()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.NONE);
 
-        combo.Add("Item 1");
-        combo.Add("Item 2");
-        combo.Remove(0);
+            combo.Add("Item 1");
+            combo.Add("Item 2");
+            combo.Remove(0);
 
-        Assert.Equal(1, combo.ItemCount);
-        Assert.DoesNotContain("Item 1", combo.Items);
+            Assert.Equal(1, combo.ItemCount);
+            Assert.DoesNotContain("Item 1", combo.Items);
 
-        combo.Dispose();
+            combo.Dispose();
+        });
     }
 
     [Fact]
     public void Combo_RemoveAll_ShouldClearCombo()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.NONE);
 
-        combo.Add("Item 1");
-        combo.Add("Item 2");
-        combo.RemoveAll();
+            combo.Add("Item 1");
+            combo.Add("Item 2");
+            combo.RemoveAll();
 
-        Assert.Equal(0, combo.ItemCount);
+            Assert.Equal(0, combo.ItemCount);
 
-        combo.Dispose();
+            combo.Dispose();
+        });
     }
 
     [Fact]
@@ -103,33 +115,39 @@ public class ComboTests : WidgetTestBase
     [Fact]
     public void Combo_SelectionIndex_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.READ_ONLY);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.READ_ONLY);
 
-        combo.Add("Item 1");
-        combo.Add("Item 2");
+            combo.Add("Item 1");
+            combo.Add("Item 2");
 
-        combo.Select(1);
+            combo.Select(1);
 
-        Assert.Equal(1, combo.SelectionIndex);
+            Assert.Equal(1, combo.SelectionIndex);
 
-        combo.Dispose();
+            combo.Dispose();
+        });
     }
 
     [Fact]
     public void Combo_Items_ShouldReturnAllItems()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.NONE);
 
-        combo.Add("A");
-        combo.Add("B");
-        combo.Add("C");
+            combo.Add("A");
+            combo.Add("B");
+            combo.Add("C");
 
-        var items = combo.Items;
-        Assert.Equal(3, items.Length);
+            var items = combo.Items;
+            Assert.Equal(3, items.Length);
 
-        combo.Dispose();
+            combo.Dispose();
+        });
     }
 
     [Fact]
@@ -147,11 +165,14 @@ public class ComboTests : WidgetTestBase
     [Fact]
     public void Combo_Add_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.NONE);
-        combo.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.NONE);
+            combo.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => combo.Add("Item"));
+            Assert.Throws<SWTDisposedException>(() => combo.Add("Item"));
+        });
     }
 
     [Fact]
@@ -185,14 +206,17 @@ public class ComboTests : WidgetTestBase
     [Fact]
     public void Combo_TextLimit_ShouldLimitText()
     {
-        using var shell = CreateTestShell();
-        var combo = new Combo(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var combo = new Combo(shell, SWT.NONE);
 
-        combo.TextLimit = 5;
-        combo.Text = "1234567890";
+            combo.TextLimit = 5;
+            combo.Text = "1234567890";
 
-        Assert.Equal("12345", combo.Text);
+            Assert.Equal("12345", combo.Text);
 
-        combo.Dispose();
+            combo.Dispose();
+        });
     }
 }

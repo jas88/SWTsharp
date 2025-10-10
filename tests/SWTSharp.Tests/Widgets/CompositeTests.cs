@@ -36,43 +36,52 @@ public class CompositeTests : WidgetTestBase
     [Fact]
     public void Composite_Dispose_ShouldDisposeChildren()
     {
-        using var shell = CreateTestShell();
-        var composite = new Composite(shell, SWT.NONE);
-        var button = new Button(composite, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var composite = new Composite(shell, SWT.NONE);
+            var button = new Button(composite, SWT.PUSH);
 
-        composite.Dispose();
+            composite.Dispose();
 
-        Assert.True(composite.IsDisposed);
-        Assert.True(button.IsDisposed);
+            Assert.True(composite.IsDisposed);
+            Assert.True(button.IsDisposed);
+        });
     }
 
     [Fact]
     public void Composite_AddChild_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var composite = new Composite(shell, SWT.NONE);
-        var button = new Button(composite, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var composite = new Composite(shell, SWT.NONE);
+            var button = new Button(composite, SWT.PUSH);
 
-        Assert.Same(composite, button.Parent);
+            Assert.Same(composite, button.Parent);
 
-        button.Dispose();
-        composite.Dispose();
+            button.Dispose();
+            composite.Dispose();
+        });
     }
 
     [Fact]
     public void Composite_AddMultipleChildren_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var composite = new Composite(shell, SWT.NONE);
-        var button1 = new Button(composite, SWT.PUSH);
-        var button2 = new Button(composite, SWT.PUSH);
-        var label = new Label(composite, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var composite = new Composite(shell, SWT.NONE);
+            var button1 = new Button(composite, SWT.PUSH);
+            var button2 = new Button(composite, SWT.PUSH);
+            var label = new Label(composite, SWT.NONE);
 
-        Assert.Same(composite, button1.Parent);
-        Assert.Same(composite, button2.Parent);
-        Assert.Same(composite, label.Parent);
+            Assert.Same(composite, button1.Parent);
+            Assert.Same(composite, button2.Parent);
+            Assert.Same(composite, label.Parent);
 
-        composite.Dispose();
+            composite.Dispose();
+        });
     }
 
     [Fact]
@@ -121,48 +130,60 @@ public class CompositeTests : WidgetTestBase
     [Fact]
     public void Composite_NestedComposites_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var composite1 = new Composite(shell, SWT.NONE);
-        var composite2 = new Composite(composite1, SWT.NONE);
-        var composite3 = new Composite(composite2, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var composite1 = new Composite(shell, SWT.NONE);
+            var composite2 = new Composite(composite1, SWT.NONE);
+            var composite3 = new Composite(composite2, SWT.NONE);
 
-        Assert.Same(shell, composite1.Parent);
-        Assert.Same(composite1, composite2.Parent);
-        Assert.Same(composite2, composite3.Parent);
+            Assert.Same(shell, composite1.Parent);
+            Assert.Same(composite1, composite2.Parent);
+            Assert.Same(composite2, composite3.Parent);
 
-        composite1.Dispose();
+            composite1.Dispose();
+        });
     }
 
     [Fact]
     public void Composite_Display_ShouldMatchParent()
     {
-        using var shell = CreateTestShell();
-        var composite = new Composite(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var composite = new Composite(shell, SWT.NONE);
 
-        Assert.Same(shell.Display, composite.Display);
+            Assert.Same(shell.Display, composite.Display);
 
-        composite.Dispose();
+            composite.Dispose();
+        });
     }
 
     [Fact]
     public void Composite_InitiallyVisible()
     {
-        using var shell = CreateTestShell();
-        var composite = new Composite(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var composite = new Composite(shell, SWT.NONE);
 
-        Assert.True(composite.Visible);
+            Assert.True(composite.Visible);
 
-        composite.Dispose();
+            composite.Dispose();
+        });
     }
 
     [Fact]
     public void Composite_InitiallyEnabled()
     {
-        using var shell = CreateTestShell();
-        var composite = new Composite(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var composite = new Composite(shell, SWT.NONE);
 
-        Assert.True(composite.Enabled);
+            Assert.True(composite.Enabled);
 
-        composite.Dispose();
+            composite.Dispose();
+        });
     }
 }

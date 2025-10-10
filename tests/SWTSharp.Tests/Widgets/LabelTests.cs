@@ -56,32 +56,38 @@ public class LabelTests : WidgetTestBase
     [Fact]
     public void Label_Text_WithNull_ShouldSetEmptyString()
     {
-        using var shell = CreateTestShell();
-        var label = new Label(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var label = new Label(shell, SWT.NONE);
 
-        label.Text = null!;
+            label.Text = null!;
 
-        Assert.Equal(string.Empty, label.Text);
+            Assert.Equal(string.Empty, label.Text);
 
-        label.Dispose();
+            label.Dispose();
+        });
     }
 
     [Fact]
     public void Label_Text_MultipleUpdates_ShouldWork()
     {
-        using var shell = CreateTestShell();
-        var label = new Label(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var label = new Label(shell, SWT.NONE);
 
-        label.Text = "First";
-        Assert.Equal("First", label.Text);
+            label.Text = "First";
+            Assert.Equal("First", label.Text);
 
-        label.Text = "Second";
-        Assert.Equal("Second", label.Text);
+            label.Text = "Second";
+            Assert.Equal("Second", label.Text);
 
-        label.Text = "Third";
-        Assert.Equal("Third", label.Text);
+            label.Text = "Third";
+            Assert.Equal("Third", label.Text);
 
-        label.Dispose();
+            label.Dispose();
+        });
     }
 
     [Fact]
@@ -108,11 +114,14 @@ public class LabelTests : WidgetTestBase
     [Fact]
     public void Label_GetText_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var label = new Label(shell, SWT.NONE);
-        label.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var label = new Label(shell, SWT.NONE);
+            label.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => _ = label.Text);
+            Assert.Throws<SWTDisposedException>(() => _ = label.Text);
+        });
     }
 
     [Fact]
@@ -146,22 +155,28 @@ public class LabelTests : WidgetTestBase
     [Fact]
     public void Label_Display_ShouldMatchParent()
     {
-        using var shell = CreateTestShell();
-        var label = new Label(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var label = new Label(shell, SWT.NONE);
 
-        Assert.Same(shell.Display, label.Display);
+            Assert.Same(shell.Display, label.Display);
 
-        label.Dispose();
+            label.Dispose();
+        });
     }
 
     [Fact]
     public void Label_InitialText_ShouldBeEmpty()
     {
-        using var shell = CreateTestShell();
-        var label = new Label(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var label = new Label(shell, SWT.NONE);
 
-        Assert.Equal(string.Empty, label.Text);
+            Assert.Equal(string.Empty, label.Text);
 
-        label.Dispose();
+            label.Dispose();
+        });
     }
 }

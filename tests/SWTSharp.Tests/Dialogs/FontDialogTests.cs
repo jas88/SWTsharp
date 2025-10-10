@@ -16,123 +16,156 @@ public class FontDialogTests : TestBase
     [Fact]
     public void FontDialog_Create_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        Assert.NotNull(fontDialog);
+            Assert.NotNull(fontDialog);
+        });
     }
 
     [Fact]
     public void FontDialog_Create_WithStyles_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var styles = new[] { SWT.NONE };
-
-        foreach (var style in styles)
+        RunOnUIThread(() =>
         {
-            var fontDialog = new FontDialog(shell, style);
-            Assert.NotNull(fontDialog);
-        }
+            using var shell = CreateTestShell();
+            var styles = new[] { SWT.NONE };
+
+            foreach (var style in styles)
+            {
+                var fontDialog = new FontDialog(shell, style);
+                Assert.NotNull(fontDialog);
+            }
+        });
     }
 
     [Fact]
     public void FontDialog_FontData_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        var fontData = new FontData("Arial", 12, SWT.NORMAL);
-        fontDialog.FontData = fontData;
+            var fontData = new FontData("Arial", 12, SWT.NORMAL);
+            fontDialog.FontData = fontData;
 
-        Assert.Equal(fontData, fontDialog.FontData);
+            Assert.Equal(fontData, fontDialog.FontData);
+        });
     }
 
     [Fact]
     public void FontDialog_FontData_WithBold_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        var fontData = new FontData("Times New Roman", 14, SWT.BOLD);
-        fontDialog.FontData = fontData;
+            var fontData = new FontData("Times New Roman", 14, SWT.BOLD);
+            fontDialog.FontData = fontData;
 
-        Assert.Equal(fontData, fontDialog.FontData);
+            Assert.Equal(fontData, fontDialog.FontData);
+        });
     }
 
     [Fact]
     public void FontDialog_FontData_WithItalic_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        var fontData = new FontData("Courier", 10, SWT.ITALIC);
-        fontDialog.FontData = fontData;
+            var fontData = new FontData("Courier", 10, SWT.ITALIC);
+            fontDialog.FontData = fontData;
 
-        Assert.Equal(fontData, fontDialog.FontData);
+            Assert.Equal(fontData, fontDialog.FontData);
+        });
     }
 
     [Fact]
     public void FontDialog_RGB_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        var rgb = new RGB(255, 0, 0);
-        fontDialog.RGB = rgb;
+            var rgb = new RGB(255, 0, 0);
+            fontDialog.RGB = rgb;
 
-        Assert.Equal(rgb, fontDialog.RGB);
+            Assert.Equal(rgb, fontDialog.RGB);
+        });
     }
 
     [Fact]
     public void FontDialog_FontDataUpdate_ShouldWork()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        var font1 = new FontData("Arial", 12, SWT.NORMAL);
-        fontDialog.FontData = font1;
-        Assert.Equal(font1, fontDialog.FontData);
+            var font1 = new FontData("Arial", 12, SWT.NORMAL);
+            fontDialog.FontData = font1;
+            Assert.Equal(font1, fontDialog.FontData);
 
-        var font2 = new FontData("Times", 14, SWT.BOLD);
-        fontDialog.FontData = font2;
-        Assert.Equal(font2, fontDialog.FontData);
+            var font2 = new FontData("Times", 14, SWT.BOLD);
+            fontDialog.FontData = font2;
+            Assert.Equal(font2, fontDialog.FontData);
+        });
     }
 
     [Fact]
     public void FontDialog_InitialFontData_ShouldNotBeNull()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        Assert.NotNull(fontDialog.FontData);
+            Assert.NotNull(fontDialog.FontData);
+        });
     }
 
     [Fact]
     public void FontDialog_Parent_ShouldMatchShell()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        Assert.Same(shell, fontDialog.Parent);
+            Assert.Same(shell, fontDialog.Parent);
+        });
     }
 
     [Fact]
     public void FontDialog_Style_ShouldMatchConstructor()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell, SWT.NONE);
 
-        Assert.Equal(SWT.NONE, fontDialog.Style);
+            Assert.Equal(SWT.NONE, fontDialog.Style);
+        });
     }
 
     [Fact]
     public void FontDialog_Text_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fontDialog = new FontDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fontDialog = new FontDialog(shell);
 
-        fontDialog.Text = "Select Font";
+            fontDialog.Text = "Select Font";
 
-        Assert.Equal("Select Font", fontDialog.Text);
+            Assert.Equal("Select Font", fontDialog.Text);
+        });
     }
 }

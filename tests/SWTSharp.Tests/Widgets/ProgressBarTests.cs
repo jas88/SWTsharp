@@ -66,42 +66,51 @@ public class ProgressBarTests : WidgetTestBase
     [Fact]
     public void ProgressBar_Selection_ClampedToMinimum()
     {
-        using var shell = CreateTestShell();
-        var progressBar = new ProgressBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var progressBar = new ProgressBar(shell, SWT.NONE);
 
-        progressBar.Minimum = 10;
-        progressBar.Selection = 5;
+            progressBar.Minimum = 10;
+            progressBar.Selection = 5;
 
-        Assert.Equal(10, progressBar.Selection);
+            Assert.Equal(10, progressBar.Selection);
 
-        progressBar.Dispose();
+            progressBar.Dispose();
+        });
     }
 
     [Fact]
     public void ProgressBar_Selection_ClampedToMaximum()
     {
-        using var shell = CreateTestShell();
-        var progressBar = new ProgressBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var progressBar = new ProgressBar(shell, SWT.NONE);
 
-        progressBar.Maximum = 100;
-        progressBar.Selection = 150;
+            progressBar.Maximum = 100;
+            progressBar.Selection = 150;
 
-        Assert.Equal(100, progressBar.Selection);
+            Assert.Equal(100, progressBar.Selection);
 
-        progressBar.Dispose();
+            progressBar.Dispose();
+        });
     }
 
     [Fact]
     public void ProgressBar_DefaultValues_ShouldBeCorrect()
     {
-        using var shell = CreateTestShell();
-        var progressBar = new ProgressBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var progressBar = new ProgressBar(shell, SWT.NONE);
 
-        Assert.Equal(0, progressBar.Minimum);
-        Assert.Equal(100, progressBar.Maximum);
-        Assert.Equal(0, progressBar.Selection);
+            Assert.Equal(0, progressBar.Minimum);
+            Assert.Equal(100, progressBar.Maximum);
+            Assert.Equal(0, progressBar.Selection);
 
-        progressBar.Dispose();
+            progressBar.Dispose();
+        });
     }
 
     [Fact]
@@ -156,16 +165,19 @@ public class ProgressBarTests : WidgetTestBase
     [Fact]
     public void ProgressBar_RangeChange_ShouldAdjustSelection()
     {
-        using var shell = CreateTestShell();
-        var progressBar = new ProgressBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var progressBar = new ProgressBar(shell, SWT.NONE);
 
-        progressBar.Maximum = 100;
-        progressBar.Selection = 50;
+            progressBar.Maximum = 100;
+            progressBar.Selection = 50;
 
-        progressBar.Maximum = 40; // Selection should be clamped
+            progressBar.Maximum = 40; // Selection should be clamped
 
-        Assert.Equal(40, progressBar.Selection);
+            Assert.Equal(40, progressBar.Selection);
 
-        progressBar.Dispose();
+            progressBar.Dispose();
+        });
     }
 }

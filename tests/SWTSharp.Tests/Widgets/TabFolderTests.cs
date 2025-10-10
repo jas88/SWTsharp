@@ -31,91 +31,109 @@ public class TabFolderTests : WidgetTestBase
     [Fact]
     public void TabFolder_AddTabItem_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
-        var tabItem = new TabItem(tabFolder, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
+            var tabItem = new TabItem(tabFolder, SWT.NONE);
 
-        Assert.NotNull(tabItem);
-        Assert.Equal(1, tabFolder.ItemCount);
+            Assert.NotNull(tabItem);
+            Assert.Equal(1, tabFolder.ItemCount);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
+        });
     }
 
     [Fact]
     public void TabFolder_AddMultipleTabItems_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
 
-        var tab1 = new TabItem(tabFolder, SWT.NONE);
-        var tab2 = new TabItem(tabFolder, SWT.NONE);
-        var tab3 = new TabItem(tabFolder, SWT.NONE);
+            var tab1 = new TabItem(tabFolder, SWT.NONE);
+            var tab2 = new TabItem(tabFolder, SWT.NONE);
+            var tab3 = new TabItem(tabFolder, SWT.NONE);
 
-        Assert.Equal(3, tabFolder.ItemCount);
+            Assert.Equal(3, tabFolder.ItemCount);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
+        });
     }
 
     [Fact]
     public void TabFolder_GetItem_ShouldReturnCorrectItem()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
 
-        var tab1 = new TabItem(tabFolder, SWT.NONE);
-        var tab2 = new TabItem(tabFolder, SWT.NONE);
+            var tab1 = new TabItem(tabFolder, SWT.NONE);
+            var tab2 = new TabItem(tabFolder, SWT.NONE);
 
-        var retrieved = tabFolder.GetItem(1);
-        Assert.Same(tab2, retrieved);
+            var retrieved = tabFolder.GetItem(1);
+            Assert.Same(tab2, retrieved);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
+        });
     }
 
     [Fact]
     public void TabFolder_SelectionIndex_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
 
-        new TabItem(tabFolder, SWT.NONE);
-        new TabItem(tabFolder, SWT.NONE);
+            new TabItem(tabFolder, SWT.NONE);
+            new TabItem(tabFolder, SWT.NONE);
 
-        tabFolder.SelectionIndex = 1;
-        Assert.Equal(1, tabFolder.SelectionIndex);
+            tabFolder.SelectionIndex = 1;
+            Assert.Equal(1, tabFolder.SelectionIndex);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
+        });
     }
 
     [Fact]
     public void TabFolder_Selection_ShouldReturnSelectedItem()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
 
-        var tab1 = new TabItem(tabFolder, SWT.NONE);
-        var tab2 = new TabItem(tabFolder, SWT.NONE);
+            var tab1 = new TabItem(tabFolder, SWT.NONE);
+            var tab2 = new TabItem(tabFolder, SWT.NONE);
 
-        tabFolder.SelectionIndex = 1;
-        Assert.Same(tab2, tabFolder.Selection);
+            tabFolder.SelectionIndex = 1;
+            Assert.Same(tab2, tabFolder.Selection);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
+        });
     }
 
     [Fact]
     public void TabFolder_Items_ShouldReturnAllItems()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
 
-        var tab1 = new TabItem(tabFolder, SWT.NONE);
-        var tab2 = new TabItem(tabFolder, SWT.NONE);
+            var tab1 = new TabItem(tabFolder, SWT.NONE);
+            var tab2 = new TabItem(tabFolder, SWT.NONE);
 
-        var items = tabFolder.Items;
-        Assert.Equal(2, items.Length);
-        Assert.Contains(tab1, items);
-        Assert.Contains(tab2, items);
+            var items = tabFolder.Items;
+            Assert.Equal(2, items.Length);
+            Assert.Contains(tab1, items);
+            Assert.Contains(tab2, items);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
+        });
     }
 
     [Fact]
@@ -133,14 +151,17 @@ public class TabFolderTests : WidgetTestBase
     [Fact]
     public void TabFolder_Dispose_ShouldDisposeItems()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
-        var tabItem = new TabItem(tabFolder, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
+            var tabItem = new TabItem(tabFolder, SWT.NONE);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
 
-        Assert.True(tabFolder.IsDisposed);
-        Assert.True(tabItem.IsDisposed);
+            Assert.True(tabFolder.IsDisposed);
+            Assert.True(tabItem.IsDisposed);
+        });
     }
 
     [Fact]
@@ -174,12 +195,15 @@ public class TabFolderTests : WidgetTestBase
     [Fact]
     public void TabFolder_InitialItemCount_ShouldBeZero()
     {
-        using var shell = CreateTestShell();
-        var tabFolder = new TabFolder(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tabFolder = new TabFolder(shell, SWT.NONE);
 
-        Assert.Equal(0, tabFolder.ItemCount);
+            Assert.Equal(0, tabFolder.ItemCount);
 
-        tabFolder.Dispose();
+            tabFolder.Dispose();
+        });
     }
 
     [Fact]

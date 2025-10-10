@@ -97,42 +97,51 @@ public class SliderTests : WidgetTestBase
     [Fact]
     public void Slider_Selection_ClampedToMinimum()
     {
-        using var shell = CreateTestShell();
-        var slider = new Slider(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var slider = new Slider(shell, SWT.NONE);
 
-        slider.Minimum = 10;
-        slider.Selection = 5;
+            slider.Minimum = 10;
+            slider.Selection = 5;
 
-        Assert.Equal(10, slider.Selection);
+            Assert.Equal(10, slider.Selection);
 
-        slider.Dispose();
+            slider.Dispose();
+        });
     }
 
     [Fact]
     public void Slider_Selection_ClampedToMaximum()
     {
-        using var shell = CreateTestShell();
-        var slider = new Slider(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var slider = new Slider(shell, SWT.NONE);
 
-        slider.Maximum = 100;
-        slider.Selection = 150;
+            slider.Maximum = 100;
+            slider.Selection = 150;
 
-        Assert.Equal(100, slider.Selection);
+            Assert.Equal(100, slider.Selection);
 
-        slider.Dispose();
+            slider.Dispose();
+        });
     }
 
     [Fact]
     public void Slider_DefaultValues_ShouldBeCorrect()
     {
-        using var shell = CreateTestShell();
-        var slider = new Slider(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var slider = new Slider(shell, SWT.NONE);
 
-        Assert.Equal(0, slider.Minimum);
-        Assert.Equal(100, slider.Maximum);
-        Assert.Equal(0, slider.Selection);
+            Assert.Equal(0, slider.Minimum);
+            Assert.Equal(100, slider.Maximum);
+            Assert.Equal(0, slider.Selection);
 
-        slider.Dispose();
+            slider.Dispose();
+        });
     }
 
     [Fact]

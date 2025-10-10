@@ -15,139 +15,178 @@ public class FileDialogTests : TestBase
     [Fact]
     public void FileDialog_Create_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        Assert.NotNull(fileDialog);
+            Assert.NotNull(fileDialog);
+        });
     }
 
     [Fact]
     public void FileDialog_Create_WithStyles_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var styles = new[] { SWT.OPEN, SWT.SAVE, SWT.MULTI };
-
-        foreach (var style in styles)
+        RunOnUIThread(() =>
         {
-            var fileDialog = new FileDialog(shell, style);
-            Assert.NotNull(fileDialog);
-        }
+            using var shell = CreateTestShell();
+            var styles = new[] { SWT.OPEN, SWT.SAVE, SWT.MULTI };
+
+            foreach (var style in styles)
+            {
+                var fileDialog = new FileDialog(shell, style);
+                Assert.NotNull(fileDialog);
+            }
+        });
     }
 
     [Fact]
     public void FileDialog_FileName_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        fileDialog.FileName = "test.txt";
+            fileDialog.FileName = "test.txt";
 
-        Assert.Equal("test.txt", fileDialog.FileName);
+            Assert.Equal("test.txt", fileDialog.FileName);
+        });
     }
 
     [Fact]
     public void FileDialog_FileName_WithEmptyString_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        fileDialog.FileName = string.Empty;
+            fileDialog.FileName = string.Empty;
 
-        Assert.Equal(string.Empty, fileDialog.FileName);
+            Assert.Equal(string.Empty, fileDialog.FileName);
+        });
     }
 
     [Fact]
     public void FileDialog_FileName_WithNull_ShouldSetEmptyString()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        fileDialog.FileName = null!;
+            fileDialog.FileName = null!;
 
-        Assert.Equal(string.Empty, fileDialog.FileName);
+            Assert.Equal(string.Empty, fileDialog.FileName);
+        });
     }
 
     [Fact]
     public void FileDialog_FilterExtensions_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        var extensions = new[] { "*.txt", "*.doc" };
-        fileDialog.FilterExtensions = extensions;
+            var extensions = new[] { "*.txt", "*.doc" };
+            fileDialog.FilterExtensions = extensions;
 
-        Assert.Equal(extensions, fileDialog.FilterExtensions);
+            Assert.Equal(extensions, fileDialog.FilterExtensions);
+        });
     }
 
     [Fact]
     public void FileDialog_FilterNames_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        var names = new[] { "Text Files", "Word Documents" };
-        fileDialog.FilterNames = names;
+            var names = new[] { "Text Files", "Word Documents" };
+            fileDialog.FilterNames = names;
 
-        Assert.Equal(names, fileDialog.FilterNames);
+            Assert.Equal(names, fileDialog.FilterNames);
+        });
     }
 
     [Fact]
     public void FileDialog_FilterPath_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        fileDialog.FilterPath = "/home/user";
+            fileDialog.FilterPath = "/home/user";
 
-        Assert.Equal("/home/user", fileDialog.FilterPath);
+            Assert.Equal("/home/user", fileDialog.FilterPath);
+        });
     }
 
     [Fact]
     public void FileDialog_InitialFileName_ShouldBeEmpty()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        Assert.Equal(string.Empty, fileDialog.FileName);
+            Assert.Equal(string.Empty, fileDialog.FileName);
+        });
     }
 
     [Fact]
     public void FileDialog_FilterExtensions_EmptyArray_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        fileDialog.FilterExtensions = Array.Empty<string>();
+            fileDialog.FilterExtensions = Array.Empty<string>();
 
-        Assert.Empty(fileDialog.FilterExtensions);
+            Assert.Empty(fileDialog.FilterExtensions);
+        });
     }
 
     [Fact]
     public void FileDialog_Parent_ShouldMatchShell()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        Assert.Same(shell, fileDialog.Parent);
+            Assert.Same(shell, fileDialog.Parent);
+        });
     }
 
     [Fact]
     public void FileDialog_Style_ShouldMatchConstructor()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell, SWT.OPEN);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell, SWT.OPEN);
 
-        Assert.Equal(SWT.OPEN, fileDialog.Style);
+            Assert.Equal(SWT.OPEN, fileDialog.Style);
+        });
     }
 
     [Fact]
     public void FileDialog_Text_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var fileDialog = new FileDialog(shell);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var fileDialog = new FileDialog(shell);
 
-        fileDialog.Text = "Select File";
+            fileDialog.Text = "Select File";
 
-        Assert.Equal("Select File", fileDialog.Text);
+            Assert.Equal("Select File", fileDialog.Text);
+        });
     }
 }

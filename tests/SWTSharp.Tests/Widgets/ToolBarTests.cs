@@ -32,61 +32,73 @@ public class ToolBarTests : WidgetTestBase
     [Fact]
     public void ToolBar_AddToolItem_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
-        var toolItem = new ToolItem(toolBar, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
+            var toolItem = new ToolItem(toolBar, SWT.PUSH);
 
-        Assert.NotNull(toolItem);
-        Assert.Equal(1, toolBar.ItemCount);
+            Assert.NotNull(toolItem);
+            Assert.Equal(1, toolBar.ItemCount);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
+        });
     }
 
     [Fact]
     public void ToolBar_AddMultipleToolItems_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
 
-        var item1 = new ToolItem(toolBar, SWT.PUSH);
-        var item2 = new ToolItem(toolBar, SWT.PUSH);
-        var item3 = new ToolItem(toolBar, SWT.SEPARATOR);
+            var item1 = new ToolItem(toolBar, SWT.PUSH);
+            var item2 = new ToolItem(toolBar, SWT.PUSH);
+            var item3 = new ToolItem(toolBar, SWT.SEPARATOR);
 
-        Assert.Equal(3, toolBar.ItemCount);
+            Assert.Equal(3, toolBar.ItemCount);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
+        });
     }
 
     [Fact]
     public void ToolBar_GetItem_ShouldReturnCorrectItem()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
 
-        var item1 = new ToolItem(toolBar, SWT.PUSH);
-        var item2 = new ToolItem(toolBar, SWT.PUSH);
+            var item1 = new ToolItem(toolBar, SWT.PUSH);
+            var item2 = new ToolItem(toolBar, SWT.PUSH);
 
-        var retrieved = toolBar.GetItem(1);
-        Assert.Same(item2, retrieved);
+            var retrieved = toolBar.GetItem(1);
+            Assert.Same(item2, retrieved);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
+        });
     }
 
     [Fact]
     public void ToolBar_Items_ShouldReturnAllItems()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
 
-        var item1 = new ToolItem(toolBar, SWT.PUSH);
-        var item2 = new ToolItem(toolBar, SWT.PUSH);
+            var item1 = new ToolItem(toolBar, SWT.PUSH);
+            var item2 = new ToolItem(toolBar, SWT.PUSH);
 
-        var items = toolBar.Items;
-        Assert.Equal(2, items.Length);
-        Assert.Contains(item1, items);
-        Assert.Contains(item2, items);
+            var items = toolBar.Items;
+            Assert.Equal(2, items.Length);
+            Assert.Contains(item1, items);
+            Assert.Contains(item2, items);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
+        });
     }
 
     [Fact]
@@ -104,14 +116,17 @@ public class ToolBarTests : WidgetTestBase
     [Fact]
     public void ToolBar_Dispose_ShouldDisposeItems()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
-        var toolItem = new ToolItem(toolBar, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
+            var toolItem = new ToolItem(toolBar, SWT.PUSH);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
 
-        Assert.True(toolBar.IsDisposed);
-        Assert.True(toolItem.IsDisposed);
+            Assert.True(toolBar.IsDisposed);
+            Assert.True(toolItem.IsDisposed);
+        });
     }
 
     [Fact]
@@ -145,49 +160,61 @@ public class ToolBarTests : WidgetTestBase
     [Fact]
     public void ToolBar_InitialItemCount_ShouldBeZero()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
 
-        Assert.Equal(0, toolBar.ItemCount);
+            Assert.Equal(0, toolBar.ItemCount);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
+        });
     }
 
     [Fact]
     public void ToolBar_GetItem_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
-        new ToolItem(toolBar, SWT.PUSH);
-        toolBar.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
+            new ToolItem(toolBar, SWT.PUSH);
+            toolBar.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => toolBar.GetItem(0));
+            Assert.Throws<SWTDisposedException>(() => toolBar.GetItem(0));
+        });
     }
 
     [Fact]
     public void ToolBar_Display_ShouldMatchParent()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
 
-        Assert.Same(shell.Display, toolBar.Display);
+            Assert.Same(shell.Display, toolBar.Display);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
+        });
     }
 
     [Fact]
     public void ToolBar_MixedItemTypes_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var toolBar = new ToolBar(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var toolBar = new ToolBar(shell, SWT.NONE);
 
-        new ToolItem(toolBar, SWT.PUSH);
-        new ToolItem(toolBar, SWT.SEPARATOR);
-        new ToolItem(toolBar, SWT.CHECK);
-        new ToolItem(toolBar, SWT.RADIO);
+            new ToolItem(toolBar, SWT.PUSH);
+            new ToolItem(toolBar, SWT.SEPARATOR);
+            new ToolItem(toolBar, SWT.CHECK);
+            new ToolItem(toolBar, SWT.RADIO);
 
-        Assert.Equal(4, toolBar.ItemCount);
+            Assert.Equal(4, toolBar.ItemCount);
 
-        toolBar.Dispose();
+            toolBar.Dispose();
+        });
     }
 }
