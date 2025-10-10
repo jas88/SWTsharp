@@ -273,6 +273,8 @@ internal partial class MacOSPlatform
         objc_msgSend(data.TabViewItem, selSetToolTip, toolTipString);
     }
 
+    private IntPtr _selInitWithItemIdentifier;
+
     private void InitializeToolBarSelectors()
     {
         if (_nsToolbarClass == IntPtr.Zero)
@@ -297,6 +299,7 @@ internal partial class MacOSPlatform
             _selSetMenu = RegisterSelector("setMenu:");
             _selShowsMenu = RegisterSelector("setShowsMenu:");
             _selSetVisible = RegisterSelector("setVisible:");
+            _selInitWithItemIdentifier = RegisterSelector("initWithItemIdentifier:");  // NSToolbarItem uses initWithItemIdentifier:, not initWithIdentifier:
         }
 
         // Ensure button selectors are initialized (they're in MacOSPlatform.cs)
@@ -407,7 +410,7 @@ internal partial class MacOSPlatform
         // Create NSToolbarItem
         toolbarItem = objc_msgSend(_nsToolbarItemClass, _selAlloc);
         IntPtr identifier = CreateNSString(itemIdentifier);
-        toolbarItem = objc_msgSend(toolbarItem, _selInitWithIdentifier, identifier);
+        toolbarItem = objc_msgSend(toolbarItem, _selInitWithItemIdentifier, identifier);
 
         // Set default properties
         if ((style & SWT.SEPARATOR) == 0)
