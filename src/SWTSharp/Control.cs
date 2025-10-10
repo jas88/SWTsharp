@@ -27,11 +27,12 @@ public abstract class Control : Widget
 
     /// <summary>
     /// Gets or sets the platform-specific window handle.
+    /// Internal to prevent external dependencies on platform-specific handles.
     /// </summary>
-    public override IntPtr Handle
+    internal override IntPtr Handle
     {
         get => _handle;
-        protected set => _handle = value;
+        set => _handle = value;
     }
 
     /// <summary>

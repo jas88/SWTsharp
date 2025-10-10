@@ -142,10 +142,10 @@ public class MenuItem : Widget
     /// <summary>
     /// Gets or sets the platform-specific menu item handle.
     /// </summary>
-    public override IntPtr Handle
+    internal override IntPtr Handle
     {
         get => _handle;
-        protected set => _handle = value;
+        set => _handle = value;
     }
 
     /// <summary>

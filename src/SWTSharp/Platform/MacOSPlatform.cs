@@ -837,7 +837,55 @@ internal partial class MacOSPlatform : IPlatform
 
     public void SetControlVisible(IntPtr handle, bool visible)
     {
+        // Phase 1 Fix: Detect pseudo-handles and route to specialized methods
+        // Pseudo-handles use high bits to differentiate from real pointers:
+        // - 0x40000000 range: ToolBar pseudo-handles
+        // - 0x30000000 range: ToolItem pseudo-handles
+        // - 0x20000000 range: TabItem pseudo-handles
+        long handleValue = handle.ToInt64();
+
+        if ((handleValue & 0x40000000) != 0)
+        {
+            // ToolBar pseudo-handle - route to specialized handler
+            SetToolBarVisible(handle, visible);
+            return;
+        }
+
+        if ((handleValue & 0x30000000) != 0)
+        {
+            // ToolItem pseudo-handle - items don't have independent visibility
+            // Visibility is controlled by adding/removing from toolbar
+            return;
+        }
+
+        if ((handleValue & 0x20000000) != 0)
+        {
+            // TabItem pseudo-handle - route to specialized handler
+            SetTabItemVisible(handle, visible);
+            return;
+        }
+
+        // Real native handle - use standard NSView setHidden: API
         objc_msgSend_void(handle, _selSetHidden, !visible);
+    }
+
+    private void SetToolBarVisible(IntPtr pseudoHandle, bool visible)
+    {
+        if (_toolBarData.TryGetValue(pseudoHandle, out var toolbarData))
+        {
+            // NSToolbar uses setVisible:, not setHidden:
+            objc_msgSend_void(toolbarData.Toolbar, _selSetVisible, visible);
+        }
+    }
+
+    private void SetTabItemVisible(IntPtr pseudoHandle, bool visible)
+    {
+        if (_tabItemData.TryGetValue(pseudoHandle, out var itemData))
+        {
+            // TabItem visibility is controlled through tab selection
+            // Individual tabs can't be hidden, only selected/deselected
+            // For now, this is a no-op
+        }
     }
 
     public void SetControlBounds(IntPtr handle, int x, int y, int width, int height)

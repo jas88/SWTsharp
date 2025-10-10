@@ -39,6 +39,7 @@ internal partial class MacOSPlatform
     private IntPtr _selSetMaxSize;
     private IntPtr _selSetMenu;
     private IntPtr _selShowsMenu;
+    private IntPtr _selSetVisible; // For NSToolbar visibility
 
     private sealed class TabFolderData
     {
@@ -295,6 +296,7 @@ internal partial class MacOSPlatform
             _selSetMaxSize = RegisterSelector("setMaxSize:");
             _selSetMenu = RegisterSelector("setMenu:");
             _selShowsMenu = RegisterSelector("setShowsMenu:");
+            _selSetVisible = RegisterSelector("setVisible:");
         }
 
         // Ensure button selectors are initialized (they're in MacOSPlatform.cs)

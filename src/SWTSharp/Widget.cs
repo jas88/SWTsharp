@@ -139,7 +139,7 @@ public abstract class Widget : IDisposable
     /// <summary>
     /// Returns the platform-specific handle for this widget.
     /// </summary>
-    public virtual IntPtr Handle { get; protected set; } = IntPtr.Zero;
+    internal virtual IntPtr Handle { get; set; } = IntPtr.Zero;
 
     /// <summary>
     /// Gets platform-specific data associated with the widget.
