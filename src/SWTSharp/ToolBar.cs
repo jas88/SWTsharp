@@ -196,6 +196,22 @@ public class ToolBar : Composite
     /// </summary>
     public bool IsShadowOut => (Style & SWT.SHADOW_OUT) != 0;
 
+    protected override void UpdateVisible()
+    {
+        if (Handle != IntPtr.Zero)
+        {
+            Platform.PlatformFactory.Instance.SetControlVisible(Handle, Visible);
+        }
+    }
+
+    protected override void UpdateEnabled()
+    {
+        if (Handle != IntPtr.Zero)
+        {
+            Platform.PlatformFactory.Instance.SetControlEnabled(Handle, Enabled);
+        }
+    }
+
     protected override void ReleaseWidget()
     {
         // Dispose all items
@@ -214,7 +230,7 @@ public class ToolBar : Composite
         // Destroy platform toolbar handle
         if (Handle != IntPtr.Zero)
         {
-            Platform.PlatformFactory.Instance.DestroyWindow(Handle);
+            Platform.PlatformFactory.Instance.DestroyToolBar(Handle);
         }
 
         base.ReleaseWidget();

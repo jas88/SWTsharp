@@ -445,6 +445,33 @@ internal partial class MacOSPlatform
         return toolItemHandle;
     }
 
+    public void DestroyToolBar(IntPtr handle)
+    {
+        if (!_toolBarData.TryGetValue(handle, out var toolbarData))
+            return;
+
+        InitializeToolBarSelectors();
+
+        // Remove all tool items first
+        foreach (var itemHandle in toolbarData.Items.ToArray())
+        {
+            DestroyToolItem(itemHandle);
+        }
+
+        // Remove toolbar from window if attached
+        if (toolbarData.Window != IntPtr.Zero)
+        {
+            objc_msgSend(toolbarData.Window, _selSetToolbar, IntPtr.Zero);
+        }
+
+        // Release the NSToolbar
+        IntPtr selRelease = sel_registerName("release");
+        objc_msgSend(toolbarData.Toolbar, selRelease);
+
+        // Clean up data
+        _toolBarData.Remove(handle);
+    }
+
     public void DestroyToolItem(IntPtr handle)
     {
         if (!_toolItemData.TryGetValue(handle, out var itemData))

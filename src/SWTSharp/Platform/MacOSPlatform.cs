@@ -454,24 +454,45 @@ internal partial class MacOSPlatform : IPlatform
 
     public void DestroyWindow(IntPtr handle)
     {
-        if (handle != IntPtr.Zero)
-        {
-            // Check if this is an NSWindow or an NSView
-            // NSWindow has the close method, NSView does not
-            IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
-            bool respondsToClose = objc_msgSend_bool(handle, selRespondsToSelector, _selClose);
+        if (handle == IntPtr.Zero)
+            return;
 
-            if (respondsToClose)
-            {
-                // It's an NSWindow, use close
-                objc_msgSend_void(handle, _selClose);
-            }
-            else
-            {
-                // It's an NSView, remove from superview
-                IntPtr selRemoveFromSuperview = sel_registerName("removeFromSuperview");
-                objc_msgSend_void(handle, selRemoveFromSuperview);
-            }
+        // Phase 1 Fix: Detect pseudo-handles that should not be passed to objc_msgSend
+        long handleValue = handle.ToInt64();
+
+        if ((handleValue & 0x40000000) != 0)
+        {
+            // ToolBar pseudo-handle - should use DestroyToolBar instead
+            throw new InvalidOperationException("DestroyWindow called on ToolBar pseudo-handle. Use DestroyToolBar instead.");
+        }
+
+        if ((handleValue & 0x30000000) != 0)
+        {
+            // TabItem pseudo-handle - these are cleaned up by their parent TabFolder
+            return;
+        }
+
+        if ((handleValue & 0x20000000) != 0)
+        {
+            // Future pseudo-handle type - add handling as needed
+            return;
+        }
+
+        // Real native handle - check if this is an NSWindow or an NSView
+        // NSWindow has the close method, NSView does not
+        IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
+        bool respondsToClose = objc_msgSend_bool(handle, selRespondsToSelector, _selClose);
+
+        if (respondsToClose)
+        {
+            // It's an NSWindow, use close
+            objc_msgSend_void(handle, _selClose);
+        }
+        else
+        {
+            // It's an NSView, remove from superview
+            IntPtr selRemoveFromSuperview = sel_registerName("removeFromSuperview");
+            objc_msgSend_void(handle, selRemoveFromSuperview);
         }
     }
 
@@ -824,7 +845,29 @@ internal partial class MacOSPlatform : IPlatform
 
     public void SetControlEnabled(IntPtr handle, bool enabled)
     {
-        // Only NSControl and its subclasses have setEnabled:
+        // Phase 1 Fix: Detect pseudo-handles and route to specialized methods
+        long handleValue = handle.ToInt64();
+
+        if ((handleValue & 0x40000000) != 0)
+        {
+            // ToolBar pseudo-handle - toolbars don't have enabled state
+            return;
+        }
+
+        if ((handleValue & 0x30000000) != 0)
+        {
+            // ToolItem pseudo-handle - route to specialized handler
+            SetToolItemEnabled(handle, enabled);
+            return;
+        }
+
+        if ((handleValue & 0x20000000) != 0)
+        {
+            // TabItem pseudo-handle - tab items don't have independent enabled state
+            return;
+        }
+
+        // Real native handle - only NSControl and its subclasses have setEnabled:
         // NSView (used by Canvas) does not support this method
         IntPtr selIsKindOfClass = sel_registerName("isKindOfClass:");
         if (objc_msgSend_bool(handle, selIsKindOfClass, _nsControlClass))

@@ -260,6 +260,27 @@ internal partial class Win32Platform
         return toolItemHandle;
     }
 
+    public void DestroyToolBar(IntPtr handle)
+    {
+        if (!_toolBars.TryGetValue(handle, out var toolBarData))
+            return;
+
+        // Destroy all tool items first
+        foreach (var itemHandle in toolBarData.ToolItems.ToArray())
+        {
+            DestroyToolItem(itemHandle);
+        }
+
+        // Destroy the Win32 control
+        if (handle != IntPtr.Zero)
+        {
+            DestroyWindow(handle);
+        }
+
+        // Remove from tracking
+        _toolBars.Remove(handle);
+    }
+
     public void DestroyToolItem(IntPtr handle)
     {
         if (!_toolItems.TryGetValue(handle, out var itemData))

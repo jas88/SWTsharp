@@ -412,6 +412,12 @@ public partial interface IPlatform
     /// <returns>Handle to the created toolbar</returns>
     IntPtr CreateToolBar(IntPtr parent, int style);
 
+    /// <summary>
+    /// Destroys a native toolbar handle.
+    /// </summary>
+    /// <param name="handle">Toolbar handle</param>
+    void DestroyToolBar(IntPtr handle);
+
     // ToolItem operations
 
     /// <summary>

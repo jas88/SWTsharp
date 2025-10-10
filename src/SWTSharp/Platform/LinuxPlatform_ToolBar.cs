@@ -181,6 +181,27 @@ internal partial class LinuxPlatform
         return itemHandle;
     }
 
+    public void DestroyToolBar(IntPtr handle)
+    {
+        if (!_toolBarData.TryGetValue(handle, out var barData))
+            return;
+
+        // Destroy all tool items first
+        foreach (var itemHandle in barData.Items.ToArray())
+        {
+            DestroyToolItem(itemHandle);
+        }
+
+        // Destroy the GTK widget
+        if (barData.Toolbar != IntPtr.Zero)
+        {
+            gtk_widget_destroy(barData.Toolbar);
+        }
+
+        // Remove from tracking
+        _toolBarData.Remove(handle);
+    }
+
     public void DestroyToolItem(IntPtr handle)
     {
         if (!_toolItemData.TryGetValue(handle, out var itemData))
