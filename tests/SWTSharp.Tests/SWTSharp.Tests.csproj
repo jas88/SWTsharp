@@ -18,11 +18,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- ModuleInitializer not needed for direct execution -->
-    <Compile Remove="ModuleInitializer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
@@ -50,6 +45,12 @@
       <AdapterFiles Include="..\SWTSharp.TestAdapter\bin\$(Configuration)\netstandard2.0\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(AdapterFiles)" DestinationFolder="$(OutDir)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- Force copy TestHost.dll to ensure latest version is used -->
+  <Target Name="CopyTestHost" AfterTargets="Build">
+    <Copy SourceFiles="..\SWTSharp.TestHost\bin\$(Configuration)\net9.0\SWTSharp.TestHost.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="false" />
+    <Copy SourceFiles="..\SWTSharp.TestHost\bin\$(Configuration)\net9.0\SWTSharp.TestHost.pdb" DestinationFolder="$(OutDir)" SkipUnchangedFiles="false" />
   </Target>
 
 </Project>

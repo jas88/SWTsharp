@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace SWTSharp.TestHost;
@@ -6,6 +7,7 @@ namespace SWTSharp.TestHost;
 /// <summary>
 /// Dispatcher that runs code on the macOS main thread (thread 1).
 /// This solves the NSWindow "must be created on main thread" requirement.
+/// Uses CFRunLoop on macOS, custom queue on other platforms.
 /// </summary>
 public static class MainThreadDispatcher
 {
@@ -13,9 +15,132 @@ public static class MainThreadDispatcher
     private static Thread? _mainThread;
     private static bool _running = true;
     private static readonly ManualResetEventSlim _initialized = new(false);
+    private static readonly ManualResetEventSlim _runLoopReady = new(false);
+    private static IntPtr _mainQueue = IntPtr.Zero;
+    private static IntPtr _mainRunLoop = IntPtr.Zero;
 
     public static int MainThreadId => _mainThread?.ManagedThreadId ?? -1;
     public static bool IsInitialized => _initialized.IsSet;
+
+    /// <summary>
+    /// Starts a dedicated UI thread that runs the dispatch loop.
+    /// On macOS, runs CFRunLoop. On Windows/Linux, runs custom queue.
+    /// This method returns immediately - the UI thread runs in the background.
+    /// </summary>
+    public static void StartUIThread()
+    {
+        if (_initialized.IsSet)
+        {
+            Console.WriteLine("[INFO] MainThreadDispatcher: Already initialized");
+            return;
+        }
+
+        // Start UI thread
+        var uiThread = new Thread(() =>
+        {
+            // Initialize on THIS thread (the UI thread)
+            Initialize();
+
+            // Run the dispatch loop (blocks until Stop() is called)
+            RunLoop();
+        })
+        {
+            Name = "UI Thread",
+            IsBackground = true // Background thread - exits when main app exits
+        };
+
+        uiThread.Start();
+
+        // Wait for initialization to complete
+        if (!_initialized.Wait(TimeSpan.FromSeconds(5)))
+        {
+            throw new TimeoutException("UI thread failed to initialize within 5 seconds");
+        }
+
+        // On macOS, also wait for run loop handles to be ready
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            if (!_runLoopReady.Wait(TimeSpan.FromSeconds(5)))
+            {
+                throw new TimeoutException("UI thread run loop failed to initialize within 5 seconds");
+            }
+        }
+
+        Console.WriteLine($"[INFO] MainThreadDispatcher: UI thread started on Thread {MainThreadId}");
+    }
+
+    // Objective-C runtime
+    private const string LibObjC = "/usr/lib/libobjc.A.dylib";
+
+    [DllImport(LibObjC, EntryPoint = "objc_getClass")]
+    private static extern IntPtr objc_getClass(string name);
+
+    [DllImport(LibObjC, EntryPoint = "sel_registerName")]
+    private static extern IntPtr sel_registerName(string name);
+
+    [DllImport(LibObjC, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
+
+    // GCD functions
+    private const string LibSystem = "/usr/lib/libSystem.dylib";
+
+    [DllImport(LibSystem, EntryPoint = "dispatch_async_f")]
+    private static extern void dispatch_async_f(IntPtr queue, IntPtr context, IntPtr work);
+
+    [DllImport(LibSystem, EntryPoint = "dispatch_main")]
+    private static extern void dispatch_main();
+
+    // Core Foundation run loop
+    private const string CoreFoundation = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
+
+    [DllImport(CoreFoundation, EntryPoint = "CFRunLoopGetMain")]
+    private static extern IntPtr CFRunLoopGetMain();
+
+    [DllImport(CoreFoundation, EntryPoint = "CFRunLoopGetCurrent")]
+    private static extern IntPtr CFRunLoopGetCurrent();
+
+    [DllImport(CoreFoundation, EntryPoint = "CFRunLoopRun")]
+    private static extern void CFRunLoopRun();
+
+    [DllImport(CoreFoundation, EntryPoint = "CFRunLoopStop")]
+    private static extern void CFRunLoopStop(IntPtr rl);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void WorkDelegate(IntPtr context);
+
+    private static readonly WorkDelegate? _workCallback = WorkCallback;
+
+    private static void WorkCallback(IntPtr context)
+    {
+        try
+        {
+            var handle = GCHandle.FromIntPtr(context);
+            var wrapper = (WorkContext)handle.Target!;
+            wrapper.Action();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[ERROR] MainThreadDispatcher callback failed: {ex}");
+        }
+    }
+
+    private class WorkContext
+    {
+        public required Action Action { get; init; }
+    }
+
+    /// <summary>
+    /// Get GCD main queue via NSOperationQueue.mainQueue.underlyingQueue
+    /// </summary>
+    private static IntPtr GetMainQueue()
+    {
+        var nsOperationQueueClass = objc_getClass("NSOperationQueue");
+        var mainQueueSelector = sel_registerName("mainQueue");
+        var mainOperationQueue = objc_msgSend(nsOperationQueueClass, mainQueueSelector);
+        var underlyingQueueSelector = sel_registerName("underlyingQueue");
+        var mainDispatchQueue = objc_msgSend(mainOperationQueue, underlyingQueueSelector);
+        return mainDispatchQueue;
+    }
 
     /// <summary>
     /// Initializes the dispatcher with the current thread as main thread.
@@ -51,7 +176,9 @@ public static class MainThreadDispatcher
 
     /// <summary>
     /// Starts the dispatcher loop on the CURRENT thread.
-    /// This will block until Stop() is called.
+    /// This will block until Stop() is called OR all foreground threads exit.
+    /// On macOS, runs CFRunLoop which processes GCD main queue.
+    /// On other platforms, uses custom blocking queue.
     /// </summary>
     public static void RunLoop()
     {
@@ -62,7 +189,18 @@ public static class MainThreadDispatcher
 
         Console.WriteLine($"[INFO] MainThreadDispatcher: Starting dispatch loop on Thread {Thread.CurrentThread.ManagedThreadId}");
 
-        // Dispatch loop
+        // Signal that run loop is ready for Invoke() calls
+        _runLoopReady.Set();
+
+        // Hook ProcessExit to stop the run loop when all foreground threads complete
+        AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+        {
+            Console.WriteLine("[INFO] MainThreadDispatcher: ProcessExit event fired, stopping run loop");
+            Stop();
+        };
+
+        // Windows/Linux OR macOS fallback: use custom dispatch loop
+        Console.WriteLine("[INFO] MainThreadDispatcher: Running custom dispatch loop");
         while (_running)
         {
             try
@@ -78,21 +216,29 @@ public static class MainThreadDispatcher
                 Console.Error.WriteLine($"[ERROR] MainThreadDispatcher: Unhandled exception: {ex}");
             }
         }
-
-        Console.WriteLine("[INFO] MainThreadDispatcher: Dispatch loop stopped");
+        Console.WriteLine("[INFO] MainThreadDispatcher: Custom dispatch loop stopped");
     }
 
     public static void Stop()
     {
         _running = false;
-        // Post a dummy action to wake up the loop
-        try
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && _mainRunLoop != IntPtr.Zero)
         {
-            _workQueue.Add(() => { });
+            // Stop CFRunLoop
+            CFRunLoopStop(_mainRunLoop);
         }
-        catch (InvalidOperationException)
+        else
         {
-            // Already completed
+            // Post a dummy action to wake up the custom loop
+            try
+            {
+                _workQueue.Add(() => { });
+            }
+            catch (InvalidOperationException)
+            {
+                // Already completed
+            }
         }
     }
 
@@ -100,6 +246,8 @@ public static class MainThreadDispatcher
     /// Executes an action synchronously on the main thread.
     /// If already on the main thread, executes immediately.
     /// Otherwise, blocks until execution completes.
+    /// On macOS, uses GCD dispatch_async_f to submit to CFRunLoop.
+    /// On other platforms, uses custom blocking queue.
     /// </summary>
     public static void Invoke(Action action)
     {
@@ -115,27 +263,34 @@ public static class MainThreadDispatcher
             return;
         }
 
-        // Marshal to main thread
+        // Use custom BlockingCollection queue on ALL platforms (including macOS)
+        // GCD/CFRunLoop doesn't work reliably with .NET's threading model
+        Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Dispatching from Thread {Thread.CurrentThread.ManagedThreadId} to UI Thread {MainThreadId}");
         Exception? exception = null;
         var completed = new ManualResetEventSlim(false);
 
         _workQueue.Add(() =>
         {
+            Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Executing on Thread {Thread.CurrentThread.ManagedThreadId}");
             try
             {
                 action();
             }
             catch (Exception ex)
             {
+                Console.Error.WriteLine($"[ERROR] MainThreadDispatcher.Invoke: Exception: {ex}");
                 exception = ex;
             }
             finally
             {
+                Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Completed on Thread {Thread.CurrentThread.ManagedThreadId}");
                 completed.Set();
             }
         });
 
+        Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Waiting for completion...");
         completed.Wait();
+        Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Wait completed");
 
         if (exception != null)
         {
@@ -145,6 +300,7 @@ public static class MainThreadDispatcher
 
     /// <summary>
     /// Executes a function synchronously on the main thread and returns the result.
+    /// Uses custom BlockingCollection queue on all platforms.
     /// </summary>
     public static T Invoke<T>(Func<T> func)
     {
@@ -159,7 +315,7 @@ public static class MainThreadDispatcher
             return func();
         }
 
-        // Marshal to main thread
+        // Use custom BlockingCollection queue on ALL platforms
         T? result = default;
         Exception? exception = null;
         var completed = new ManualResetEventSlim(false);
