@@ -112,15 +112,23 @@ public static class MainThreadDispatcher
 
     private static void WorkCallback(IntPtr context)
     {
+        GCHandle handle = default;
         try
         {
-            var handle = GCHandle.FromIntPtr(context);
+            handle = GCHandle.FromIntPtr(context);
             var wrapper = (WorkContext)handle.Target!;
             wrapper.Action();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[ERROR] MainThreadDispatcher callback failed: {ex}");
+        }
+        finally
+        {
+            if (handle.IsAllocated)
+            {
+                handle.Free();
+            }
         }
     }
 
@@ -247,8 +255,22 @@ public static class MainThreadDispatcher
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && _mainRunLoop != IntPtr.Zero)
         {
-            // Stop CFRunLoop
-            CFRunLoopStop(_mainRunLoop);
+            // Dispatch CFRunLoopStop via GCD to ensure it runs on the correct thread
+            var wrapper = new WorkContext
+            {
+                Action = () =>
+                {
+                    Console.WriteLine($"[INFO] MainThreadDispatcher.Stop: Stopping CFRunLoop from Thread {Thread.CurrentThread.ManagedThreadId}");
+                    CFRunLoopStop(_mainRunLoop);
+                }
+            };
+
+            var handle = GCHandle.Alloc(wrapper);
+            var mainQueue = GetMainQueue();
+            var callbackPtr = Marshal.GetFunctionPointerForDelegate(_workCallback);
+
+            Console.WriteLine($"[INFO] MainThreadDispatcher.Stop: Dispatching stop command via GCD");
+            dispatch_async_f(mainQueue, GCHandle.ToIntPtr(handle), callbackPtr);
         }
         else
         {
