@@ -144,7 +144,9 @@ public static class MainThreadDispatcher
 
     /// <summary>
     /// Initializes the dispatcher with the current thread as main thread.
-    /// Must be called from Thread 1 on macOS.
+    /// On macOS, MUST be called from the process's main thread (Thread 1)
+    /// because NSApplicationLoad() requires the main thread.
+    /// RunLoop() must then be called from this same thread.
     /// </summary>
     public static void Initialize()
     {
@@ -179,12 +181,23 @@ public static class MainThreadDispatcher
     /// This will block until Stop() is called.
     /// On macOS, runs CFRunLoop which processes GCD main queue.
     /// On other platforms, uses custom blocking queue.
+    /// IMPORTANT: On macOS, MUST be called from the same thread where Initialize() was called
+    /// (the thread where NSApplicationLoad() ran).
     /// </summary>
     public static void RunLoop()
     {
         if (!_initialized.IsSet)
         {
             throw new InvalidOperationException("MainThreadDispatcher not initialized. Call Initialize() first.");
+        }
+
+        // Validate we're on the same thread as Initialize() was called on
+        if (Thread.CurrentThread.ManagedThreadId != _mainThread?.ManagedThreadId)
+        {
+            throw new InvalidOperationException(
+                $"RunLoop() must be called from the same thread as Initialize(). " +
+                $"Expected Thread {_mainThread?.ManagedThreadId}, but called from Thread {Thread.CurrentThread.ManagedThreadId}. " +
+                $"On macOS, CFRunLoop must run on the thread where NSApplicationLoad() was called.");
         }
 
         Console.WriteLine($"[INFO] MainThreadDispatcher: Starting dispatch loop on Thread {Thread.CurrentThread.ManagedThreadId}");
