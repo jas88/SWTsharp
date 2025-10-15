@@ -17,7 +17,10 @@ internal static class ModuleInitializer
         var threadId = Thread.CurrentThread.ManagedThreadId;
         var msg = $"[ModuleInitializer] Running on Thread {threadId}";
         Console.WriteLine(msg);
-        File.AppendAllText("/tmp/test-thread-log.txt", msg + "\n");
+
+        // Use cross-platform temp path (works on Windows, macOS, Linux)
+        var logPath = Path.Combine(Path.GetTempPath(), "test-thread-log.txt");
+        File.AppendAllText(logPath, msg + "\n");
 
         // Note: On macOS, MainThreadDispatcher initialization and validation
         // happens in DisplayFixture constructor (after Program.Main runs).
