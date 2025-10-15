@@ -5,7 +5,9 @@ namespace SWTSharp.Tests.Infrastructure;
 
 /// <summary>
 /// Base class for widget-specific tests with common widget testing patterns.
+/// All widget tests require GUI environment and are marked with Category=GUI trait.
 /// </summary>
+[Trait("Category", "GUI")]
 public abstract class WidgetTestBase : TestBase
 {
     protected WidgetTestBase(DisplayFixture displayFixture) : base(displayFixture) { }

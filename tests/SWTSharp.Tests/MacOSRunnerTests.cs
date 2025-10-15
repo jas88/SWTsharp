@@ -10,7 +10,9 @@ namespace SWTSharp.Tests;
 /// Dummy test for macOS that ensures tests run through the custom test runner.
 /// When invoked by 'dotnet test', it launches the custom runner as an external process.
 /// When invoked by the custom runner, it's a no-op that passes.
+/// Marked as NonGUI so it can run in CI.
 /// </summary>
+[Trait("Category", "NonGUI")]
 public class MacOSRunnerTests
 {
     /// <summary>

@@ -7,7 +7,9 @@ namespace SWTSharp.Tests.Platform;
 /// <summary>
 /// Minimal test case to verify main thread dispatch on macOS works.
 /// Documents that dispatch_sync_f requires Thread 1 to run NSRunLoop/CFRunLoop.
+/// These are NON-GUI tests that can run in CI headless environment.
 /// </summary>
+[Trait("Category", "NonGUI")]
 public class GCDThreadingTests
 {
     // Objective-C runtime
