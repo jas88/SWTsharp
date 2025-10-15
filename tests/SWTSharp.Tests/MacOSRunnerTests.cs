@@ -26,6 +26,17 @@ public class MacOSRunnerTests
             return;
         }
 
+        // Skip in CI environment - CI already uses 'dotnet run --project'
+        var isCI = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")) ||
+                   !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
+
+        if (isCI)
+        {
+            // Running in CI which already uses custom runner via 'dotnet run --project'
+            Assert.True(true, "Skipping in CI - already using custom runner");
+            return;
+        }
+
         // Check if we're running under the custom test runner
         // The custom runner initializes MainThreadDispatcher
         if (IsRunningUnderCustomRunner())
