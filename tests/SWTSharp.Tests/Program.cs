@@ -19,8 +19,10 @@ public class Program
 {
     public static int Main(string[] args)
     {
-        // Set up assembly resolution to find xunit.core and other dependencies
-        AssemblyLoadContext.Default.Resolving += OnResolving;
+        // Set up GLOBAL assembly resolution for all load contexts
+        // This catches LoadFrom context and method token resolution failures
+        AppDomain.CurrentDomain.AssemblyResolve += OnAppDomainAssemblyResolve;
+        AssemblyLoadContext.Default.Resolving += OnAssemblyLoadContextResolving;
 
         try
         {
@@ -40,17 +42,45 @@ public class Program
         }
         finally
         {
-            AssemblyLoadContext.Default.Resolving -= OnResolving;
+            AppDomain.CurrentDomain.AssemblyResolve -= OnAppDomainAssemblyResolve;
+            AssemblyLoadContext.Default.Resolving -= OnAssemblyLoadContextResolving;
         }
     }
 
-    private static Assembly? OnResolving(AssemblyLoadContext context, AssemblyName assemblyName)
+    /// <summary>
+    /// Global AppDomain assembly resolver - catches ALL resolution failures including LoadFrom context
+    /// </summary>
+    private static Assembly? OnAppDomainAssemblyResolve(object? sender, ResolveEventArgs args)
     {
-        // Look for assemblies in the application directory
+        var assemblyName = new AssemblyName(args.Name);
         var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         if (appDir == null) return null;
 
-        // Try direct match first
+        // Try direct match
+        var dllPath = Path.Combine(appDir, $"{assemblyName.Name}.dll");
+        if (File.Exists(dllPath))
+        {
+            try
+            {
+                return Assembly.LoadFrom(dllPath);
+            }
+            catch
+            {
+                // Continue to other strategies
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// AssemblyLoadContext resolver - catches Default context failures
+    /// </summary>
+    private static Assembly? OnAssemblyLoadContextResolving(AssemblyLoadContext context, AssemblyName assemblyName)
+    {
+        var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        if (appDir == null) return null;
+
         var dllPath = Path.Combine(appDir, $"{assemblyName.Name}.dll");
         if (File.Exists(dllPath))
         {
@@ -60,7 +90,7 @@ public class Program
             }
             catch
             {
-                // If loading fails, continue to next strategy
+                // Continue to other strategies
             }
         }
 
