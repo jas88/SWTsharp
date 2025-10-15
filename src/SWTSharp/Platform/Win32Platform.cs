@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using SWTSharp.Platform.Win32;
 
 namespace SWTSharp.Platform;
 
@@ -27,7 +28,7 @@ internal partial class Win32Platform : IPlatform
             // This is a temporary workaround - proper fix would expose handle through interface
         }
 
-        return new Win32.Win32Button(parentHandle, style);
+        return new Win32Button(parentHandle, style);
     }
 
     public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
@@ -41,7 +42,7 @@ internal partial class Win32Platform : IPlatform
             // This is a temporary workaround - proper fix would expose handle through interface
         }
 
-        return new Win32.Win32Label(parentHandle, style);
+        return new Win32Label(parentHandle, style);
     }
 
     public IPlatformTextInput CreateTextWidget(IPlatformWidget? parent, int style)
@@ -53,7 +54,7 @@ internal partial class Win32Platform : IPlatform
             // For now, we'll need the parent to be created first
         }
 
-        return new Win32.Win32Text(parentHandle, style);
+        return new Win32Text(parentHandle, style);
     }
 
     public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
