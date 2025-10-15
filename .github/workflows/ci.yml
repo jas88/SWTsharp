@@ -33,7 +33,7 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Run tests
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --no-build --configuration ${{ env.CONFIGURATION }}
+        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -86,7 +86,7 @@ jobs:
           fi
 
       - name: Run tests
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --no-build --configuration ${{ env.CONFIGURATION }}
+        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -148,7 +148,7 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Run tests
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --no-build --configuration ${{ env.CONFIGURATION }}
+        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
         env:
           DISPLAY: :99
 
