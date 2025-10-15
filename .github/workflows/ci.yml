@@ -72,6 +72,19 @@ jobs:
       - name: Build
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
+      - name: List output directory contents
+        run: ls -la tests/SWTSharp.Tests/bin/${{ env.CONFIGURATION }}/net9.0/ | grep -E '\.(dll|exe)$'
+
+      - name: Check for xunit.core.dll
+        run: |
+          if [ -f "tests/SWTSharp.Tests/bin/${{ env.CONFIGURATION }}/net9.0/xunit.core.dll" ]; then
+            echo "✓ xunit.core.dll found"
+          else
+            echo "✗ xunit.core.dll NOT found"
+            echo "Listing all DLLs:"
+            ls -la tests/SWTSharp.Tests/bin/${{ env.CONFIGURATION }}/net9.0/ | head -30
+          fi
+
       - name: Run tests
         run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --no-build --configuration ${{ env.CONFIGURATION }}
 
