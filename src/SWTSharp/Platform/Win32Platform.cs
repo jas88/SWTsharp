@@ -18,6 +18,7 @@ internal partial class Win32Platform : IPlatform
 
     public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
     {
+        #if WINDOWS
         // Get parent handle - use desktop if no parent
         IntPtr parentHandle = IntPtr.Zero;
         if (parent != null && parent is IPlatformWidget platformWidget)
@@ -28,10 +29,14 @@ internal partial class Win32Platform : IPlatform
         }
 
         return new SWTSharp.Platform.Win32.Win32Button(parentHandle, style);
+        #else
+        throw new PlatformNotSupportedException("Win32Platform is only supported on Windows");
+        #endif
     }
 
     public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
     {
+        #if WINDOWS
         // Get parent handle - use desktop if no parent
         IntPtr parentHandle = IntPtr.Zero;
         if (parent != null && parent is IPlatformWidget platformWidget)
@@ -42,10 +47,14 @@ internal partial class Win32Platform : IPlatform
         }
 
         return new SWTSharp.Platform.Win32.Win32Label(parentHandle, style);
+        #else
+        throw new PlatformNotSupportedException("Win32Platform is only supported on Windows");
+        #endif
     }
 
     public IPlatformTextInput CreateTextWidget(IPlatformWidget? parent, int style)
     {
+        #if WINDOWS
         IntPtr parentHandle = IntPtr.Zero;
         if (parent != null && parent is IPlatformWidget platformWidget)
         {
@@ -54,6 +63,9 @@ internal partial class Win32Platform : IPlatform
         }
 
         return new SWTSharp.Platform.Win32.Win32Text(parentHandle, style);
+        #else
+        throw new PlatformNotSupportedException("Win32Platform is only supported on Windows");
+        #endif
     }
 
     public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
