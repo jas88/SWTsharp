@@ -11,8 +11,7 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformWindow CreateWindowWidget(int style, string title)
     {
-        // TODO: Implement LinuxWindow in Phase 2
-        throw new NotImplementedException("CreateWindowWidget will be implemented in Phase 2");
+        return new Linux.LinuxWindow(style, title);
     }
 
     public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)

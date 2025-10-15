@@ -12,8 +12,11 @@ internal partial class Win32Platform : IPlatform
 
     public IPlatformWindow CreateWindowWidget(int style, string title)
     {
-        // TODO: Implement Win32Window in Phase 2
-        throw new NotImplementedException("CreateWindowWidget will be implemented in Phase 2");
+        #if WINDOWS
+        return new Win32.Win32Window(style, title);
+        #else
+        throw new PlatformNotSupportedException("Win32Platform is only supported on Windows");
+        #endif
     }
 
     public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
