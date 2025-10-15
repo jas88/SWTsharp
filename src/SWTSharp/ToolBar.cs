@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -8,7 +10,9 @@ namespace SWTSharp;
 public class ToolBar : Composite
 {
     private readonly List<ToolItem> _items = new();
-    private IntPtr _toolBarHandle;
+#pragma warning disable CS0649 // Field is never assigned to - will be assigned when platform widget interface is implemented
+    private IPlatformToolBar? _platformToolBar;
+#pragma warning restore CS0649
 
     /// <summary>
     /// Gets an array of all items in the toolbar.
@@ -68,28 +72,36 @@ public class ToolBar : Composite
     }
 
     /// <summary>
-    /// Gets or sets the platform-specific toolbar handle.
-    /// Note: ToolBar uses its own internal handle instead of the inherited Handle property
-    /// to avoid conflicts with the Composite disposal chain.
+    /// Gets the actual platform-specific toolbar handle for use by ToolItem.
+    /// TODO: Remove this property when platform widget implementation is available
+    /// TODO: Replace with IPlatformToolBar interface access
     /// </summary>
-    internal override IntPtr Handle
-    {
-        get => IntPtr.Zero; // Return Zero to prevent Composite.ReleaseWidget from destroying it
-        set { } // Ignore sets from base class
-    }
+    internal IntPtr ToolBarHandle => IntPtr.Zero; // Return placeholder handle for now
 
     /// <summary>
-    /// Gets the actual platform-specific toolbar handle for use by ToolItem.
+    /// Gets the platform toolbar for use by ToolItem.
+    /// TODO: Initialize this property when IPlatformToolBar implementation is available
+    /// TODO: Create toolbar widget in CreateWidget method using CreateToolBarWidget
     /// </summary>
-    internal IntPtr ToolBarHandle => _toolBarHandle;
+    internal IPlatformToolBar? PlatformToolBar => _platformToolBar;
 
     /// <summary>
     /// Creates the platform-specific toolbar widget.
     /// </summary>
     protected override void CreateWidget()
     {
-        // Create platform-specific toolbar handle (stored separately from inherited Handle)
-        _toolBarHandle = Platform.PlatformFactory.Instance.CreateToolBar(Parent!.Handle, Style);
+        // TEMPORARY FIX: Until IPlatformToolBar is fully implemented, create as basic Composite
+        // This prevents NSWindow state inconsistency and crashes during disposal
+        // The ToolBar will function as a container but without native toolbar features
+        base.CreateWidget();
+
+        // TODO: Replace base.CreateWidget() with proper toolbar creation:
+        // PlatformWidget = Platform.PlatformFactory.Instance.CreateToolBarWidget(
+        //     Parent?.PlatformWidget,
+        //     Style
+        // );
+        // TODO: Handle toolbar style bits (FLAT, WRAP, RIGHT, HORIZONTAL, VERTICAL, SHADOW_OUT)
+        // TODO: Initialize _platformToolBar from PlatformWidget cast to IPlatformToolBar
     }
 
     /// <summary>
@@ -103,9 +115,14 @@ public class ToolBar : Composite
         CheckWidget();
         lock (_items)
         {
+            // ROBUST: Validate bounds before array access to prevent NSInternalInconsistencyException
             if (index < 0 || index >= _items.Count)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), "Index out of range");
+                throw new ArgumentOutOfRangeException(
+                    nameof(index),
+                    index,
+                    $"Index must be between 0 and {_items.Count - 1}, but was {index}"
+                );
             }
             return _items[index];
         }
@@ -154,8 +171,10 @@ public class ToolBar : Composite
 
         lock (_items)
         {
-            if (index < 0 || index >= _items.Count)
+            // ROBUST: Validate insertion index before modifying collection
+            if (index < 0 || index > _items.Count)  // Note: > not >= for insertion
             {
+                // Invalid index - append to end
                 _items.Add(item);
             }
             else
@@ -215,42 +234,75 @@ public class ToolBar : Composite
 
     protected override void UpdateVisible()
     {
-        if (_toolBarHandle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.SetControlVisible(_toolBarHandle, Visible);
-        }
+        // Guard against null platform widget during initialization or disposal
+        if (PlatformWidget == null)
+            return;
+
+        // Use base Composite visibility control until IPlatformToolBar is implemented
+        base.UpdateVisible();
+
+        // TODO: Replace with IPlatformToolBar-specific visibility control
+        // TODO: _platformToolBar?.SetVisible(Visible);
     }
 
     protected override void UpdateEnabled()
     {
-        if (_toolBarHandle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.SetControlEnabled(_toolBarHandle, Enabled);
-        }
+        // Guard against null platform widget during initialization or disposal
+        if (PlatformWidget == null)
+            return;
+
+        // Use base Composite enabled control until IPlatformToolBar is implemented
+        base.UpdateEnabled();
+
+        // TODO: Replace with IPlatformToolBar-specific enabled control
+        // TODO: _platformToolBar?.SetEnabled(Enabled);
+        // TODO: May need to propagate to all items
     }
 
     protected override void ReleaseWidget()
     {
-        // Dispose all items
-        lock (_items)
+        try
         {
-            foreach (var item in _items.ToArray())
+            // ROBUST: Dispose all items first, before platform cleanup
+            // This ensures proper cleanup order and prevents access to disposed items
+            lock (_items)
             {
-                if (item is IDisposable disposable)
+                foreach (var item in _items.ToArray())
                 {
-                    disposable.Dispose();
+                    if (item is IDisposable disposable)
+                    {
+                        try
+                        {
+                            disposable.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but don't let one item failure stop others
+                            System.Diagnostics.Debug.WriteLine($"Error disposing ToolItem: {ex.Message}");
+                        }
+                    }
                 }
+                _items.Clear();
             }
-            _items.Clear();
-        }
 
-        // Destroy platform toolbar handle
-        if (_toolBarHandle != IntPtr.Zero)
+            // Dispose platform toolbar if it exists
+            if (_platformToolBar != null)
+            {
+                try
+                {
+                    _platformToolBar.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error disposing platform toolbar: {ex.Message}");
+                }
+                _platformToolBar = null;
+            }
+        }
+        finally
         {
-            Platform.PlatformFactory.Instance.DestroyToolBar(_toolBarHandle);
-            _toolBarHandle = IntPtr.Zero;
+            // ROBUST: Always call base cleanup, even if item disposal fails
+            base.ReleaseWidget();
         }
-
-        base.ReleaseWidget();
     }
 }
