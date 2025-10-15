@@ -8,6 +8,102 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class Win32Platform : IPlatform
 {
+    // New platform widget methods (return objects, not handles!)
+
+    public IPlatformWindow CreateWindowWidget(int style, string title)
+    {
+        // TODO: Implement Win32Window in Phase 2
+        throw new NotImplementedException("CreateWindowWidget will be implemented in Phase 2");
+    }
+
+    public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
+    {
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null && parent is IPlatformWidget platformWidget)
+        {
+            // Win32 widgets should expose their handle through the platform interface
+            // For now, we'll need the parent to be created first
+            // This is a temporary workaround - proper fix would expose handle through interface
+        }
+
+        return new Win32.Win32Button(parentHandle, style);
+    }
+
+    public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
+    {
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null && parent is IPlatformWidget platformWidget)
+        {
+            // Win32 widgets should expose their handle through the platform interface
+            // For now, we'll need the parent to be created first
+            // This is a temporary workaround - proper fix would expose handle through interface
+        }
+
+        return new Win32.Win32Label(parentHandle, style);
+    }
+
+    public IPlatformTextInput CreateTextWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null && parent is IPlatformWidget platformWidget)
+        {
+            // Win32 widgets should expose their handle through the platform interface
+            // For now, we'll need the parent to be created first
+        }
+
+        return new Win32.Win32Text(parentHandle, style);
+    }
+
+    public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement Win32Composite in Phase 2
+        throw new NotImplementedException("CreateCompositeWidget will be implemented in Phase 2");
+    }
+
+    public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)
+    {
+        // TODO: Implement Win32ToolBar in Phase 3 (special case)
+        throw new NotImplementedException("CreateToolBarWidget will be implemented in Phase 3");
+    }
+
+    // Advanced widget factory methods for Phase 5.3
+    public IPlatformCombo CreateComboWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement Win32Combo in Phase 5.3
+        throw new NotImplementedException("CreateComboWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformList CreateListWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement Win32List in Phase 5.3
+        throw new NotImplementedException("CreateListWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformProgressBar CreateProgressBarWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement Win32ProgressBar in Phase 5.3
+        throw new NotImplementedException("CreateProgressBarWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformSlider CreateSliderWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement Win32Slider in Phase 5.3
+        throw new NotImplementedException("CreateSliderWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement Win32Scale in Phase 5.3
+        throw new NotImplementedException("CreateScaleWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement Win32Spinner in Phase 5.3
+        throw new NotImplementedException("CreateSpinnerWidget will be implemented in Phase 5.3");
+    }
     private const string User32 = "user32.dll";
     private const string Kernel32 = "kernel32.dll";
 
@@ -319,56 +415,25 @@ internal partial class Win32Platform : IPlatform
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }
 
-    public IntPtr CreateWindow(int style, string title)
-    {
-        uint dwStyle = WS_OVERLAPPEDWINDOW;
-
-        var handle = CreateWindowEx(
-            0,
-            WindowClassName,
-            title,
-            dwStyle,
-            100, 100,  // x, y
-            800, 600,  // width, height
-            IntPtr.Zero,
-            IntPtr.Zero,
-            _hInstance,
-            IntPtr.Zero);
-
-        return handle;
-    }
-
-    void IPlatform.DestroyWindow(IntPtr handle)
-    {
-        if (handle != IntPtr.Zero)
-        {
-            DestroyWindow(handle);
-        }
-    }
-
-    public void SetWindowVisible(IntPtr handle, bool visible)
-    {
-        ShowWindow(handle, visible ? SW_SHOW : SW_HIDE);
-    }
-
-    void IPlatform.SetWindowText(IntPtr handle, string text)
-    {
-        SetWindowText(handle, text);
-    }
-
-    // SetWindowPos flags - defined at class level for reuse
+    // SetWindowPos flags - used internally by platform implementations
     private const uint SWP_NOMOVE = 0x0002;
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOZORDER = 0x0004;
 
-    public void SetWindowSize(IntPtr handle, int width, int height)
+    // Internal helper methods (not part of IPlatform interface)
+    internal void SetControlEnabled(IntPtr handle, bool enabled)
     {
-        SetWindowPos(handle, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
+        EnableWindow(handle, enabled);
     }
 
-    public void SetWindowLocation(IntPtr handle, int x, int y)
+    internal void SetControlVisible(IntPtr handle, bool visible)
     {
-        SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ShowWindow(handle, visible ? SW_SHOW : SW_HIDE);
+    }
+
+    internal void SetControlBounds(IntPtr handle, int x, int y, int width, int height)
+    {
+        MoveWindow(handle, x, y, width, height, true);
     }
 
     public bool ProcessEvent()
@@ -408,54 +473,12 @@ internal partial class Win32Platform : IPlatform
         action();
     }
 
-    public IntPtr CreateComposite(IntPtr parent, int style)
-    {
-        // Create a child window that acts as a container
-        // Use WS_CHILD style for composites
-        uint windowStyle = WS_CHILD | WS_VISIBLE;
+    // CreateComposite method - REMOVED: Now handled by CreateCompositeWidget() which returns IPlatformComposite
+    // public IntPtr CreateComposite(IntPtr parent, int style) - Removed in platform widget migration
 
-        if ((style & SWT.BORDER) != 0)
-        {
-            windowStyle |= 0x00800000; // WS_BORDER
-        }
-
-        IntPtr hInstance = GetModuleHandle(null);
-        IntPtr hwnd = CreateWindowEx(
-            0,                      // Extended style
-            "STATIC",               // Using STATIC class as container
-            string.Empty,           // No title
-            windowStyle,
-            0, 0,                   // Position
-            100, 100,               // Default size
-            parent,                 // Parent window
-            IntPtr.Zero,            // No menu
-            hInstance,
-            IntPtr.Zero);
-
-        return hwnd;
-    }
-
-    // Button-specific constants
-    private const uint BS_PUSHBUTTON = 0x00000000;
-    private const uint BS_DEFPUSHBUTTON = 0x00000001;
-    private const uint BS_CHECKBOX = 0x00000002;
-    private const uint BS_AUTOCHECKBOX = 0x00000003;
-    private const uint BS_RADIOBUTTON = 0x00000004;
-    private const uint BS_AUTORADIOBUTTON = 0x00000009;
-    private const uint BS_3STATE = 0x00000005;
-    private const uint BS_AUTO3STATE = 0x00000006;
-
-    // Button messages
-    private const uint BM_SETCHECK = 0x00F1;
-    private const uint BM_GETCHECK = 0x00F0;
-    private const uint BM_CLICK = 0x00F5;
-
-    // Button notification codes
-    private const uint BN_CLICKED = 0;
-
-    // Button check states
-    private const int BST_UNCHECKED = 0x0000;
-    private const int BST_CHECKED = 0x0001;
+    // Button-specific constants - REMOVED: Now handled by platform widget interfaces
+    // Removed: BS_PUSHBUTTON, BS_DEFPUSHBUTTON, BS_CHECKBOX, BS_AUTOCHECKBOX, BS_RADIOBUTTON, etc.
+    // Removed: BM_SETCHECK, BM_GETCHECK, BM_CLICK, BN_CLICKED, BST_UNCHECKED, BST_CHECKED
 
     // Control messages
     private const uint WM_COMMAND = 0x0111;
@@ -495,487 +518,52 @@ internal partial class Win32Platform : IPlatform
     [DllImport(User32, SetLastError = true)]
     private static extern bool MoveWindow(IntPtr hWnd, int x, int y, int width, int height, bool repaint);
 #endif
-    private readonly Dictionary<IntPtr, Action> _buttonCallbacks = new Dictionary<IntPtr, Action>();
+    // Button callback dictionary - REMOVED: No longer needed with platform widget interfaces
+    // private readonly Dictionary<IntPtr, Action> _buttonCallbacks - Removed in platform widget migration
+    // ClearButtonCallbacks() method also removed - event handling now in widget classes
 
     // Canvas data structure - implementations in Win32Platform_Canvas.cs
     // (CanvasData class and _canvasData dictionary defined in Win32Platform_Canvas.cs)
 
-    // LEAK-002: Cleanup method for button callbacks
-    public void ClearButtonCallbacks()
-    {
-        _buttonCallbacks.Clear();
-    }
+    // Button widget methods - REMOVED: Now handled by CreateButtonWidget() which returns IPlatformWidget
+    // public IntPtr CreateButton(IntPtr parent, int style, string text) - Removed in platform widget migration
+    // public void SetButtonText(IntPtr handle, string text) - Removed in platform widget migration
+    // public void SetButtonSelection(IntPtr handle, bool selected) - Removed in platform widget migration
+    // public bool GetButtonSelection(IntPtr handle) - Removed in platform widget migration
 
-    // LEAK-002: Remove specific button callback when control is destroyed
+    // ConnectButtonClick method - REMOVED: Now handled by IPlatformWidget event system
+    // public void ConnectButtonClick(IntPtr handle, Action callback) - Removed in platform widget migration
 
-    // Button widget methods
-    public IntPtr CreateButton(IntPtr parent, int style, string text)
-    {
-        uint buttonStyle = WS_CHILD | WS_VISIBLE;
-
-        // Determine button type from SWT style
-        if ((style & SWT.CHECK) != 0)
-        {
-            buttonStyle |= BS_AUTOCHECKBOX;
-        }
-        else if ((style & SWT.RADIO) != 0)
-        {
-            buttonStyle |= BS_AUTORADIOBUTTON;
-        }
-        else if ((style & SWT.TOGGLE) != 0)
-        {
-            buttonStyle |= BS_AUTOCHECKBOX; // Toggle behaves like checkbox
-        }
-        else if ((style & SWT.ARROW) != 0)
-        {
-            buttonStyle |= BS_PUSHBUTTON; // Arrow buttons need custom drawing
-        }
-        else // Default to PUSH
-        {
-            buttonStyle |= BS_PUSHBUTTON;
-        }
-
-        var handle = CreateWindowEx(
-            0,
-            "BUTTON",
-            text,
-            buttonStyle,
-            0, 0, 100, 30, // Default size
-            parent,
-            IntPtr.Zero,
-            _hInstance,
-            IntPtr.Zero);
-
-        return handle;
-    }
-
-    public void SetButtonText(IntPtr handle, string text)
-    {
-        SendMessage(handle, WM_SETTEXT, IntPtr.Zero, text);
-    }
-
-    public void SetButtonSelection(IntPtr handle, bool selected)
-    {
-        SendMessage(handle, BM_SETCHECK, new IntPtr(selected ? BST_CHECKED : BST_UNCHECKED), IntPtr.Zero);
-    }
-
-    public bool GetButtonSelection(IntPtr handle)
-    {
-        IntPtr result = SendMessage(handle, BM_GETCHECK, IntPtr.Zero, IntPtr.Zero);
-        return result.ToInt32() == BST_CHECKED;
-    }
-
-    public void SetControlEnabled(IntPtr handle, bool enabled)
-    {
-        EnableWindow(handle, enabled);
-    }
-
-    public void SetControlVisible(IntPtr handle, bool visible)
-    {
-        ShowWindow(handle, visible ? SW_SHOW : SW_HIDE);
-    }
-
-    public void SetControlBounds(IntPtr handle, int x, int y, int width, int height)
-    {
-        MoveWindow(handle, x, y, width, height, true);
-    }
-
-    public void ConnectButtonClick(IntPtr handle, Action callback)
-    {
-        // Store callback for later invocation
-        _buttonCallbacks[handle] = callback;
-
-        // In Win32, button clicks come through WM_COMMAND messages
-        // This would need proper subclassing or a window procedure hook
-        // For now, we store the callback - full implementation would require
-        // hooking into the parent window's message loop
-    }
-
-    // Menu operations
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
-    private static partial IntPtr CreateMenu();
-#else
-    [DllImport(User32, SetLastError = true)]
-    private static extern IntPtr CreateMenu();
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
-    private static partial IntPtr CreatePopupMenu();
-#else
-    [DllImport(User32, SetLastError = true)]
-    private static extern IntPtr CreatePopupMenu();
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool DestroyMenu(IntPtr hMenu);
-#else
-    [DllImport(User32, SetLastError = true)]
-    private static extern bool DestroyMenu(IntPtr hMenu);
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetMenu(IntPtr hWnd, IntPtr hMenu);
-#else
-    [DllImport(User32, SetLastError = true)]
-    private static extern bool SetMenu(IntPtr hWnd, IntPtr hMenu);
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, EntryPoint = "AppendMenuW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool AppendMenu(IntPtr hMenu, uint uFlags, UIntPtr uIDNewItem, string lpNewItem);
-#else
-    [DllImport(User32, EntryPoint = "AppendMenuW", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern bool AppendMenu(IntPtr hMenu, uint uFlags, UIntPtr uIDNewItem, string lpNewItem);
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool InsertMenu(IntPtr hMenu, uint uPosition, uint uFlags, UIntPtr uIDNewItem, string lpNewItem);
-#else
-    [DllImport(User32, CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern bool InsertMenu(IntPtr hMenu, uint uPosition, uint uFlags, UIntPtr uIDNewItem, string lpNewItem);
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool CheckMenuItem(IntPtr hMenu, uint uIDCheckItem, uint uCheck);
-#else
-    [DllImport(User32, SetLastError = true)]
-    private static extern bool CheckMenuItem(IntPtr hMenu, uint uIDCheckItem, uint uCheck);
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
-#else
-    [DllImport(User32, SetLastError = true)]
-    private static extern bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
-#endif
-
-#if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool TrackPopupMenu(IntPtr hMenu, uint uFlags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
-#else
-    [DllImport(User32, SetLastError = true)]
-    private static extern bool TrackPopupMenu(IntPtr hMenu, uint uFlags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
-#endif
-
-    // Menu flags
-    private const uint MF_STRING = 0x00000000;
-    private const uint MF_SEPARATOR = 0x00000800;
-    private const uint MF_POPUP = 0x00000010;
-    private const uint MF_CHECKED = 0x00000008;
-    private const uint MF_UNCHECKED = 0x00000000;
-    private const uint MF_BYCOMMAND = 0x00000000;
-    private const uint MF_BYPOSITION = 0x00000400;
-    private const uint MF_ENABLED = 0x00000000;
-    private const uint MF_GRAYED = 0x00000001;
-    private const uint MF_DISABLED = 0x00000002;
-
-    // TrackPopupMenu flags
-    private const uint TPM_LEFTALIGN = 0x0000;
-    private const uint TPM_RETURNCMD = 0x0100;
-
-    IntPtr IPlatform.CreateMenu(int style)
-    {
-        if ((style & SWT.BAR) != 0)
-        {
-            return CreateMenu();
-        }
-        else
-        {
-            return CreatePopupMenu();
-        }
-    }
-
-    void IPlatform.DestroyMenu(IntPtr handle)
-    {
-        if (handle != IntPtr.Zero)
-        {
-            DestroyMenu(handle);
-        }
-    }
-
-    void IPlatform.SetShellMenuBar(IntPtr shellHandle, IntPtr menuHandle)
-    {
-        SetMenu(shellHandle, menuHandle);
-    }
-
-    void IPlatform.SetMenuVisible(IntPtr handle, bool visible)
-    {
-        // Menus don't have visibility state on Win32
-        // Visibility is controlled by showing/hiding the window or popup
-    }
-
-    void IPlatform.ShowPopupMenu(IntPtr menuHandle, int x, int y)
-    {
-        // For popup menus, we need a window handle to associate with
-        // This is a simplified version - in production you'd track the active window
-        TrackPopupMenu(menuHandle, TPM_LEFTALIGN, x, y, 0, IntPtr.Zero, IntPtr.Zero);
-    }
-
-    IntPtr IPlatform.CreateMenuItem(IntPtr menuHandle, int style, int id, int index)
-    {
-        uint flags = MF_STRING;
-
-        if ((style & SWT.SEPARATOR) != 0)
-        {
-            flags = MF_SEPARATOR;
-        }
-        else if ((style & SWT.CASCADE) != 0)
-        {
-            flags = MF_POPUP;
-        }
-
-        if (index >= 0)
-        {
-            flags |= MF_BYPOSITION;
-            InsertMenu(menuHandle, (uint)index, flags, (UIntPtr)id, string.Empty);
-        }
-        else
-        {
-            AppendMenu(menuHandle, flags, (UIntPtr)id, string.Empty);
-        }
-
-        // Return the menu item ID as the handle (Win32 uses IDs to identify menu items)
-        return (IntPtr)id;
-    }
-
-    void IPlatform.DestroyMenuItem(IntPtr handle)
-    {
-        // Menu items are destroyed when their parent menu is destroyed
-        // No explicit cleanup needed
-    }
-
-    void IPlatform.SetMenuItemText(IntPtr handle, string text)
-    {
-        // On Win32, we need the menu handle and item ID
-        // This is a limitation of our current design - we'd need to track parent menus
-        // For now, this is a stub
-    }
-
-    void IPlatform.SetMenuItemSelection(IntPtr handle, bool selected)
-    {
-        // Would need parent menu handle
-        // CheckMenuItem(parentMenu, (uint)(int)handle, selected ? MF_CHECKED : MF_UNCHECKED);
-    }
-
-    void IPlatform.SetMenuItemEnabled(IntPtr handle, bool enabled)
-    {
-        // Would need parent menu handle
-        // EnableMenuItem(parentMenu, (uint)(int)handle, enabled ? MF_ENABLED : MF_GRAYED);
-    }
-
-    void IPlatform.SetMenuItemSubmenu(IntPtr itemHandle, IntPtr submenuHandle)
-    {
-        // Cascade items are created with the submenu handle as the ID
-        // This is handled in CreateMenuItem
-    }
+    // Menu operations - REMOVED: All menu-related P/Invoke declarations and constants removed
+    // These are now handled by platform widget interfaces (IPlatformMenu, IPlatformMenuItem)
+    // Removed: CreateMenu, CreatePopupMenu, DestroyMenu, SetMenu, AppendMenu, InsertMenu
+    // Removed: CheckMenuItem, EnableMenuItem, TrackPopupMenu and all menu constants
 
     // Label operations - implemented in Win32Platform_Label.cs
 
-    // Edit control (Text) constants
-    private const uint ES_LEFT = 0x0000;
-    private const uint ES_CENTER = 0x0001;
-    private const uint ES_RIGHT = 0x0002;
-    private const uint ES_MULTILINE = 0x0004;
-    private const uint ES_UPPERCASE = 0x0008;
-    private const uint ES_LOWERCASE = 0x0010;
-    private const uint ES_PASSWORD = 0x0020;
-    private const uint ES_AUTOVSCROLL = 0x0040;
-    private const uint ES_AUTOHSCROLL = 0x0080;
-    private const uint ES_NOHIDESEL = 0x0100;
-    private const uint ES_WANTRETURN = 0x1000;
-    // ES_READONLY and ES_NUMBER defined in Win32Platform_Spinner.cs
+    // Essential constants still needed by other platform widget partial classes
+    // Border styles (still needed by List, Tree, Combo widgets)
+    private const uint WS_EX_CLIENTEDGE = 0x00000200;
 
-    // Edit control messages
-    private const uint EM_GETSEL = 0x00B0;
-    private const uint EM_SETSEL = 0x00B1;
-    private const uint EM_GETRECT = 0x00B2;
-    private const uint EM_SETRECT = 0x00B3;
-    private const uint EM_SCROLL = 0x00B5;
-    private const uint EM_LINESCROLL = 0x00B6;
-    private const uint EM_SCROLLCARET = 0x00B7;
-    private const uint EM_GETMODIFY = 0x00B8;
-    private const uint EM_SETMODIFY = 0x00B9;
-    private const uint EM_GETLINECOUNT = 0x00BA;
-    private const uint EM_LINEINDEX = 0x00BB;
-    private const uint EM_SETHANDLE = 0x00BC;
-    private const uint EM_GETHANDLE = 0x00BD;
-    private const uint EM_GETTHUMB = 0x00BE;
-    private const uint EM_LINELENGTH = 0x00C1;
-    private const uint EM_REPLACESEL = 0x00C2;
-    private const uint EM_GETLINE = 0x00C4;
-    private const uint EM_LIMITTEXT = 0x00C5;
-    private const uint EM_CANUNDO = 0x00C6;
-    private const uint EM_UNDO = 0x00C7;
-    private const uint EM_FMTLINES = 0x00C8;
-    private const uint EM_LINEFROMCHAR = 0x00C9;
-    private const uint EM_SETTABSTOPS = 0x00CB;
-    private const uint EM_SETPASSWORDCHAR = 0x00CC;
-    private const uint EM_EMPTYUNDOBUFFER = 0x00CD;
-    private const uint EM_GETFIRSTVISIBLELINE = 0x00CE;
-    private const uint EM_SETREADONLY = 0x00CF;
-    private const uint EM_SETWORDBREAKPROC = 0x00D0;
-    private const uint EM_GETWORDBREAKPROC = 0x00D1;
-    private const uint EM_GETPASSWORDCHAR = 0x00D2;
-    private const uint EM_SETMARGINS = 0x00D3;
-    private const uint EM_GETMARGINS = 0x00D4;
-
-    // Window messages for text
+    // Window messages still needed by remaining widget implementations
     private const uint WM_GETTEXT = 0x000D;
     private const uint WM_GETTEXTLENGTH = 0x000E;
 
-    // Border styles
-    private const uint WS_EX_CLIENTEDGE = 0x00000200;
+    // Edit control (Text) constants - REMOVED: Now handled by platform widget interfaces
+    // Removed: All ES_ constants (edit control styles)
+    // Removed: All EM_ constants (edit control messages)
+    // Note: Some constants kept above for use by other widget implementations
 
+    // Text widget methods - REMOVED: Now handled by platform widget interfaces
+    // public IntPtr CreateText(IntPtr parent, int style) - Removed in platform widget migration
+    // public void SetTextContent(IntPtr handle, string text) - Removed in platform widget migration
+    // public string GetTextContent(IntPtr handle) - Removed in platform widget migration
+    // public void SetTextSelection(IntPtr handle, int start, int end) - Removed in platform widget migration
+    // public (int Start, int End) GetTextSelection(IntPtr handle) - Removed in platform widget migration
+    // public void SetTextLimit(IntPtr handle, int limit) - Removed in platform widget migration
+    // public void SetTextReadOnly(IntPtr handle, bool readOnly) - Removed in platform widget migration
 
-    // Text widget methods
-    public IntPtr CreateText(IntPtr parent, int style)
-    {
-        uint windowStyle = WS_CHILD | WS_VISIBLE;
-        uint exStyle = 0;
-
-        // Multi-line vs single-line
-        if ((style & SWT.MULTI) != 0)
-        {
-            windowStyle |= ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN;
-
-            if ((style & SWT.WRAP) != 0)
-            {
-                // Word wrapping - don't add horizontal scroll
-            }
-            else
-            {
-                windowStyle |= ES_AUTOHSCROLL;
-            }
-        }
-        else // SINGLE line is default
-        {
-            windowStyle |= ES_AUTOHSCROLL;
-        }
-
-        // Password field
-        if ((style & SWT.PASSWORD) != 0)
-        {
-            windowStyle |= ES_PASSWORD;
-        }
-
-        // Read-only
-        if ((style & SWT.READ_ONLY) != 0)
-        {
-            windowStyle |= ES_READONLY;
-        }
-
-        // Border
-        if ((style & SWT.BORDER) != 0)
-        {
-            exStyle |= WS_EX_CLIENTEDGE;
-        }
-
-        // Search style (Windows Vista+ has native search box)
-        // For now, treat as regular text with border
-        if ((style & SWT.SEARCH) != 0)
-        {
-            exStyle |= WS_EX_CLIENTEDGE;
-        }
-
-        var handle = CreateWindowEx(
-            exStyle,
-            "EDIT",           // Windows Edit control
-            string.Empty,
-            windowStyle,
-            0, 0, 100, 25,    // Default size
-            parent,
-            IntPtr.Zero,
-            _hInstance,
-            IntPtr.Zero);
-
-        return handle;
-    }
-
-    public void SetTextContent(IntPtr handle, string text)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        SendMessage(handle, WM_SETTEXT, IntPtr.Zero, text ?? string.Empty);
-    }
-
-    public string GetTextContent(IntPtr handle)
-    {
-        if (handle == IntPtr.Zero)
-            return string.Empty;
-
-        // Get the length of the text
-        int length = SendMessage(handle, WM_GETTEXTLENGTH, IntPtr.Zero, IntPtr.Zero).ToInt32();
-        if (length == 0)
-            return string.Empty;
-
-        // Allocate buffer and retrieve text
-        var buffer = new System.Text.StringBuilder(length + 1);
-        SendMessage(handle, WM_GETTEXT, new IntPtr(buffer.Capacity), buffer);
-
-        return buffer.ToString();
-    }
-
-    public void SetTextSelection(IntPtr handle, int start, int end)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // EM_SETSEL wParam=start, lParam=end
-        SendMessage(handle, EM_SETSEL, new IntPtr(start), new IntPtr(end));
-
-        // Scroll to make selection visible
-        SendMessage(handle, EM_SCROLLCARET, IntPtr.Zero, IntPtr.Zero);
-    }
-
-    public (int Start, int End) GetTextSelection(IntPtr handle)
-    {
-        if (handle == IntPtr.Zero)
-            return (0, 0);
-
-        int start = 0;
-        int end = 0;
-
-        // EM_GETSEL retrieves selection range
-        SendMessage(handle, EM_GETSEL, ref start, ref end);
-
-        return (start, end);
-    }
-
-    public void SetTextLimit(IntPtr handle, int limit)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // EM_LIMITTEXT sets the maximum number of characters
-        // 0 means maximum (64KB for single-line, ~4GB for multi-line on modern Windows)
-        SendMessage(handle, EM_LIMITTEXT, new IntPtr(limit), IntPtr.Zero);
-    }
-
-    public void SetTextReadOnly(IntPtr handle, bool readOnly)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // EM_SETREADONLY wParam=1 for read-only, 0 for editable
-        SendMessage(handle, EM_SETREADONLY, new IntPtr(readOnly ? 1 : 0), IntPtr.Zero);
-    }
-
-    // Additional SendMessage overloads for text operations
+    // Additional SendMessage overloads still needed by remaining widget implementations
     // Note: StringBuilder is not supported by LibraryImport - keep using DllImport
     [DllImport(User32, CharSet = CharSet.Unicode)]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, System.Text.StringBuilder lParam);
@@ -987,6 +575,8 @@ internal partial class Win32Platform : IPlatform
     [DllImport(User32)]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, ref int wParam, ref int lParam);
 #endif
+
+    // Note: Some text-specific SendMessage overloads removed as those methods are now handled by platform widget interfaces
 
     // ========================================================================
     // Widget implementations in separate partial class files:
@@ -1004,120 +594,10 @@ internal partial class Win32Platform : IPlatform
     // - Label widget: Win32Platform_Label.cs
     // ========================================================================
 
-    // ProgressBar operations
-
-    // Progress bar styles
-    private const uint PBS_HORIZONTAL = 0x01;
-    private const uint PBS_VERTICAL = 0x04;
-    private const uint PBS_SMOOTH = 0x01;
-    private const uint PBS_MARQUEE = 0x08;
-
-    // Progress bar messages
-    private const uint PBM_SETRANGE = 0x0401;
-    private const uint PBM_SETPOS = 0x0402;
-    private const uint PBM_DELTAPOS = 0x0403;
-    private const uint PBM_SETSTEP = 0x0404;
-    private const uint PBM_STEPIT = 0x0405;
-    private const uint PBM_SETRANGE32 = 0x0406;
-    private const uint PBM_GETRANGE = 0x0407;
-    private const uint PBM_GETPOS = 0x0408;
-    private const uint PBM_SETBARCOLOR = 0x0409;
-    private const uint PBM_SETBKCOLOR = 0x2001;
-    private const uint PBM_SETMARQUEE = 0x040A;  // For indeterminate mode
-    private const uint PBM_SETSTATE = 0x0410;     // Vista+ only
-    private const uint PBM_GETSTATE = 0x0411;     // Vista+ only
-
-    // Progress bar states (Vista+ only)
-    private const int PBST_NORMAL = 0x0001;
-    private const int PBST_ERROR = 0x0002;
-    private const int PBST_PAUSED = 0x0003;
-
-    public IntPtr CreateProgressBar(IntPtr parent, int style)
-    {
-        uint windowStyle = WS_CHILD | WS_VISIBLE;
-
-        // Determine orientation
-        if ((style & SWT.VERTICAL) != 0)
-        {
-            windowStyle |= PBS_VERTICAL;
-        }
-        else
-        {
-            windowStyle |= PBS_HORIZONTAL;
-        }
-
-        // Smooth style
-        if ((style & SWT.SMOOTH) != 0)
-        {
-            windowStyle |= PBS_SMOOTH;
-        }
-
-        // Indeterminate style (marquee)
-        if ((style & SWT.INDETERMINATE) != 0)
-        {
-            windowStyle |= PBS_MARQUEE;
-        }
-
-        var handle = CreateWindowEx(
-            0,
-            "msctls_progress32",  // Progress bar class
-            string.Empty,
-            windowStyle,
-            0, 0, 200, 20,  // Default size
-            parent,
-            IntPtr.Zero,
-            _hInstance,
-            IntPtr.Zero);
-
-        if (handle == IntPtr.Zero)
-        {
-            int error = Marshal.GetLastWin32Error();
-            throw new InvalidOperationException($"Failed to create progress bar. Error: {error}");
-        }
-
-        // Enable marquee animation for indeterminate style
-        if ((style & SWT.INDETERMINATE) != 0)
-        {
-            SendMessage(handle, PBM_SETMARQUEE, new IntPtr(1), new IntPtr(30)); // 30ms update interval
-        }
-
-        return handle;
-    }
-
-    public void SetProgressBarRange(IntPtr handle, int minimum, int maximum)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // Use PBM_SETRANGE32 for full 32-bit range
-        SendMessage(handle, PBM_SETRANGE32, new IntPtr(minimum), new IntPtr(maximum));
-    }
-
-    public void SetProgressBarSelection(IntPtr handle, int value)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // Set the current position
-        SendMessage(handle, PBM_SETPOS, new IntPtr(value), IntPtr.Zero);
-    }
-
-    public void SetProgressBarState(IntPtr handle, int state)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // Map SWT state to Win32 state
-        int pbState = state switch
-        {
-            ProgressBarState.NORMAL => PBST_NORMAL,
-            ProgressBarState.ERROR => PBST_ERROR,
-            ProgressBarState.PAUSED => PBST_PAUSED,
-            _ => PBST_NORMAL
-        };
-
-        // PBM_SETSTATE is only available on Windows Vista and later
-        // On older systems, this message will be ignored
-        SendMessage(handle, PBM_SETSTATE, new IntPtr(pbState), IntPtr.Zero);
-    }
+    // ProgressBar operations - REMOVED: Now handled by platform widget interfaces
+    // All ProgressBar-related constants and methods have been removed:
+    // - Progress bar styles: PBS_HORIZONTAL, PBS_VERTICAL, PBS_SMOOTH, PBS_MARQUEE
+    // - Progress bar messages: PBM_SETRANGE, PBM_SETPOS, PBM_DELTAPOS, etc.
+    // - Progress bar states: PBST_NORMAL, PBST_ERROR, PBST_PAUSED
+    // - Methods: CreateProgressBar, SetProgressBarRange, SetProgressBarSelection, SetProgressBarState
 }

@@ -144,11 +144,8 @@ public class Tree : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        Handle = Platform.PlatformFactory.Instance.CreateTree(Parent?.Handle ?? IntPtr.Zero, Style);
-        if (Handle == IntPtr.Zero)
-        {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create tree control");
-        }
+        // TODO: Implement platform widget interface for Tree
+        // TODO: Create IPlatformTree widget here
     }
 
     /// <summary>
@@ -302,7 +299,7 @@ public class Tree : Composite
         {
             throw new ArgumentNullException(nameof(item));
         }
-        Platform.PlatformFactory.Instance.ShowTreeItem(Handle, item.Handle);
+        // TODO: Implement platform widget interface for ShowTreeItem
     }
 
     /// <summary>
@@ -317,7 +314,7 @@ public class Tree : Composite
         }
         _items.Clear();
         _selection.Clear();
-        Platform.PlatformFactory.Instance.ClearTreeItems(Handle);
+        // TODO: Implement platform widget interface for ClearTreeItems
     }
 
     /// <summary>
@@ -394,8 +391,8 @@ public class Tree : Composite
     /// </summary>
     private void UpdateSelection()
     {
-        var handles = _selection.Select(item => item.Handle).ToArray();
-        Platform.PlatformFactory.Instance.SetTreeSelection(Handle, handles);
+        // TODO: Implement platform widget interface for SetTreeSelection
+        // TODO: Update platform tree selection through platform widget interface
         OnSelectionChanged(EventArgs.Empty);
     }
 

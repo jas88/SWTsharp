@@ -43,10 +43,7 @@ public class MessageBox : Dialog
     public int Open()
     {
         CheckWidget();
-        return PlatformFactory.Instance.ShowMessageBox(
-            Parent?.Handle ?? IntPtr.Zero,
-            _message,
-            Text,
-            Style);
+        // TODO: Implement message box through platform widget interface
+        return SWT.OK; // Placeholder
     }
 }

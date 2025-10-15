@@ -104,25 +104,7 @@ public class FileDialog : Dialog
     {
         CheckWidget();
 
-        var result = PlatformFactory.Instance.ShowFileDialog(
-            Parent?.Handle ?? IntPtr.Zero,
-            Text,
-            _filterPath,
-            _fileName,
-            _filterNames,
-            _filterExtensions,
-            Style,
-            _overwrite);
-
-        if (result.SelectedFiles != null && result.SelectedFiles.Length > 0)
-        {
-            _fileName = result.SelectedFiles[0];
-            _fileNames = result.SelectedFiles;
-            _filterPath = result.FilterPath ?? _filterPath;
-            _filterIndex = result.FilterIndex;
-            return _fileName;
-        }
-
-        return null;
+        // TODO: Implement file dialog through platform widget interface
+        return null; // Placeholder
     }
 }

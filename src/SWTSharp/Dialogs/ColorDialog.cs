@@ -56,18 +56,7 @@ public class ColorDialog : Dialog
     {
         CheckWidget();
 
-        var result = PlatformFactory.Instance.ShowColorDialog(
-            Parent?.Handle ?? IntPtr.Zero,
-            Text,
-            _rgb,
-            _rgbs);
-
-        if (result.HasValue)
-        {
-            _rgb = result.Value;
-            return _rgb;
-        }
-
-        return null;
+        // TODO: Implement color dialog through platform widget interface
+        return null; // Placeholder
     }
 }

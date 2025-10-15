@@ -11,7 +11,7 @@ public class Menu : Widget
     private Menu? _parentMenu;
     private bool _visible;
     private readonly List<MenuItem> _items = new();
-    private IntPtr _handle;
+    // Handle property removed - replaced with PlatformWidget
 
     /// <summary>
     /// Gets the parent widget of this menu.
@@ -65,19 +65,12 @@ public class Menu : Widget
             if (_visible != value)
             {
                 _visible = value;
-                UpdateVisible();
+                // TODO: Implement visibility updates through platform widget interface
             }
         }
     }
 
-    /// <summary>
-    /// Gets or sets the platform-specific menu handle.
-    /// </summary>
-    internal override IntPtr Handle
-    {
-        get => _handle;
-        set => _handle = value;
-    }
+    // Handle property removed - replaced with PlatformWidget
 
     /// <summary>
     /// Gets the array of menu items contained in this menu.
@@ -148,10 +141,11 @@ public class Menu : Widget
         _parent = parent;
         CreateWidget();
 
+        // TODO: Implement menu bar attachment through platform widget interface
         // If this is a menu bar, attach it to the shell
         if ((style & SWT.BAR) != 0)
         {
-            SWTSharp.Platform.PlatformFactory.Instance.SetShellMenuBar(parent.Handle, _handle);
+            // Will be implemented through platform widget interface
         }
     }
 
@@ -201,8 +195,8 @@ public class Menu : Widget
 
     private void CreateWidget()
     {
-        // Create platform-specific menu handle
-        Handle = SWTSharp.Platform.PlatformFactory.Instance.CreateMenu(Style);
+        // TODO: Implement menu creation through platform widget interface
+        // Handle property removed - replaced with PlatformWidget
     }
 
     /// <summary>
@@ -274,7 +268,7 @@ public class Menu : Widget
             throw new SWTException(SWT.ERROR_MENU_NOT_POP_UP);
         }
 
-        SWTSharp.Platform.PlatformFactory.Instance.ShowPopupMenu(_handle, x, y);
+        // TODO: Implement popup menu display through platform widget interface
     }
 
     /// <summary>
@@ -304,14 +298,7 @@ public class Menu : Widget
         }
     }
 
-    private void UpdateVisible()
-    {
-        if (_handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetMenuVisible(_handle, _visible);
-        }
-    }
-
+    
     protected override void ReleaseWidget()
     {
         // Dispose all items
@@ -324,12 +311,7 @@ public class Menu : Widget
             _items.Clear();
         }
 
-        // Destroy platform menu
-        if (_handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.DestroyMenu(_handle);
-            _handle = IntPtr.Zero;
-        }
+        // TODO: Implement menu disposal through platform widget interface
 
         _parent = null;
         _parentItem = null;

@@ -44,15 +44,10 @@ public class Group : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // Get parent handle
-        IntPtr parentHandle = IntPtr.Zero;
-        if (Parent != null)
-        {
-            parentHandle = Parent.Handle;
-        }
-
-        // Create platform-specific group box
-        Handle = Platform.PlatformFactory.Instance.CreateGroup(parentHandle, Style, _text);
+        // TODO: Implement Group widget creation using platform widget interface
+        // TODO: Use IPlatformWidget.CreateGroup with parent widget reference
+        // TODO: Pass style and initial text to platform implementation
+        // TODO: Create IPlatformGroup widget here
     }
 
     /// <summary>
@@ -60,34 +55,43 @@ public class Group : Composite
     /// </summary>
     private void UpdateText()
     {
-        if (Handle != IntPtr.Zero)
+        // TODO: Implement text update using platform widget interface
+        // TODO: Call IPlatformWidget.SetText or Group.SetText method
+        // TODO: Handle text changes through the platform widget abstraction
+        if (PlatformWidget != null)
         {
-            Platform.PlatformFactory.Instance.SetGroupText(Handle, _text);
+            // TODO: PlatformWidget.SetText(_text);
         }
     }
 
     protected override void UpdateVisible()
     {
-        if (Handle != IntPtr.Zero)
+        // TODO: Implement visibility update using platform widget interface
+        // TODO: Call IPlatformWidget.SetVisible method
+        if (PlatformWidget != null)
         {
-            Platform.PlatformFactory.Instance.SetControlVisible(Handle, Visible);
+            // TODO: PlatformWidget.SetVisible(Visible);
         }
     }
 
     protected override void UpdateEnabled()
     {
-        if (Handle != IntPtr.Zero)
+        // TODO: Implement enabled state update using platform widget interface
+        // TODO: Call IPlatformWidget.SetEnabled method
+        if (PlatformWidget != null)
         {
-            Platform.PlatformFactory.Instance.SetControlEnabled(Handle, Enabled);
+            // TODO: PlatformWidget.SetEnabled(Enabled);
         }
     }
 
     protected override void UpdateBounds()
     {
-        if (Handle != IntPtr.Zero)
+        // TODO: Implement bounds update using platform widget interface
+        // TODO: Call IPlatformWidget.SetBounds method
+        if (PlatformWidget != null)
         {
             var (x, y, width, height) = GetBounds();
-            Platform.PlatformFactory.Instance.SetControlBounds(Handle, x, y, width, height);
+            PlatformWidget.SetBounds(x, y, width, height);
         }
     }
 

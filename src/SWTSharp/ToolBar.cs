@@ -90,18 +90,49 @@ public class ToolBar : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // TEMPORARY FIX: Until IPlatformToolBar is fully implemented, create as basic Composite
-        // This prevents NSWindow state inconsistency and crashes during disposal
-        // The ToolBar will function as a container but without native toolbar features
-        base.CreateWidget();
+        // Get parent window for toolbar attachment
+        var parentWindow = GetParentShell()?.PlatformWidget as IPlatformWindow;
 
-        // TODO: Replace base.CreateWidget() with proper toolbar creation:
-        // PlatformWidget = Platform.PlatformFactory.Instance.CreateToolBarWidget(
-        //     Parent?.PlatformWidget,
-        //     Style
-        // );
-        // TODO: Handle toolbar style bits (FLAT, WRAP, RIGHT, HORIZONTAL, VERTICAL, SHADOW_OUT)
-        // TODO: Initialize _platformToolBar from PlatformWidget cast to IPlatformToolBar
+        if (parentWindow == null)
+        {
+            throw new InvalidOperationException(
+                "ToolBar must have a Shell parent. ToolBars attach to windows and require a valid parent window."
+            );
+        }
+
+        // Create real toolbar through factory (NO pseudo-handles)
+        // Note: IPlatformToolBar does NOT extend IPlatformWidget because toolbars
+        // attach to windows rather than being embedded in layouts like regular widgets
+        _platformToolBar = Platform.PlatformFactory.Instance.CreateToolBarWidget(
+            parentWindow,
+            Style
+        );
+
+        if (_platformToolBar == null)
+        {
+            throw new InvalidOperationException(
+                "Platform failed to create IPlatformToolBar implementation"
+            );
+        }
+
+        // Set PlatformWidget to the toolbar if it also implements IPlatformWidget
+        // (for platforms where toolbar is a widget), otherwise leave it null
+        PlatformWidget = _platformToolBar as IPlatformWidget;
+    }
+
+    /// <summary>
+    /// Gets the parent Shell for this toolbar.
+    /// </summary>
+    private Shell? GetParentShell()
+    {
+        Control? current = Parent;
+        while (current != null)
+        {
+            if (current is Shell shell)
+                return shell;
+            current = current.Parent;
+        }
+        return null;
     }
 
     /// <summary>

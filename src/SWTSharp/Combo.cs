@@ -1,3 +1,6 @@
+using SWTSharp.Platform;
+using SWTSharp.Events;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -131,7 +134,8 @@ public class Combo : Control
             {
                 Text = _text.SliceToString(0, _textLimit);
             }
-            Platform.PlatformFactory.Instance.SetComboTextLimit(Handle, _textLimit);
+            // TODO: Implement SetComboTextLimit using platform widget interface
+            // Platform.PlatformFactory.Instance.SetComboTextLimit(Handle, _textLimit);
         }
     }
 
@@ -153,7 +157,8 @@ public class Combo : Control
                 throw new ArgumentException("Visible item count must be at least 1");
             }
             _visibleItemCount = value;
-            Platform.PlatformFactory.Instance.SetComboVisibleItemCount(Handle, value);
+            // TODO: Implement SetComboVisibleItemCount using platform widget interface
+            // Platform.PlatformFactory.Instance.SetComboVisibleItemCount(Handle, value);
         }
     }
 
@@ -191,7 +196,12 @@ public class Combo : Control
             throw new ArgumentNullException(nameof(item));
         }
         _items.Add(item);
-        Platform.PlatformFactory.Instance.AddComboItem(Handle, item, _items.Count - 1);
+
+        // Use IPlatformCombo interface to add item
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.AddItem(item);
+        }
     }
 
     /// <summary>
@@ -211,7 +221,16 @@ public class Combo : Control
             throw new ArgumentOutOfRangeException(nameof(index));
         }
         _items.Insert(index, item);
-        Platform.PlatformFactory.Instance.AddComboItem(Handle, item, index);
+
+        // For IPlatformCombo interface, we need to refresh all items since it doesn't support insert at index
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.ClearItems();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                comboWidget.AddItem(_items[i]);
+            }
+        }
 
         // Update selection index if needed
         if (_selectionIndex >= index)
@@ -232,7 +251,16 @@ public class Combo : Control
             throw new ArgumentOutOfRangeException(nameof(index));
         }
         _items.RemoveAt(index);
-        Platform.PlatformFactory.Instance.RemoveComboItem(Handle, index);
+
+        // Use IPlatformCombo interface to refresh items after removal
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.ClearItems();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                comboWidget.AddItem(_items[i]);
+            }
+        }
 
         // Update selection index
         if (_selectionIndex == index)
@@ -269,7 +297,12 @@ public class Combo : Control
         _items.Clear();
         _selectionIndex = -1;
         _text = string.Empty;
-        Platform.PlatformFactory.Instance.ClearComboItems(Handle);
+
+        // Use IPlatformCombo interface to clear items
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.ClearItems();
+        }
     }
 
     /// <summary>
@@ -331,7 +364,8 @@ public class Combo : Control
     public void ClearSelection()
     {
         CheckWidget();
-        Platform.PlatformFactory.Instance.SetComboTextSelection(Handle, 0, 0);
+        // TODO: Implement SetComboTextSelection using platform widget interface
+        // Platform.PlatformFactory.Instance.SetComboTextSelection(Handle, 0, 0);
     }
 
     /// <summary>
@@ -346,7 +380,8 @@ public class Combo : Control
         {
             throw new ArgumentOutOfRangeException("Invalid selection range");
         }
-        Platform.PlatformFactory.Instance.SetComboTextSelection(Handle, start, end);
+        // TODO: Implement SetComboTextSelection using platform widget interface
+        // Platform.PlatformFactory.Instance.SetComboTextSelection(Handle, start, end);
     }
 
     /// <summary>
@@ -356,7 +391,9 @@ public class Combo : Control
     public (int Start, int End) GetSelection()
     {
         CheckWidget();
-        return Platform.PlatformFactory.Instance.GetComboTextSelection(Handle);
+        // TODO: Implement GetComboTextSelection using platform widget interface
+        return (0, 0);
+        // return Platform.PlatformFactory.Instance.GetComboTextSelection(Handle);
     }
 
     /// <summary>
@@ -381,7 +418,8 @@ public class Combo : Control
     public void Copy()
     {
         CheckWidget();
-        Platform.PlatformFactory.Instance.ComboTextCopy(Handle);
+        // TODO: Implement ComboTextCopy using platform widget interface
+        // Platform.PlatformFactory.Instance.ComboTextCopy(Handle);
     }
 
     /// <summary>
@@ -392,7 +430,8 @@ public class Combo : Control
         CheckWidget();
         if (!_readOnly)
         {
-            Platform.PlatformFactory.Instance.ComboTextCut(Handle);
+            // TODO: Implement ComboTextCut using platform widget interface
+            // Platform.PlatformFactory.Instance.ComboTextCut(Handle);
         }
     }
 
@@ -404,41 +443,265 @@ public class Combo : Control
         CheckWidget();
         if (!_readOnly)
         {
-            Platform.PlatformFactory.Instance.ComboTextPaste(Handle);
+            // TODO: Implement ComboTextPaste using platform widget interface
+            // Platform.PlatformFactory.Instance.ComboTextPaste(Handle);
         }
     }
 
     private void CreateWidget()
     {
-        Handle = Platform.PlatformFactory.Instance.CreateCombo(Parent?.Handle ?? IntPtr.Zero, Style);
-        if (Handle == IntPtr.Zero)
+        // Create IPlatformCombo widget using platform widget interface
+        var parentWidget = Parent?.PlatformWidget;
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateComboWidget(parentWidget, Style);
+
+        // Subscribe to platform widget events
+        if (PlatformWidget is IPlatformCombo comboWidget)
         {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create combo control");
+            comboWidget.SelectionChanged += OnPlatformSelectionChanged;
+            comboWidget.ItemDoubleClick += OnPlatformItemDoubleClick;
+        }
+
+        // Connect standard widget events
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained += OnPlatformFocusGained;
+            eventHandling.FocusLost += OnPlatformFocusLost;
+            eventHandling.KeyDown += OnPlatformKeyDown;
+            eventHandling.KeyUp += OnPlatformKeyUp;
+        }
+
+        // Connect text events
+        if (PlatformWidget is IPlatformTextEvents textEvents)
+        {
+            textEvents.TextChanged += OnPlatformTextChanged;
+            textEvents.TextCommitted += OnPlatformTextCommitted;
         }
     }
 
     private void UpdateItems()
     {
-        Platform.PlatformFactory.Instance.ClearComboItems(Handle);
-        for (int i = 0; i < _items.Count; i++)
+        // Use IPlatformCombo interface to update items
+        if (PlatformWidget is IPlatformCombo comboWidget)
         {
-            Platform.PlatformFactory.Instance.AddComboItem(Handle, _items[i], i);
+            comboWidget.ClearItems();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                comboWidget.AddItem(_items[i]);
+            }
         }
     }
 
     private void UpdateText()
     {
-        Platform.PlatformFactory.Instance.SetComboText(Handle, _text);
+        // Use IPlatformCombo interface to update text
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.Text = _text;
+        }
     }
 
     private void UpdateSelection()
     {
-        Platform.PlatformFactory.Instance.SetComboSelection(Handle, _selectionIndex);
+        // Use IPlatformCombo interface to update selection
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.SelectionIndex = _selectionIndex;
+        }
+
         if (_selectionIndex >= 0 && _selectionIndex < _items.Count)
         {
             _text = _items[_selectionIndex];
             UpdateText();
         }
+    }
+
+    /// <summary>
+    /// Handles platform widget selection changed events.
+    /// </summary>
+    private void OnPlatformSelectionChanged(object? sender, int selectedIndex)
+    {
+        CheckWidget();
+
+        if (_selectionIndex != selectedIndex)
+        {
+            _selectionIndex = selectedIndex;
+
+            // Update text to reflect selection for read-only combos
+            if (_readOnly && selectedIndex >= 0 && selectedIndex < _items.Count)
+            {
+                _text = _items[selectedIndex];
+                UpdateText();
+            }
+
+            // Create SWT Selection event
+            var selectionEvent = new Event
+            {
+                Index = selectedIndex,
+                Time = Environment.TickCount,
+                Item = selectedIndex >= 0 ? _items[selectedIndex] : null
+            };
+            NotifyListeners(SWT.Selection, selectionEvent);
+
+            // Raise the legacy SelectionChanged event for backwards compatibility
+            OnSelectionChanged(EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget item double-click events.
+    /// </summary>
+    private void OnPlatformItemDoubleClick(object? sender, int itemIndex)
+    {
+        CheckWidget();
+
+        var doubleClickEvent = new Event
+        {
+            Index = itemIndex,
+            Time = Environment.TickCount,
+            Item = itemIndex >= 0 ? _items[itemIndex] : null
+        };
+        NotifyListeners(SWT.DefaultSelection, doubleClickEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus gained events.
+    /// </summary>
+    private void OnPlatformFocusGained(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusIn, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus lost events.
+    /// </summary>
+    private void OnPlatformFocusLost(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusOut, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key down events.
+    /// </summary>
+    private void OnPlatformKeyDown(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyDown, keyEvent);
+
+        // Handle keyboard navigation for dropdown
+        if (!_readOnly)
+        {
+            // Handle navigation keys for editable combo
+            if (e.KeyCode == SWT.ARROW_DOWN && _dropDown)
+            {
+                // TODO: Open dropdown
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget key up events.
+    /// </summary>
+    private void OnPlatformKeyUp(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyUp, keyEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget text changed events.
+    /// </summary>
+    private void OnPlatformTextChanged(object? sender, string newText)
+    {
+        CheckWidget();
+
+        if (!_readOnly && _text != newText)
+        {
+            _text = newText;
+
+            var modifyEvent = new Event
+            {
+                Text = newText,
+                Time = Environment.TickCount
+            };
+            NotifyListeners(SWT.Modify, modifyEvent);
+
+            // Raise the legacy TextChanged event for backwards compatibility
+            OnTextChanged(EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget text committed events.
+    /// </summary>
+    private void OnPlatformTextCommitted(object? sender, string committedText)
+    {
+        CheckWidget();
+
+        if (!_readOnly)
+        {
+            var verifyEvent = new Event
+            {
+                Text = committedText,
+                Time = Environment.TickCount,
+                Doit = true
+            };
+            NotifyListeners(SWT.Verify, verifyEvent);
+
+            if (verifyEvent.Doit)
+            {
+                _text = committedText;
+                // Update selection index if text matches an item
+                int newIndex = _items.IndexOf(committedText);
+                if (newIndex >= 0 && _selectionIndex != newIndex)
+                {
+                    _selectionIndex = newIndex;
+                    UpdateSelection();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Converts platform key event arguments to SWT state mask.
+    /// </summary>
+    private int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
+    {
+        int stateMask = 0;
+        if (e.Shift) stateMask |= SWT.SHIFT;
+        if (e.Control) stateMask |= SWT.CTRL;
+        if (e.Alt) stateMask |= SWT.ALT;
+        // TODO: Add Command key detection on macOS
+        return stateMask;
     }
 
     /// <summary>
@@ -459,6 +722,27 @@ public class Combo : Control
 
     protected override void ReleaseWidget()
     {
+        // Unsubscribe from platform widget events to prevent memory leaks
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.SelectionChanged -= OnPlatformSelectionChanged;
+            comboWidget.ItemDoubleClick -= OnPlatformItemDoubleClick;
+        }
+
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained -= OnPlatformFocusGained;
+            eventHandling.FocusLost -= OnPlatformFocusLost;
+            eventHandling.KeyDown -= OnPlatformKeyDown;
+            eventHandling.KeyUp -= OnPlatformKeyUp;
+        }
+
+        if (PlatformWidget is IPlatformTextEvents textEvents)
+        {
+            textEvents.TextChanged -= OnPlatformTextChanged;
+            textEvents.TextCommitted -= OnPlatformTextCommitted;
+        }
+
         _items.Clear();
         _text = string.Empty;
         _selectionIndex = -1;

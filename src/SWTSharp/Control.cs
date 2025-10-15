@@ -10,7 +10,6 @@ public abstract class Control : Widget
     private bool _enabled = true;
     private int _x, _y, _width, _height;
     private Control? _parent;
-    private IntPtr _handle;
     private object? _layoutData;
 
     /// <summary>
@@ -25,15 +24,8 @@ public abstract class Control : Widget
         }
     }
 
-    /// <summary>
-    /// Gets or sets the platform-specific window handle.
-    /// Internal to prevent external dependencies on platform-specific handles.
-    /// </summary>
-    internal override IntPtr Handle
-    {
-        get => _handle;
-        set => _handle = value;
-    }
+    // REMOVED: Handle property override - now using PlatformWidget property instead
+    // The old IntPtr-based handle system has been replaced with the IPlatformWidget interface system
 
     /// <summary>
     /// Gets or sets whether the control is visible.

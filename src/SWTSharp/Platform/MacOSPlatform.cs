@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp.Platform;
 
@@ -7,6 +8,101 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class MacOSPlatform : IPlatform
 {
+    // New platform widget methods (return objects, not handles!)
+
+    public IPlatformWindow CreateWindowWidget(int style, string title)
+    {
+        // For top-level windows, parent is null (no parent for windows)
+        return new MacOSWindow(style, title);
+    }
+
+    public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSButton(parentHandle, style);
+    }
+
+    public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+
+        // Extract alignment and wrapping info from style
+        int alignment = SWT.LEFT;
+        if ((style & SWT.CENTER) != 0) alignment = SWT.CENTER;
+        else if ((style & SWT.RIGHT) != 0) alignment = SWT.RIGHT;
+
+        bool wrap = (style & SWT.WRAP) != 0;
+
+        return new MacOSLabel(parentHandle, style, alignment, wrap);
+    }
+
+    public IPlatformTextInput CreateTextWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSText(parentHandle, style);
+    }
+
+    public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSComposite(parentHandle, style);
+    }
+
+    public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)
+    {
+        // Create real NSToolbar with NO pseudo-handles
+        if (parent == null)
+            throw new ArgumentNullException(nameof(parent));
+
+        IntPtr windowHandle = IntPtr.Zero;
+        if (parent is MacOSWindow macOSWindow)
+        {
+            windowHandle = macOSWindow.GetNativeHandle();
+        }
+
+        if (windowHandle == IntPtr.Zero)
+            throw new InvalidOperationException("Parent window does not have a valid native handle");
+
+        return new MacOSToolBar(windowHandle, style);
+    }
+
+    // Advanced widget factory methods for Phase 5.2
+    public IPlatformCombo CreateComboWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSCombo(parentHandle, style);
+    }
+
+    public IPlatformList CreateListWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSList(parentHandle, style);
+    }
+
+    public IPlatformProgressBar CreateProgressBarWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSProgressBar(parentHandle, style);
+    }
+
+    public IPlatformSlider CreateSliderWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSSlider(parentHandle, style);
+    }
+
+    public IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSScale(parentHandle, style);
+    }
+
+    public IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        return new MacOSSpinner(parentHandle, style);
+    }
+
     /// <summary>
     /// Optional custom main thread executor for testing scenarios.
     /// When set, ExecuteOnMainThread will use this instead of GCD.
@@ -457,28 +553,8 @@ internal partial class MacOSPlatform : IPlatform
         if (handle == IntPtr.Zero)
             return;
 
-        // Phase 1 Fix: Detect pseudo-handles that should not be passed to objc_msgSend
-        long handleValue = handle.ToInt64();
-
-        if ((handleValue & 0x40000000) != 0)
-        {
-            // ToolBar pseudo-handle - should use DestroyToolBar instead
-            throw new InvalidOperationException("DestroyWindow called on ToolBar pseudo-handle. Use DestroyToolBar instead.");
-        }
-
-        if ((handleValue & 0x30000000) != 0)
-        {
-            // TabItem pseudo-handle - these are cleaned up by their parent TabFolder
-            return;
-        }
-
-        if ((handleValue & 0x20000000) != 0)
-        {
-            // Future pseudo-handle type - add handling as needed
-            return;
-        }
-
-        // Real native handle - check if this is an NSWindow or an NSView
+        // NO pseudo-handle detection - all handles are now real native handles
+        // Check if this is an NSWindow or an NSView
         // NSWindow has the close method, NSView does not
         IntPtr selRespondsToSelector = sel_registerName("respondsToSelector:");
         bool respondsToClose = objc_msgSend_bool(handle, selRespondsToSelector, _selClose);
@@ -986,93 +1062,8 @@ internal partial class MacOSPlatform : IPlatform
         }
     }
 
-    IntPtr IPlatform.CreateMenu(int style)
-    {
-        InitializeMenuSelectors();
-
-        // Allocate and initialize menu
-        IntPtr menu = objc_msgSend(_nsMenuClass, _selAlloc);
-        menu = objc_msgSend(menu, _selInit);
-
-        return menu;
-    }
-
-    void IPlatform.DestroyMenu(IntPtr handle)
-    {
-        // NSMenu is reference counted, will be freed automatically
-    }
-
-    void IPlatform.SetShellMenuBar(IntPtr shellHandle, IntPtr menuHandle)
-    {
-        objc_msgSend(_nsApplication, _selSetMainMenu, menuHandle);
-    }
-
-    void IPlatform.SetMenuVisible(IntPtr handle, bool visible)
-    {
-        // Menu visibility is controlled by the application
-    }
-
-    void IPlatform.ShowPopupMenu(IntPtr menuHandle, int x, int y)
-    {
-        // Show popup menu at location
-        // This requires an NSEvent and NSView - simplified version
-        // objc_msgSend with proper parameters would be needed
-    }
-
-    IntPtr IPlatform.CreateMenuItem(IntPtr menuHandle, int style, int id, int index)
-    {
-        IntPtr menuItem;
-
-        if ((style & SWT.SEPARATOR) != 0)
-        {
-            IntPtr selSeparatorItem = sel_registerName("separatorItem");
-            menuItem = objc_msgSend(_nsMenuItemClass, selSeparatorItem);
-        }
-        else
-        {
-            // Create regular menu item
-            IntPtr selInitWithTitle = sel_registerName("initWithTitle:action:keyEquivalent:");
-            menuItem = objc_msgSend(_nsMenuItemClass, _selAlloc);
-
-            IntPtr emptyString = CreateNSString(string.Empty);
-            IntPtr selNull = IntPtr.Zero;
-
-            // initWithTitle:action:keyEquivalent:
-            menuItem = objc_msgSend(menuItem, selInitWithTitle, emptyString);
-        }
-
-        // Add to parent menu
-        objc_msgSend(menuHandle, _selAddItem, menuItem);
-
-        return menuItem;
-    }
-
-    void IPlatform.DestroyMenuItem(IntPtr handle)
-    {
-        // NSMenuItem is reference counted, will be freed automatically
-    }
-
-    void IPlatform.SetMenuItemText(IntPtr handle, string text)
-    {
-        IntPtr nsString = CreateNSString(text);
-        objc_msgSend(handle, _selSetTitle_item, nsString);
-    }
-
-    void IPlatform.SetMenuItemSelection(IntPtr handle, bool selected)
-    {
-        // NSMenuItem state: 0=off, 1=on
-        objc_msgSend(handle, _selSetState, (IntPtr)(selected ? 1 : 0));
-    }
-
-    void IPlatform.SetMenuItemEnabled(IntPtr handle, bool enabled)
-    {
-        objc_msgSend_void(handle, _selSetEnabled_item, enabled);
-    }
-
-    void IPlatform.SetMenuItemSubmenu(IntPtr itemHandle, IntPtr submenuHandle)
-    {
-        objc_msgSend(itemHandle, _selSetSubmenu, submenuHandle);
-    }
+    // Menu operations - REMOVED: Now handled by platform widget interfaces
+// Menu item operations - REMOVED: Now handled by platform widget interfaces
 
     // Label operations - implemented in MacOSPlatform_Label.cs
 

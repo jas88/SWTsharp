@@ -1,3 +1,6 @@
+using SWTSharp.Platform;
+using SWTSharp.Events;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -17,13 +20,23 @@ public class Button : Control
         get
         {
             CheckWidget();
+            // NEW: Use platform widget
+            if (PlatformWidget is IPlatformTextWidget textWidget)
+            {
+                return textWidget.GetText();
+            }
+            // OLD: Fallback to internal field for backwards compatibility
             return _text;
         }
         set
         {
             CheckWidget();
             _text = value ?? string.Empty;
-            UpdateText();
+            // Use platform widget
+            if (PlatformWidget is IPlatformTextWidget textWidget)
+            {
+                textWidget.SetText(_text);
+            }
         }
     }
 
@@ -43,7 +56,7 @@ public class Button : Control
             if (_selection != value)
             {
                 _selection = value;
-                UpdateSelection();
+                // TODO: Implement selection updates through platform widget interface
             }
         }
     }
@@ -73,24 +86,152 @@ public class Button : Control
 
     private void CreateWidget(int style)
     {
-        // Get parent handle
-        IntPtr parentHandle = IntPtr.Zero;
-        if (Parent != null)
+        // Use platform widget - must complete before subscribing to events
+        var widget = SWTSharp.Platform.PlatformFactory.Instance.CreateButtonWidget(
+            Parent?.PlatformWidget,
+            style
+        );
+
+        // Only assign and subscribe to events after successful creation
+        PlatformWidget = widget;
+
+        // Subscribe to platform widget events
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
         {
-            parentHandle = Parent.Handle;
+            eventHandling.Click += OnPlatformClick;
+            eventHandling.FocusGained += OnPlatformFocusGained;
+            eventHandling.FocusLost += OnPlatformFocusLost;
+            eventHandling.KeyDown += OnPlatformKeyDown;
+            eventHandling.KeyUp += OnPlatformKeyUp;
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget click events and converts them to SWT events.
+    /// </summary>
+    private void OnPlatformClick(object? sender, int button)
+    {
+        CheckWidget();
+
+        // Create SWT MouseDown event
+        var mouseDownEvent = new Event
+        {
+            Button = button,
+            Time = Environment.TickCount,
+            StateMask = GetCurrentStateMask()
+        };
+        NotifyListeners(SWT.MouseDown, mouseDownEvent);
+
+        // Create SWT MouseUp event
+        var mouseUpEvent = new Event
+        {
+            Button = button,
+            Time = Environment.TickCount,
+            StateMask = GetCurrentStateMask()
+        };
+        NotifyListeners(SWT.MouseUp, mouseUpEvent);
+
+        // Update selection state for CHECK, RADIO, and TOGGLE buttons
+        if ((Style & SWT.CHECK) != 0 || (Style & SWT.TOGGLE) != 0)
+        {
+            _selection = !_selection;
+        }
+        else if ((Style & SWT.RADIO) != 0)
+        {
+            _selection = true;
+            // TODO: Unselect other radio buttons in the same group
         }
 
-        // Create platform-specific button
-        Handle = SWTSharp.Platform.PlatformFactory.Instance.CreateButton(parentHandle, style, _text);
+        // Raise the legacy Click event for backwards compatibility
+        Click?.Invoke(this, EventArgs.Empty);
+    }
 
-        // Connect click event handler
-        SWTSharp.Platform.PlatformFactory.Instance.ConnectButtonClick(Handle, () => OnClick(EventArgs.Empty));
+    /// <summary>
+    /// Handles platform widget focus gained events.
+    /// </summary>
+    private void OnPlatformFocusGained(object? sender, int detail)
+    {
+        CheckWidget();
 
-        // Apply initial selection state if this is a checkable button
-        if ((style & (SWT.CHECK | SWT.RADIO | SWT.TOGGLE)) != 0)
+        var focusEvent = new Event
         {
-            UpdateSelection();
-        }
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusIn, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus lost events.
+    /// </summary>
+    private void OnPlatformFocusLost(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusOut, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key down events.
+    /// </summary>
+    private void OnPlatformKeyDown(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyDown, keyEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key up events.
+    /// </summary>
+    private void OnPlatformKeyUp(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyUp, keyEvent);
+    }
+
+    /// <summary>
+    /// Gets the current keyboard and mouse state mask.
+    /// </summary>
+    private int GetCurrentStateMask()
+    {
+        int stateMask = 0;
+        // TODO: Implement platform-specific state detection
+        // For now, return 0 as placeholder
+        return stateMask;
+    }
+
+    /// <summary>
+    /// Converts platform key event arguments to SWT state mask.
+    /// </summary>
+    private int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
+    {
+        int stateMask = 0;
+        if (e.Shift) stateMask |= SWT.SHIFT;
+        if (e.Control) stateMask |= SWT.CTRL;
+        if (e.Alt) stateMask |= SWT.ALT;
+        // TODO: Add Command key detection on macOS
+        return stateMask;
     }
 
     /// <summary>
@@ -98,58 +239,32 @@ public class Button : Control
     /// </summary>
     protected virtual void OnClick(EventArgs e)
     {
-        // For CHECK, RADIO, and TOGGLE buttons, update internal selection state
-        if ((Style & (SWT.CHECK | SWT.RADIO | SWT.TOGGLE)) != 0)
-        {
-            _selection = SWTSharp.Platform.PlatformFactory.Instance.GetButtonSelection(Handle);
-        }
-
         Click?.Invoke(this, e);
     }
 
-    private void UpdateText()
-    {
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetButtonText(Handle, _text);
-        }
-    }
-
-    private void UpdateSelection()
-    {
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetButtonSelection(Handle, _selection);
-        }
-    }
-
-    protected override void UpdateVisible()
-    {
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetControlVisible(Handle, Visible);
-        }
-    }
-
-    protected override void UpdateEnabled()
-    {
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetControlEnabled(Handle, Enabled);
-        }
-    }
-
-    protected override void UpdateBounds()
-    {
-        if (Handle != IntPtr.Zero)
-        {
-            var (x, y, width, height) = GetBounds();
-            SWTSharp.Platform.PlatformFactory.Instance.SetControlBounds(Handle, x, y, width, height);
-        }
-    }
 
     protected override void ReleaseWidget()
     {
+        // Unsubscribe from platform widget events to prevent memory leaks
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.Click -= OnPlatformClick;
+            eventHandling.FocusGained -= OnPlatformFocusGained;
+            eventHandling.FocusLost -= OnPlatformFocusLost;
+            eventHandling.KeyDown -= OnPlatformKeyDown;
+            eventHandling.KeyUp -= OnPlatformKeyUp;
+        }
+
+        // Clear the Click event subscription to prevent memory leaks
+        Click = null;
+
+        // NEW: Dispose platform widget
+        if (PlatformWidget != null)
+        {
+            PlatformWidget.Dispose();
+            PlatformWidget = null;
+        }
+
         // Platform handles cleanup via parent destruction
         base.ReleaseWidget();
     }

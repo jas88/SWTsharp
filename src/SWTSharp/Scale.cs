@@ -1,4 +1,5 @@
 using SWTSharp.Events;
+using SWTSharp.Platform;
 
 namespace SWTSharp;
 
@@ -136,9 +137,12 @@ public class Scale : Control
     /// </summary>
     private void CreateWidget()
     {
-        var parentHandle = Parent?.Handle ?? IntPtr.Zero;
-        Handle = Platform.PlatformFactory.Instance.CreateScale(parentHandle, Style);
-        Platform.PlatformFactory.Instance.SetScaleValues(Handle, _selection, _minimum, _maximum, _increment, _pageIncrement);
+        // Create IPlatformScale widget using platform widget interface
+        var parentWidget = Parent?.PlatformWidget;
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateScaleWidget(parentWidget, Style);
+
+        // Initialize scale values and connect event handlers
+        UpdateValues();
         ConnectEventHandlers();
     }
 
@@ -184,9 +188,15 @@ public class Scale : Control
     /// </summary>
     private void UpdateValues()
     {
-        if (Handle != IntPtr.Zero)
+        // Use IPlatformScale interface to update scale values
+        if (PlatformWidget is IPlatformScale scaleWidget)
         {
-            Platform.PlatformFactory.Instance.SetScaleValues(Handle, _selection, _minimum, _maximum, _increment, _pageIncrement);
+            scaleWidget.Minimum = _minimum;
+            scaleWidget.Maximum = _maximum;
+            scaleWidget.Value = _selection;
+            scaleWidget.Increment = _increment;
+            scaleWidget.ShowTicks = false; // Use ShowTicks instead of PageIncrement
+            // TODO: Implement proper PageIncrement support in IPlatformScale interface
         }
     }
 
@@ -195,9 +205,12 @@ public class Scale : Control
     /// </summary>
     private void ConnectEventHandlers()
     {
-        if (Handle != IntPtr.Zero)
+        // Connect scale change event handler to platform widget
+        // Event handling will be implemented in Phase 5.8
+        if (PlatformWidget is IPlatformScale scaleWidget)
         {
-            Platform.PlatformFactory.Instance.ConnectScaleChanged(Handle, OnNativeSelectionChanged);
+            // TODO: Connect scale change event through platform widget interface in Phase 5.8
+            // scaleWidget.ValueChanged += OnNativeSelectionChanged;
         }
     }
 
@@ -220,10 +233,8 @@ public class Scale : Control
 
     protected override void ReleaseWidget()
     {
-        if (Handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.DestroyWindow(Handle);
-        }
+        // TODO: Implement proper widget disposal through platform widget interface
+        // Platform widget cleanup is handled by parent disposal
         base.ReleaseWidget();
     }
 }

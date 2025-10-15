@@ -54,10 +54,8 @@ public class Text : Control
                 throw new ArgumentException("Text limit cannot be negative");
             }
             _textLimit = value;
-            if (Handle != IntPtr.Zero)
-            {
-                SWTSharp.Platform.PlatformFactory.Instance.SetTextLimit(Handle, _textLimit);
-            }
+            // TODO: Set text limit via platform widget interface
+            // TODO: Update text limit through platform widget interface
             // Only truncate if limit > 0 (0 means unlimited)
             if (_textLimit > 0 && _text.Length > _textLimit)
             {
@@ -83,10 +81,8 @@ public class Text : Control
             if (_readOnly != value)
             {
                 _readOnly = value;
-                if (Handle != IntPtr.Zero)
-                {
-                    SWTSharp.Platform.PlatformFactory.Instance.SetTextReadOnly(Handle, _readOnly);
-                }
+                // TODO: Set read-only state via platform widget interface
+                // TODO: Update read-only state through platform widget interface
             }
         }
     }
@@ -138,27 +134,12 @@ public class Text : Control
 
     private void CreateWidget()
     {
-        IntPtr parentHandle = Parent?.Handle ?? IntPtr.Zero;
+        // TODO: Implement platform widget interface for Text
+        // TODO: Create IPlatformText widget here
 
-        Handle = SWTSharp.Platform.PlatformFactory.Instance.CreateText(parentHandle, Style);
-
-        if (Handle == IntPtr.Zero)
-            throw new InvalidOperationException("Failed to create native text control");
-
-        if (!string.IsNullOrEmpty(_text))
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetTextContent(Handle, _text);
-        }
-
-        if (_readOnly)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetTextReadOnly(Handle, true);
-        }
-
-        if (_textLimit != int.MaxValue)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetTextLimit(Handle, _textLimit);
-        }
+        // TODO: Set initial text content via platform widget interface
+        // TODO: Set read-only state via platform widget interface
+        // TODO: Set text limit via platform widget interface
     }
 
     /// <summary>
@@ -222,10 +203,8 @@ public class Text : Control
     public string GetText()
     {
         CheckWidget();
-        if (Handle != IntPtr.Zero)
-        {
-            _text = SWTSharp.Platform.PlatformFactory.Instance.GetTextContent(Handle);
-        }
+        // TODO: Get text content via platform widget interface
+        // TODO: Update text content through platform widget interface
         return _text;
     }
 
@@ -247,10 +226,8 @@ public class Text : Control
         if (start < 0 || end < 0 || start > end)
             throw new ArgumentException("Invalid selection range");
 
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetTextSelection(Handle, start, end);
-        }
+        // TODO: Set text selection via platform widget interface
+        // TODO: Update text selection through platform widget interface
     }
 
     /// <summary>
@@ -259,10 +236,8 @@ public class Text : Control
     public (int Start, int End) GetSelection()
     {
         CheckWidget();
-        if (Handle != IntPtr.Zero)
-        {
-            return SWTSharp.Platform.PlatformFactory.Instance.GetTextSelection(Handle);
-        }
+        // TODO: Get text selection via platform widget interface
+        // TODO: Update text selection through platform widget interface
         return (0, 0);
     }
 
@@ -363,10 +338,8 @@ public class Text : Control
 
     private void UpdateText()
     {
-        if (Handle == IntPtr.Zero)
-            return;
-
-        SWTSharp.Platform.PlatformFactory.Instance.SetTextContent(Handle, _text);
+        // TODO: Set text content via platform widget interface
+        // TODO: Update text content through platform widget interface
         OnTextChanged(EventArgs.Empty);
     }
 

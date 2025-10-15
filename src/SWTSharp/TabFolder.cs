@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -73,6 +75,7 @@ public class TabFolder : Composite
         get
         {
             CheckWidget();
+            // TODO: Implement platform widget interface call to get tab selection in Phase 5.8
             return _selectionIndex;
         }
         set
@@ -88,11 +91,12 @@ public class TabFolder : Composite
                 int oldIndex = _selectionIndex;
                 _selectionIndex = value;
 
-                // Update platform selection
-                if (Handle != IntPtr.Zero)
-                {
-                    Platform.PlatformFactory.Instance.SetTabSelection(Handle, value);
-                }
+                // Use IPlatformTabFolder interface to set tab selection
+                // TODO: Implement tab selection through platform widget interface in Phase 5.8
+                // if (PlatformWidget is IPlatformTabFolder tabFolderWidget)
+                // {
+                //     tabFolderWidget.SelectionIndex = value;
+                // }
 
                 // Hide old tab's control
                 if (oldIndex >= 0 && oldIndex < _items.Count)
@@ -140,13 +144,12 @@ public class TabFolder : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        IntPtr parentHandle = Parent?.Handle ?? IntPtr.Zero;
-        Handle = Platform.PlatformFactory.Instance.CreateTabFolder(parentHandle, Style);
+        // TODO: Create IPlatformTabFolder widget using platform widget interface
+        // CreateTabFolderWidget method not yet implemented in IPlatform interface
+        // var parentWidget = Parent?.PlatformWidget;
+        // PlatformWidget = Platform.PlatformFactory.Instance.CreateTabFolderWidget(parentWidget, Style);
 
-        if (Handle == IntPtr.Zero)
-        {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create tab folder");
-        }
+        // For now, leave PlatformWidget null - TabFolder functionality will be completed in Phase 5.7
     }
 
     /// <summary>

@@ -7,6 +7,98 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class LinuxPlatform : IPlatform
 {
+    // New platform widget methods (return objects, not handles!)
+
+    public IPlatformWindow CreateWindowWidget(int style, string title)
+    {
+        // TODO: Implement LinuxWindow in Phase 2
+        throw new NotImplementedException("CreateWindowWidget will be implemented in Phase 2");
+    }
+
+    public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        return new Linux.LinuxButton(parentHandle, style);
+    }
+
+    public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        return new Linux.LinuxLabel(parentHandle, style);
+    }
+
+    public IPlatformTextInput CreateTextWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        return new Linux.LinuxText(parentHandle, style);
+    }
+
+    public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement LinuxComposite in Phase 2
+        throw new NotImplementedException("CreateCompositeWidget will be implemented in Phase 2");
+    }
+
+    public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)
+    {
+        // TODO: Implement LinuxToolBar in Phase 3 (special case)
+        throw new NotImplementedException("CreateToolBarWidget will be implemented in Phase 3");
+    }
+
+    // Advanced widget factory methods for Phase 5.3
+    public IPlatformCombo CreateComboWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement LinuxCombo in Phase 5.3
+        throw new NotImplementedException("CreateComboWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformList CreateListWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement LinuxList in Phase 5.3
+        throw new NotImplementedException("CreateListWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformProgressBar CreateProgressBarWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement LinuxProgressBar in Phase 5.3
+        throw new NotImplementedException("CreateProgressBarWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformSlider CreateSliderWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement LinuxSlider in Phase 5.3
+        throw new NotImplementedException("CreateSliderWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement LinuxScale in Phase 5.3
+        throw new NotImplementedException("CreateScaleWidget will be implemented in Phase 5.3");
+    }
+
+    public IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style)
+    {
+        // TODO: Implement LinuxSpinner in Phase 5.3
+        throw new NotImplementedException("CreateSpinnerWidget will be implemented in Phase 5.3");
+    }
     private const string GtkLib = "libgtk-3.so.0";
     private const string GdkLib = "libgdk-3.so.0";
     private const string GLibLib = "libglib-2.0.so.0";
@@ -109,6 +201,10 @@ internal partial class LinuxPlatform : IPlatform
     }
 
     private bool _initialized;
+
+    // Window container mapping - GtkWindow -> container widget
+    // This is needed for window management but will be removed when windows migrate to platform widget interfaces
+    private readonly Dictionary<IntPtr, IntPtr> _widgetContainers = new Dictionary<IntPtr, IntPtr>();
 
     public void Initialize()
     {
@@ -262,51 +358,61 @@ internal partial class LinuxPlatform : IPlatform
         action();
     }
 
-    public IntPtr CreateComposite(IntPtr parent, int style)
-    {
-        // Create a GtkFixed container widget (allows absolute positioning)
-        // This is similar to SWT's Composite when no layout is set
-        IntPtr composite = gtk_fixed_new();
+    // CreateComposite - REMOVED: Now handled by CreateCompositeWidget() method
+    // This method was removed as part of the platform widget interface migration
+    // Use CreateCompositeWidget() instead which returns IPlatformComposite objects
 
-        if (composite != IntPtr.Zero)
-        {
-            // Show the widget by default
-            gtk_widget_show(composite);
+    // Button creation and management - REMOVED: Now handled by platform widget interfaces
+    // The following DllImport declarations were removed as part of the platform widget interface migration:
+    // - gtk_button_new_with_label
+    // - gtk_button_new
+    // - gtk_button_set_label
+    // - gtk_button_get_label
+    // - gtk_check_button_new_with_label
+    // - gtk_radio_button_new_with_label
+    // - gtk_toggle_button_new_with_label
+    // - gtk_toggle_button_set_active
+    // - gtk_toggle_button_get_active
+    // These are now used in the LinuxButton widget class
 
-            // Add to parent if provided
-            AddChildToParent(parent, composite);
-        }
+    // Text/Entry DllImport declarations - NEEDED by other partial class files
+    // These are still used by LinuxPlatform_Combo.cs and other widget files
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_entry_new();
 
-        return composite;
-    }
-
-    // Button creation and management
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_button_new_with_label(string label);
+    private static extern void gtk_entry_set_text(IntPtr entry, string text);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_button_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern void gtk_button_set_label(IntPtr button, string label);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_button_get_label(IntPtr button);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_check_button_new_with_label(string label);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_radio_button_new_with_label(IntPtr group, string label);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_toggle_button_new_with_label(string label);
+    private static extern IntPtr gtk_entry_get_text(IntPtr entry);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_toggle_button_set_active(IntPtr toggle_button, bool is_active);
+    private static extern void gtk_entry_set_visibility(IntPtr entry, bool visible);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool gtk_toggle_button_get_active(IntPtr toggle_button);
+    private static extern void gtk_entry_set_max_length(IntPtr entry, int max);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_editable_set_editable(IntPtr editable, bool is_editable);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_editable_select_region(IntPtr editable, int start_pos, int end_pos);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool gtk_editable_get_selection_bounds(IntPtr editable, out int start_pos, out int end_pos);
+
+    // Scrolled window DllImport declarations - NEEDED by other partial class files
+    // These are still used by LinuxPlatform_List.cs, LinuxPlatform_Table.cs, etc.
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_scrolled_window_new(IntPtr hadjustment, IntPtr vadjustment);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_scrolled_window_set_policy(IntPtr scrolled_window, int hscrollbar_policy, int vscrollbar_policy);
+
+    // Orientation DllImport declarations - NEEDED by other partial class files
+    // These are still used by LinuxPlatform_ToolBar.cs, LinuxPlatform_ProgressBar.cs, etc.
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_orientable_set_orientation(IntPtr orientable, GtkOrientation orientation);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_set_sensitive(IntPtr widget, bool sensitive);
@@ -332,84 +438,25 @@ internal partial class LinuxPlatform : IPlatform
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_fixed_move(IntPtr @fixed, IntPtr widget, int x, int y);
 
+    // GtkSignalFunc delegate - REMOVED from main class but still needed by other partial classes
+    // Note: This delegate is still used by other partial class files (LinuxPlatform_Canvas.cs, etc.)
+    // It will be fully removed when all widget classes migrate to the new platform widget interfaces
     private delegate void GtkSignalFunc(IntPtr widget, IntPtr data);
 
-    private readonly Dictionary<IntPtr, Action> _buttonCallbacks = new Dictionary<IntPtr, Action>();
-    private readonly Dictionary<IntPtr, IntPtr> _widgetContainers = new Dictionary<IntPtr, IntPtr>();
-    private readonly Dictionary<GtkSignalFunc, object> _delegateReferences = new Dictionary<GtkSignalFunc, object>();
+    // Button callback management - REMOVED: Now handled by platform widget interfaces
+    // The following members were removed as part of the platform widget interface migration:
+    // - _buttonCallbacks dictionary
+    // - _delegateReferences dictionary
+    // - ClearButtonCallbacks() method
+    // - RemoveButtonCallback() method
+    // Button event handling is now managed by individual widget classes
 
-    // LEAK-002: Cleanup method for button callbacks
-    public void ClearButtonCallbacks()
-    {
-        _buttonCallbacks.Clear();
-        _delegateReferences.Clear();
-    }
-
-    // LEAK-002: Remove specific button callback when control is destroyed
-    public void RemoveButtonCallback(IntPtr handle)
-    {
-        _buttonCallbacks.Remove(handle);
-    }
-
-    public IntPtr CreateButton(IntPtr parent, int style, string text)
-    {
-        IntPtr button;
-
-        // Create appropriate button type based on SWT style
-        if ((style & SWT.CHECK) != 0)
-        {
-            button = gtk_check_button_new_with_label(text);
-        }
-        else if ((style & SWT.RADIO) != 0)
-        {
-            button = gtk_radio_button_new_with_label(IntPtr.Zero, text);
-            // GTK radio buttons default to active when created as the first in a group
-            // SWT expects them to be inactive initially
-            gtk_toggle_button_set_active(button, false);
-        }
-        else if ((style & SWT.TOGGLE) != 0)
-        {
-            button = gtk_toggle_button_new_with_label(text);
-        }
-        else // Default to PUSH
-        {
-            button = gtk_button_new_with_label(text);
-        }
-
-        if (button == IntPtr.Zero)
-        {
-            throw new InvalidOperationException("Failed to create GTK button");
-        }
-
-        // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            // GTK requires a container for absolute positioning
-            // We'll use gtk_fixed for simple layout
-            AddChildToParent(parent, button);
-        }
-
-        gtk_widget_show(button);
-
-        return button;
-    }
-
-    public void SetButtonText(IntPtr handle, string text)
-    {
-        gtk_button_set_label(handle, text);
-    }
-
-    public void SetButtonSelection(IntPtr handle, bool selected)
-    {
-        // Only works for toggle-style buttons
-        gtk_toggle_button_set_active(handle, selected);
-    }
-
-    public bool GetButtonSelection(IntPtr handle)
-    {
-        // Only works for toggle-style buttons
-        return gtk_toggle_button_get_active(handle);
-    }
+      // CreateButton - REMOVED: Now handled by CreateButtonWidget() method
+    // SetButtonText - REMOVED: Now handled by IPlatformTextWidget interface
+    // SetButtonSelection - REMOVED: Now handled by IPlatformTextWidget interface
+    // GetButtonSelection - REMOVED: Now handled by IPlatformTextWidget interface
+    // These methods were removed as part of the platform widget interface migration
+    // Use CreateButtonWidget() instead which returns IPlatformWidget objects
 
     public void SetControlEnabled(IntPtr handle, bool enabled)
     {
@@ -438,482 +485,39 @@ internal partial class LinuxPlatform : IPlatform
         // For now, just set the size request
     }
 
-    public void ConnectButtonClick(IntPtr handle, Action callback)
-    {
-        // Store callback
-        _buttonCallbacks[handle] = callback;
+    // ConnectButtonClick - REMOVED: Now handled by IPlatformTextWidget interface
+    // This method was removed as part of the platform widget interface migration
+    // Button events are now handled through the platform widget interface event system
 
-        // Create a delegate for the signal handler
-        GtkSignalFunc signalHandler = (widget, data) =>
-        {
-            if (_buttonCallbacks.TryGetValue(widget, out var cb))
-            {
-                cb?.Invoke();
-            }
-        };
-
-        // LEAK-002: Store delegate reference to prevent GC collection
-        _delegateReferences[signalHandler] = handle;
-
-        // Connect the "clicked" signal
-        IntPtr funcPtr = Marshal.GetFunctionPointerForDelegate(signalHandler);
-        g_signal_connect_data(handle, "clicked", funcPtr, IntPtr.Zero, IntPtr.Zero, 0);
-    }
-
-    // Menu operations
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_menu_bar_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_menu_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_menu_item_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_menu_item_new_with_label(string label);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_check_menu_item_new_with_label(string label);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern IntPtr gtk_radio_menu_item_new_with_label(IntPtr group, string label);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_separator_menu_item_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_menu_shell_append(IntPtr menu_shell, IntPtr child);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_menu_shell_insert(IntPtr menu_shell, IntPtr child, int position);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern void gtk_menu_item_set_label(IntPtr menu_item, string label);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_menu_item_set_submenu(IntPtr menu_item, IntPtr submenu);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_check_menu_item_set_active(IntPtr check_menu_item, bool is_active);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_menu_popup_at_pointer(IntPtr menu, IntPtr trigger_event);
-
-    IntPtr IPlatform.CreateMenu(int style)
-    {
-        if ((style & SWT.BAR) != 0)
-        {
-            return gtk_menu_bar_new();
-        }
-        else
-        {
-            return gtk_menu_new();
-        }
-    }
-
-    void IPlatform.DestroyMenu(IntPtr handle)
-    {
-        SafeDestroyWidget(handle);
-    }
-
-    void IPlatform.SetShellMenuBar(IntPtr shellHandle, IntPtr menuHandle)
-    {
-        // Add menu bar to the window's container, not directly to the window
-        // GtkWindow can only contain one child, so we use the container
-        if (_widgetContainers.TryGetValue(shellHandle, out IntPtr container))
-        {
-            gtk_container_add(container, menuHandle);
-            gtk_widget_show(menuHandle);
-        }
-        else
-        {
-            // Fallback: try adding directly (will fail if window already has content)
-            gtk_container_add(shellHandle, menuHandle);
-            gtk_widget_show(menuHandle);
-        }
-    }
-
-    void IPlatform.SetMenuVisible(IntPtr handle, bool visible)
-    {
-        if (visible)
-        {
-            gtk_widget_show(handle);
-        }
-        else
-        {
-            gtk_widget_hide(handle);
-        }
-    }
-
-    void IPlatform.ShowPopupMenu(IntPtr menuHandle, int x, int y)
-    {
-        gtk_menu_popup_at_pointer(menuHandle, IntPtr.Zero);
-    }
-
-    IntPtr IPlatform.CreateMenuItem(IntPtr menuHandle, int style, int id, int index)
-    {
-        IntPtr menuItem;
-
-        if ((style & SWT.SEPARATOR) != 0)
-        {
-            menuItem = gtk_separator_menu_item_new();
-        }
-        else if ((style & SWT.CHECK) != 0)
-        {
-            menuItem = gtk_check_menu_item_new_with_label(string.Empty);
-        }
-        else if ((style & SWT.RADIO) != 0)
-        {
-            menuItem = gtk_radio_menu_item_new_with_label(IntPtr.Zero, string.Empty);
-        }
-        else
-        {
-            menuItem = gtk_menu_item_new_with_label(string.Empty);
-        }
-
-        // Add to menu
-        if (index >= 0)
-        {
-            gtk_menu_shell_insert(menuHandle, menuItem, index);
-        }
-        else
-        {
-            gtk_menu_shell_append(menuHandle, menuItem);
-        }
-
-        gtk_widget_show(menuItem);
-
-        return menuItem;
-    }
-
-    void IPlatform.DestroyMenuItem(IntPtr handle)
-    {
-        SafeDestroyWidget(handle);
-    }
-
-    void IPlatform.SetMenuItemText(IntPtr handle, string text)
-    {
-        gtk_menu_item_set_label(handle, text);
-    }
-
-    void IPlatform.SetMenuItemSelection(IntPtr handle, bool selected)
-    {
-        gtk_check_menu_item_set_active(handle, selected);
-    }
-
-    void IPlatform.SetMenuItemEnabled(IntPtr handle, bool enabled)
-    {
-        gtk_widget_set_sensitive(handle, enabled);
-    }
-
-    void IPlatform.SetMenuItemSubmenu(IntPtr itemHandle, IntPtr submenuHandle)
-    {
-        gtk_menu_item_set_submenu(itemHandle, submenuHandle);
-    }
+    // Menu operations - REMOVED: Now handled by platform widget interfaces
+    // The following DllImport declarations were removed as part of the platform widget interface migration:
+    // - gtk_menu_bar_new
+    // - gtk_menu_new
+    // - gtk_menu_item_new
+    // - gtk_menu_item_new_with_label
+    // - gtk_check_menu_item_new_with_label
+    // - gtk_radio_menu_item_new_with_label
+    // - gtk_separator_menu_item_new
+    // - gtk_menu_shell_append
+    // - gtk_menu_shell_insert
+    // - gtk_menu_item_set_label
+    // - gtk_menu_item_set_submenu
+    // - gtk_check_menu_item_set_active
+    // - gtk_menu_popup_at_pointer
+    // Menu creation and management is now handled by individual menu widget classes
 
     // Label operations - implemented in LinuxPlatform_Label.cs
 
-    // GTK Text/Entry widget imports
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_entry_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern void gtk_entry_set_text(IntPtr entry, string text);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_entry_get_text(IntPtr entry);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_entry_set_visibility(IntPtr entry, bool visible);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_entry_set_max_length(IntPtr entry, int max);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_editable_set_editable(IntPtr editable, bool is_editable);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_editable_select_region(IntPtr editable, int start_pos, int end_pos);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool gtk_editable_get_selection_bounds(IntPtr editable, out int start_pos, out int end_pos);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_text_view_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_text_view_get_buffer(IntPtr text_view);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern void gtk_text_buffer_set_text(IntPtr buffer, string text, int len);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_text_buffer_get_text(IntPtr buffer, IntPtr start, IntPtr end, bool include_hidden_chars);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_get_start_iter(IntPtr buffer, IntPtr iter);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_get_end_iter(IntPtr buffer, IntPtr iter);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_view_set_editable(IntPtr text_view, bool setting);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_scrolled_window_new(IntPtr hadjustment, IntPtr vadjustment);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_scrolled_window_set_policy(IntPtr scrolled_window, int hscrollbar_policy, int vscrollbar_policy);
-
-    private readonly Dictionary<IntPtr, bool> _textWidgetTypes = new Dictionary<IntPtr, bool>(); // true = TextView, false = Entry
-    private readonly Dictionary<IntPtr, IntPtr> _textViewWidgets = new Dictionary<IntPtr, IntPtr>(); // scrolledWindow -> textView
-
-    // Text control operations
-    public IntPtr CreateText(IntPtr parent, int style)
-    {
-        IntPtr widget;
-        bool isMultiLine = (style & SWT.MULTI) != 0;
-
-        if (isMultiLine)
-        {
-            // Create multi-line text view with scrolled window
-            IntPtr textView = gtk_text_view_new();
-            IntPtr scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
-
-            // Set scroll policy: automatic for both horizontal and vertical
-            gtk_scrolled_window_set_policy(scrolledWindow, 1, 1); // GTK_POLICY_AUTOMATIC = 1
-
-            gtk_container_add(scrolledWindow, textView);
-            gtk_widget_show(textView);
-
-            widget = scrolledWindow;
-            _textWidgetTypes[widget] = true; // Mark as TextView
-            _widgetContainers[textView] = scrolledWindow; // Store relationship for disposal
-            _textViewWidgets[scrolledWindow] = textView; // Direct lookup for text operations
-        }
-        else
-        {
-            // Create single-line entry
-            widget = gtk_entry_new();
-            _textWidgetTypes[widget] = false; // Mark as Entry
-
-            // Handle password style
-            if ((style & SWT.PASSWORD) != 0)
-            {
-                gtk_entry_set_visibility(widget, false);
-            }
-        }
-
-        // Handle read-only style
-        if ((style & SWT.READ_ONLY) != 0)
-        {
-            SetTextReadOnly(widget, true);
-        }
-
-        // Add to parent if provided
-        AddChildToParent(parent, widget);
-
-        gtk_widget_show(widget);
-
-        return widget;
-    }
-
-    public void SetTextContent(IntPtr handle, string text)
-    {
-        if (handle == IntPtr.Zero)
-            throw new ArgumentException("Invalid text handle", nameof(handle));
-
-        if (_textWidgetTypes.TryGetValue(handle, out bool isTextView))
-        {
-            if (isTextView)
-            {
-                // Multi-line TextView - get actual TextView widget from scrolledWindow
-                if (_textViewWidgets.TryGetValue(handle, out IntPtr textView))
-                {
-                    IntPtr buffer = gtk_text_view_get_buffer(textView);
-                    gtk_text_buffer_set_text(buffer, text ?? string.Empty, -1);
-                }
-            }
-            else
-            {
-                // Single-line Entry
-                gtk_entry_set_text(handle, text ?? string.Empty);
-            }
-        }
-        else
-        {
-            // Fallback: assume Entry
-            gtk_entry_set_text(handle, text ?? string.Empty);
-        }
-    }
-
-    public string GetTextContent(IntPtr handle)
-    {
-        if (handle == IntPtr.Zero)
-            throw new ArgumentException("Invalid text handle", nameof(handle));
-
-        if (_textWidgetTypes.TryGetValue(handle, out bool isTextView))
-        {
-            if (isTextView)
-            {
-                // Multi-line TextView - get actual TextView widget from scrolledWindow
-                if (_textViewWidgets.TryGetValue(handle, out IntPtr textView))
-                {
-                    IntPtr buffer = gtk_text_view_get_buffer(textView);
-
-                    // Allocate GtkTextIter structures (80 bytes each for safety)
-                    IntPtr startIter = Marshal.AllocHGlobal(80);
-                    IntPtr endIter = Marshal.AllocHGlobal(80);
-
-                    try
-                    {
-                        gtk_text_buffer_get_start_iter(buffer, startIter);
-                        gtk_text_buffer_get_end_iter(buffer, endIter);
-
-                        IntPtr textPtr = gtk_text_buffer_get_text(buffer, startIter, endIter, false);
-#if NETSTANDARD2_0
-                        // .NET Standard 2.0 doesn't have PtrToStringUTF8, use manual UTF-8 decoding
-                        string result = GetUtf8String(textPtr);
-#else
-                        string result = Marshal.PtrToStringUTF8(textPtr) ?? string.Empty;
-#endif
-
-                        // Free the string returned by GTK
-                        g_free(textPtr);
-
-                        return result;
-                    }
-                    finally
-                    {
-                        Marshal.FreeHGlobal(startIter);
-                        Marshal.FreeHGlobal(endIter);
-                    }
-                }
-                return string.Empty;
-            }
-            else
-            {
-                // Single-line Entry
-                IntPtr textPtr = gtk_entry_get_text(handle);
-#if NETSTANDARD2_0
-                return GetUtf8String(textPtr);
-#else
-                return Marshal.PtrToStringUTF8(textPtr) ?? string.Empty;
-#endif
-            }
-        }
-        else
-        {
-            // Fallback: assume Entry
-            IntPtr textPtr = gtk_entry_get_text(handle);
-#if NETSTANDARD2_0
-            return GetUtf8String(textPtr);
-#else
-            return Marshal.PtrToStringUTF8(textPtr) ?? string.Empty;
-#endif
-        }
-    }
-
-    public void SetTextSelection(IntPtr handle, int start, int end)
-    {
-        if (handle == IntPtr.Zero)
-            throw new ArgumentException("Invalid text handle", nameof(handle));
-
-        if (_textWidgetTypes.TryGetValue(handle, out bool isTextView))
-        {
-            if (!isTextView)
-            {
-                // Single-line Entry supports selection
-                gtk_editable_select_region(handle, start, end);
-            }
-            // Note: TextView selection not implemented yet - requires GtkTextBuffer iters
-        }
-        else
-        {
-            // Fallback: assume Entry
-            gtk_editable_select_region(handle, start, end);
-        }
-    }
-
-    public (int Start, int End) GetTextSelection(IntPtr handle)
-    {
-        if (handle == IntPtr.Zero)
-            throw new ArgumentException("Invalid text handle", nameof(handle));
-
-        if (_textWidgetTypes.TryGetValue(handle, out bool isTextView))
-        {
-            if (!isTextView)
-            {
-                // Single-line Entry supports selection
-                if (gtk_editable_get_selection_bounds(handle, out int start, out int end))
-                {
-                    return (start, end);
-                }
-                return (0, 0);
-            }
-            // Note: TextView selection not implemented yet
-            return (0, 0);
-        }
-        else
-        {
-            // Fallback: assume Entry
-            if (gtk_editable_get_selection_bounds(handle, out int start, out int end))
-            {
-                return (start, end);
-            }
-            return (0, 0);
-        }
-    }
-
-    public void SetTextLimit(IntPtr handle, int limit)
-    {
-        if (handle == IntPtr.Zero)
-            throw new ArgumentException("Invalid text handle", nameof(handle));
-
-        if (_textWidgetTypes.TryGetValue(handle, out bool isTextView))
-        {
-            if (!isTextView)
-            {
-                // Single-line Entry supports max length
-                gtk_entry_set_max_length(handle, limit);
-            }
-            // Note: TextView max length requires custom signal handling
-        }
-        else
-        {
-            // Fallback: assume Entry
-            gtk_entry_set_max_length(handle, limit);
-        }
-    }
-
-    public void SetTextReadOnly(IntPtr handle, bool readOnly)
-    {
-        if (handle == IntPtr.Zero)
-            throw new ArgumentException("Invalid text handle", nameof(handle));
-
-        if (_textWidgetTypes.TryGetValue(handle, out bool isTextView))
-        {
-            if (isTextView)
-            {
-                // Multi-line TextView - get actual TextView widget from scrolledWindow
-                if (_textViewWidgets.TryGetValue(handle, out IntPtr textView))
-                {
-                    gtk_text_view_set_editable(textView, !readOnly);
-                }
-            }
-            else
-            {
-                // Single-line Entry
-                gtk_editable_set_editable(handle, !readOnly);
-            }
-        }
-        else
-        {
-            // Fallback: assume Entry
-            gtk_editable_set_editable(handle, !readOnly);
-        }
-    }
+    // Text/Entry control operations - REMOVED: Now handled by platform widget interfaces
+    // The following methods were removed as part of the platform widget interface migration:
+    // - CreateText (now handled by CreateTextWidget method)
+    // - SetTextContent, GetTextContent (now handled by IPlatformTextWidget interface)
+    // - SetTextSelection, GetTextSelection (now handled by IPlatformTextWidget interface)
+    // - SetTextLimit, SetTextReadOnly (now handled by IPlatformTextWidget interface)
+    // The following members were also removed:
+    // - _textWidgetTypes dictionary
+    // - _textViewWidgets dictionary
+    // Text widgets are now created through platform-specific widget classes
 
 
     // GLib memory functions
@@ -936,98 +540,17 @@ internal partial class LinuxPlatform : IPlatform
     // - LinuxPlatform_Combo.cs: Combo widget (GtkComboBox)
     // ========================================================================
 
-    // GTK ProgressBar imports
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_progress_bar_new();
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_progress_bar_set_fraction(IntPtr pbar, double fraction);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_progress_bar_set_pulse_step(IntPtr pbar, double fraction);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_progress_bar_pulse(IntPtr pbar);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_orientable_set_orientation(IntPtr orientable, GtkOrientation orientation);
-
-    // ProgressBar data storage
-    private readonly Dictionary<IntPtr, (int Min, int Max)> _progressBarRanges = new Dictionary<IntPtr, (int, int)>();
-
-    // ProgressBar operations
-    public IntPtr CreateProgressBar(IntPtr parent, int style)
-    {
-        // Create GtkProgressBar
-        IntPtr progressBar = gtk_progress_bar_new();
-
-        if (progressBar == IntPtr.Zero)
-        {
-            throw new InvalidOperationException("Failed to create GTK progress bar");
-        }
-
-        // Set orientation
-        if ((style & SWT.VERTICAL) != 0)
-        {
-            gtk_orientable_set_orientation(progressBar, GtkOrientation.Vertical);
-        }
-        else
-        {
-            gtk_orientable_set_orientation(progressBar, GtkOrientation.Horizontal);
-        }
-
-        // Initialize range
-        _progressBarRanges[progressBar] = (0, 100);
-
-        // Add to parent if provided
-        AddChildToParent(parent, progressBar);
-
-        gtk_widget_show(progressBar);
-
-        return progressBar;
-    }
-
-    public void SetProgressBarRange(IntPtr handle, int minimum, int maximum)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        _progressBarRanges[handle] = (minimum, maximum);
-
-        // If we have a current value, update the fraction to reflect new range
-        // (GTK uses 0.0 to 1.0 fraction rather than absolute values)
-    }
-
-    public void SetProgressBarSelection(IntPtr handle, int value)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // Get range for this progress bar
-        if (_progressBarRanges.TryGetValue(handle, out var range))
-        {
-            int min = range.Min;
-            int max = range.Max;
-            int span = max - min;
-
-            if (span > 0)
-            {
-                double fraction = (double)(value - min) / span;
-                fraction = Math.Max(0.0, Math.Min(1.0, fraction)); // Clamp to 0-1
-                gtk_progress_bar_set_fraction(handle, fraction);
-            }
-        }
-    }
-
-    public void SetProgressBarState(IntPtr handle, int state)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        // GTK doesn't have built-in error/paused states like Windows
-        // We could change colors using CSS, but for now just ignore
-        // This matches the behavior on platforms that don't support this feature
-    }
+    // ProgressBar control operations - REMOVED: Now handled by platform widget interfaces
+    // The following methods were removed as part of the platform widget interface migration:
+    // - CreateProgressBar (now handled by CreateProgressBarWidget method)
+    // - SetProgressBarRange, SetProgressBarSelection (now handled by IPlatformProgressBar interface)
+    // - SetProgressBarState (now handled by IPlatformProgressBar interface)
+    // The following DllImport declarations were also removed (moved to individual widget classes):
+    // - gtk_progress_bar_new, gtk_progress_bar_set_fraction, gtk_progress_bar_set_pulse_step
+    // - gtk_progress_bar_pulse
+    // The following member was also removed:
+    // - _progressBarRanges dictionary
+    // ProgressBar widgets are now created through platform-specific widget classes
 
 #if NETSTANDARD2_0
     /// <summary>

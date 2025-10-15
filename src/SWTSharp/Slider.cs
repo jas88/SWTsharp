@@ -1,4 +1,5 @@
 using SWTSharp.Events;
+using SWTSharp.Platform;
 
 namespace SWTSharp;
 
@@ -158,9 +159,14 @@ public class Slider : Control
     /// </summary>
     private void CreateWidget()
     {
-        var parentHandle = Parent?.Handle ?? IntPtr.Zero;
-        Handle = Platform.PlatformFactory.Instance.CreateSlider(parentHandle, Style);
-        Platform.PlatformFactory.Instance.SetSliderValues(Handle, _selection, _minimum, _maximum, _thumb, _increment, _pageIncrement);
+        // Create IPlatformSlider widget using platform widget interface
+        var parentWidget = Parent?.PlatformWidget;
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateSliderWidget(parentWidget, Style);
+
+        // Set initial slider values on platform widget
+        UpdateValues();
+
+        // Connect event handlers for slider value changes
         ConnectEventHandlers();
     }
 
@@ -207,9 +213,16 @@ public class Slider : Control
     /// </summary>
     private void UpdateValues()
     {
-        if (Handle != IntPtr.Zero)
+        // Use IPlatformSlider interface to update slider values
+        if (PlatformWidget is IPlatformSlider sliderWidget)
         {
-            Platform.PlatformFactory.Instance.SetSliderValues(Handle, _selection, _minimum, _maximum, _thumb, _increment, _pageIncrement);
+            sliderWidget.Minimum = _minimum;
+            sliderWidget.Maximum = _maximum;
+            sliderWidget.Value = _selection;
+            sliderWidget.Increment = _increment;
+            sliderWidget.PageIncrement = _pageIncrement;
+            // Note: Thumb property not available in IPlatformSlider interface yet
+            // TODO: Add Thumb property to IPlatformSlider interface when needed
         }
     }
 
@@ -218,35 +231,163 @@ public class Slider : Control
     /// </summary>
     private void ConnectEventHandlers()
     {
-        if (Handle != IntPtr.Zero)
+        // Connect slider value changed event handler to platform widget
+        if (PlatformWidget is IPlatformSlider sliderWidget)
         {
-            Platform.PlatformFactory.Instance.ConnectSliderChanged(Handle, OnNativeSelectionChanged);
+            sliderWidget.ValueChanged += OnPlatformValueChanged;
+        }
+
+        // Connect standard widget events
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained += OnPlatformFocusGained;
+            eventHandling.FocusLost += OnPlatformFocusLost;
+            eventHandling.KeyDown += OnPlatformKeyDown;
+            eventHandling.KeyUp += OnPlatformKeyUp;
         }
     }
 
     /// <summary>
-    /// Called when the native slider value changes.
+    /// Handles platform widget value changed events.
     /// </summary>
-    private void OnNativeSelectionChanged(int newValue)
+    private void OnPlatformValueChanged(object? sender, int newValue)
     {
+        CheckWidget();
+
         if (_selection != newValue)
         {
             _selection = newValue;
-            var evt = new Event
+
+            var selectionEvent = new Event
             {
-                Widget = this,
-                Detail = SWT.NONE
+                Detail = SWT.NONE,
+                Time = Environment.TickCount,
+                Index = newValue // Store the new value in the Index field
             };
-            NotifyListeners(SWT.Selection, evt);
+            NotifyListeners(SWT.Selection, selectionEvent);
         }
+    }
+
+    /// <summary>
+    /// Handles platform widget focus gained events.
+    /// </summary>
+    private void OnPlatformFocusGained(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusIn, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus lost events.
+    /// </summary>
+    private void OnPlatformFocusLost(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusOut, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key down events.
+    /// </summary>
+    private void OnPlatformKeyDown(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyDown, keyEvent);
+
+        // Handle arrow keys for slider navigation
+        if (e.KeyCode == SWT.ARROW_LEFT || e.KeyCode == SWT.ARROW_DOWN)
+        {
+            SetSelection(_selection - _increment);
+        }
+        else if (e.KeyCode == SWT.ARROW_RIGHT || e.KeyCode == SWT.ARROW_UP)
+        {
+            SetSelection(_selection + _increment);
+        }
+        else if (e.KeyCode == SWT.PAGE_UP)
+        {
+            SetSelection(_selection + _pageIncrement);
+        }
+        else if (e.KeyCode == SWT.PAGE_DOWN)
+        {
+            SetSelection(_selection - _pageIncrement);
+        }
+        else if (e.KeyCode == SWT.HOME)
+        {
+            SetSelection(_minimum);
+        }
+        else if (e.KeyCode == SWT.END)
+        {
+            SetSelection(_maximum);
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget key up events.
+    /// </summary>
+    private void OnPlatformKeyUp(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyUp, keyEvent);
+    }
+
+    /// <summary>
+    /// Converts platform key event arguments to SWT state mask.
+    /// </summary>
+    private int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
+    {
+        int stateMask = 0;
+        if (e.Shift) stateMask |= SWT.SHIFT;
+        if (e.Control) stateMask |= SWT.CTRL;
+        if (e.Alt) stateMask |= SWT.ALT;
+        // TODO: Add Command key detection on macOS
+        return stateMask;
     }
 
     protected override void ReleaseWidget()
     {
-        if (Handle != IntPtr.Zero)
+        // Unsubscribe from platform widget events to prevent memory leaks
+        if (PlatformWidget is IPlatformSlider sliderWidget)
         {
-            Platform.PlatformFactory.Instance.DestroyWindow(Handle);
+            sliderWidget.ValueChanged -= OnPlatformValueChanged;
         }
+
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained -= OnPlatformFocusGained;
+            eventHandling.FocusLost -= OnPlatformFocusLost;
+            eventHandling.KeyDown -= OnPlatformKeyDown;
+            eventHandling.KeyUp -= OnPlatformKeyUp;
+        }
+
+        // Platform widget cleanup is handled by parent disposal
         base.ReleaseWidget();
     }
 }

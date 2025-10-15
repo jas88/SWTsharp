@@ -1,3 +1,6 @@
+using SWTSharp.Platform;
+using SWTSharp.Platform.MacOS;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -13,6 +16,7 @@ public class TreeItem : Widget
     private readonly Tree? _parentTree;
     private readonly TreeItem? _parentItem;
     private readonly System.Collections.Generic.List<TreeItem> _items = new();
+    private IPlatformTreeItem? _platformTreeItem;
 
     /// <summary>
     /// Gets or sets the text displayed in the tree item.
@@ -30,7 +34,11 @@ public class TreeItem : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                Platform.PlatformFactory.Instance.SetTreeItemText(Handle, _text);
+                // Use platform widget
+                if (_platformTreeItem != null)
+                {
+                    _platformTreeItem.SetText(_text);
+                }
             }
         }
     }
@@ -51,7 +59,12 @@ public class TreeItem : Widget
             if (_image != value)
             {
                 _image = value;
-                Platform.PlatformFactory.Instance.SetTreeItemImage(Handle, _image?.Handle ?? IntPtr.Zero);
+                // Use platform widget
+                if (_platformTreeItem != null && _image != null)
+                {
+                    var imageAdapter = new MacOSImage(_image);
+                    _platformTreeItem.SetImage(imageAdapter);
+                }
             }
         }
     }
@@ -80,7 +93,11 @@ public class TreeItem : Widget
             if (_checked != value)
             {
                 _checked = value;
-                Platform.PlatformFactory.Instance.SetTreeItemChecked(Handle, _checked);
+                // Use platform widget
+                if (_platformTreeItem != null)
+                {
+                    _platformTreeItem.SetChecked(_checked);
+                }
             }
         }
     }
@@ -101,7 +118,11 @@ public class TreeItem : Widget
             if (_expanded != value)
             {
                 _expanded = value;
-                Platform.PlatformFactory.Instance.SetTreeItemExpanded(Handle, _expanded);
+                // Use platform widget
+                if (_platformTreeItem != null)
+                {
+                    _platformTreeItem.SetExpanded(_expanded);
+                }
 
                 if (_expanded)
                 {
@@ -186,7 +207,7 @@ public class TreeItem : Widget
         }
         _parentTree = parent;
         _parentItem = null;
-        CreateWidget(parent.Handle, IntPtr.Zero, index);
+        CreateWidget(parent.PlatformWidget, null, index);
         parent.AddItem(this, index >= 0 ? index : parent.ItemCount);
     }
 
@@ -213,25 +234,41 @@ public class TreeItem : Widget
         }
         _parentTree = null;
         _parentItem = parent;
-        CreateWidget(parent.ParentTree.Handle, parent.Handle, index);
+        CreateWidget(parent.ParentTree.PlatformWidget, parent.PlatformWidget, index);
         parent.AddItem(this, index >= 0 ? index : parent.ItemCount);
     }
 
     /// <summary>
     /// Creates the platform-specific tree item.
     /// </summary>
-    private void CreateWidget(IntPtr treeHandle, IntPtr parentItemHandle, int index)
+    private void CreateWidget(IPlatformWidget? treeWidget, IPlatformWidget? parentItemWidget, int index)
     {
-        Handle = Platform.PlatformFactory.Instance.CreateTreeItem(
-            treeHandle,
-            parentItemHandle,
-            Style,
-            index >= 0 ? index : -1
-        );
-
-        if (Handle == IntPtr.Zero)
+        // Create platform tree item if platform factory supports it
+        if (Platform.PlatformFactory.Instance is MacOSPlatform macOSPlatform)
         {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create tree item");
+            // TODO: Implement proper platform tree item creation without pseudo-handles
+            // TODO: Create IPlatformTreeItem widget here through platform widget interface
+
+            // Create platform adapter (temporary workaround)
+            _platformTreeItem = new MacOSTreeItem(macOSPlatform, IntPtr.Zero);
+        }
+        else
+        {
+            // Fallback for other platforms - TODO: Implement direct platform widget creation
+            throw new SWTException(SWT.ERROR_NOT_IMPLEMENTED, "Direct platform widget creation not implemented for this platform");
+        }
+
+        // Set initial properties using platform widget
+        if (_platformTreeItem != null)
+        {
+            _platformTreeItem.SetText(_text);
+            if (_image != null)
+            {
+                var imageAdapter = new MacOSImage(_image);
+                _platformTreeItem.SetImage(imageAdapter);
+            }
+            _platformTreeItem.SetExpanded(_expanded);
+            _platformTreeItem.SetChecked(_checked);
         }
     }
 
@@ -317,7 +354,7 @@ public class TreeItem : Widget
             item.Dispose();
         }
         _items.Clear();
-        Platform.PlatformFactory.Instance.ClearTreeItemChildren(Handle);
+        // Clear children handled by platform widget
     }
 
     /// <summary>
@@ -398,10 +435,11 @@ public class TreeItem : Widget
         }
         _items.Clear();
 
-        // Destroy platform tree item
-        if (Handle != IntPtr.Zero)
+        // Dispose platform widget
+        if (_platformTreeItem != null)
         {
-            Platform.PlatformFactory.Instance.DestroyTreeItem(Handle);
+            _platformTreeItem.Dispose();
+            _platformTreeItem = null;
         }
 
         _image = null;

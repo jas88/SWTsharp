@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Buffers;
 #endif
 using SWTSharp.Events;
+using SWTSharp.Platform;
 
 namespace SWTSharp;
 
@@ -17,6 +18,7 @@ public abstract class Widget : IDisposable
     private object? _data;
     private Display? _display;
     private Dictionary<int, List<IListener>>? _eventTable;
+    private readonly object _eventTableLock = new object();
 
     /// <summary>
     /// The widget's style bits.
@@ -136,10 +138,13 @@ public abstract class Widget : IDisposable
         _display = null;
     }
 
+    // REMOVED: Handle property - now using PlatformWidget property instead
+    // The old IntPtr-based handle system has been replaced with the IPlatformWidget interface system
+
     /// <summary>
-    /// Returns the platform-specific handle for this widget.
+    /// The platform widget object for this widget.
     /// </summary>
-    internal virtual IntPtr Handle { get; set; } = IntPtr.Zero;
+    internal IPlatformWidget? PlatformWidget { get; set; }
 
     /// <summary>
     /// Gets platform-specific data associated with the widget.
@@ -202,15 +207,18 @@ public abstract class Widget : IDisposable
             throw new ArgumentNullException(nameof(listener));
         }
 
-        _eventTable ??= new Dictionary<int, List<IListener>>();
-
-        if (!_eventTable.TryGetValue(eventType, out var listeners))
+        lock (_eventTableLock)
         {
-            listeners = new List<IListener>();
-            _eventTable[eventType] = listeners;
-        }
+            _eventTable ??= new Dictionary<int, List<IListener>>();
 
-        listeners.Add(listener);
+            if (!_eventTable.TryGetValue(eventType, out var listeners))
+            {
+                listeners = new List<IListener>();
+                _eventTable[eventType] = listeners;
+            }
+
+            listeners.Add(listener);
+        }
     }
 
     /// <summary>
@@ -228,12 +236,15 @@ public abstract class Widget : IDisposable
             throw new ArgumentNullException(nameof(listener));
         }
 
-        if (_eventTable != null && _eventTable.TryGetValue(eventType, out var listeners))
+        lock (_eventTableLock)
         {
-            listeners.Remove(listener);
-            if (listeners.Count == 0)
+            if (_eventTable != null && _eventTable.TryGetValue(eventType, out var listeners))
             {
-                _eventTable.Remove(eventType);
+                listeners.Remove(listener);
+                if (listeners.Count == 0)
+                {
+                    _eventTable.Remove(eventType);
+                }
             }
         }
     }
@@ -246,7 +257,18 @@ public abstract class Widget : IDisposable
     /// <param name="event">The event data</param>
     public void NotifyListeners(int eventType, Event @event)
     {
-        if (_eventTable != null && _eventTable.TryGetValue(eventType, out var listeners))
+        // Copy listeners under lock, then notify outside lock to avoid holding lock during callbacks
+        List<IListener>? listenersCopy = null;
+
+        lock (_eventTableLock)
+        {
+            if (_eventTable != null && _eventTable.TryGetValue(eventType, out var listeners) && listeners.Count > 0)
+            {
+                listenersCopy = new List<IListener>(listeners);
+            }
+        }
+
+        if (listenersCopy != null)
         {
             @event.Type = eventType;
             @event.Widget = this;
@@ -254,16 +276,16 @@ public abstract class Widget : IDisposable
 
 #if NET8_0_OR_GREATER
             // Use ArrayPool for better performance on .NET 8+
-            var count = listeners.Count;
-            var listenersCopy = ArrayPool<IListener>.Shared.Rent(count);
+            var count = listenersCopy.Count;
+            var listenersArray = ArrayPool<IListener>.Shared.Rent(count);
             try
             {
-                listeners.CopyTo(listenersCopy, 0);
+                listenersCopy.CopyTo(listenersArray, 0);
                 for (int i = 0; i < count; i++)
                 {
                     try
                     {
-                        listenersCopy[i].HandleEvent(@event);
+                        listenersArray[i].HandleEvent(@event);
                     }
                     catch (OutOfMemoryException)
                     {
@@ -293,11 +315,10 @@ public abstract class Widget : IDisposable
             }
             finally
             {
-                ArrayPool<IListener>.Shared.Return(listenersCopy, clearArray: true);
+                ArrayPool<IListener>.Shared.Return(listenersArray, clearArray: true);
             }
 #else
-            // Create a copy of the listeners list to avoid modification issues during iteration
-            var listenersCopy = new List<IListener>(listeners);
+            // Directly iterate over the copy we already made
             foreach (var listener in listenersCopy)
             {
                 try
@@ -448,20 +469,23 @@ public abstract class Widget : IDisposable
     /// </summary>
     private void RemoveTypedListener(int eventType, object listener)
     {
-        if (_eventTable != null && _eventTable.TryGetValue(eventType, out var listeners))
+        lock (_eventTableLock)
         {
-            for (int i = listeners.Count - 1; i >= 0; i--)
+            if (_eventTable != null && _eventTable.TryGetValue(eventType, out var listeners))
             {
-                if (listeners[i] is TypedListener typedListener &&
-                    typedListener.GetEventListener() == listener)
+                for (int i = listeners.Count - 1; i >= 0; i--)
                 {
-                    listeners.RemoveAt(i);
+                    if (listeners[i] is TypedListener typedListener &&
+                        typedListener.GetEventListener() == listener)
+                    {
+                        listeners.RemoveAt(i);
+                    }
                 }
-            }
 
-            if (listeners.Count == 0)
-            {
-                _eventTable.Remove(eventType);
+                if (listeners.Count == 0)
+                {
+                    _eventTable.Remove(eventType);
+                }
             }
         }
     }

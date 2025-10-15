@@ -42,7 +42,8 @@ public class TableColumn : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                Platform.PlatformFactory.Instance.SetTableColumnText(Handle, _text);
+                // TODO: Implement platform widget interface for setting table column text
+                // Platform.PlatformFactory.Instance.SetTableColumnText(Handle, _text);
             }
         }
     }
@@ -63,7 +64,8 @@ public class TableColumn : Widget
             if (_width != value && value >= 0)
             {
                 _width = value;
-                Platform.PlatformFactory.Instance.SetTableColumnWidth(Handle, _width);
+                // TODO: Implement platform widget interface for setting table column width
+                // Platform.PlatformFactory.Instance.SetTableColumnWidth(Handle, _width);
             }
         }
     }
@@ -84,7 +86,8 @@ public class TableColumn : Widget
             if (_alignment != value)
             {
                 _alignment = value;
-                Platform.PlatformFactory.Instance.SetTableColumnAlignment(Handle, _alignment);
+                // TODO: Implement platform widget interface for setting table column alignment
+                // Platform.PlatformFactory.Instance.SetTableColumnAlignment(Handle, _alignment);
             }
         }
     }
@@ -105,7 +108,8 @@ public class TableColumn : Widget
             if (_resizable != value)
             {
                 _resizable = value;
-                Platform.PlatformFactory.Instance.SetTableColumnResizable(Handle, _resizable);
+                // TODO: Implement platform widget interface for setting table column resizable
+                // Platform.PlatformFactory.Instance.SetTableColumnResizable(Handle, _resizable);
             }
         }
     }
@@ -126,7 +130,8 @@ public class TableColumn : Widget
             if (_moveable != value)
             {
                 _moveable = value;
-                Platform.PlatformFactory.Instance.SetTableColumnMoveable(Handle, _moveable);
+                // TODO: Implement platform widget interface for setting table column moveable
+                // Platform.PlatformFactory.Instance.SetTableColumnMoveable(Handle, _moveable);
             }
         }
     }
@@ -147,7 +152,8 @@ public class TableColumn : Widget
             if (_toolTipText != value)
             {
                 _toolTipText = value;
-                Platform.PlatformFactory.Instance.SetTableColumnToolTipText(Handle, _toolTipText);
+                // TODO: Implement platform widget interface for setting table column tooltip text
+                // Platform.PlatformFactory.Instance.SetTableColumnToolTipText(Handle, _toolTipText);
             }
         }
     }
@@ -251,24 +257,19 @@ public class TableColumn : Widget
     public void Pack()
     {
         CheckWidget();
-        int packedWidth = Platform.PlatformFactory.Instance.PackTableColumn(Handle);
-        _width = packedWidth;
+        // TODO: Implement platform widget interface for packing table column
+        // int packedWidth = Platform.PlatformFactory.Instance.PackTableColumn(Handle);
+        // _width = packedWidth;
     }
 
     private void CreateWidget(int index = -1)
     {
-        Handle = Platform.PlatformFactory.Instance.CreateTableColumn(_parent.Handle, Style, index);
-        if (Handle == IntPtr.Zero)
-        {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create table column");
-        }
+        // TODO: Implement platform widget interface for creating table columns
+        // TODO: Create IPlatformTableColumn widget here
+        // PlatformWidget = Platform.PlatformFactory.Instance.CreateTableColumnWidget(_parent.PlatformWidget, Style, index);
 
-        // Set initial properties
-        Platform.PlatformFactory.Instance.SetTableColumnText(Handle, _text);
-        Platform.PlatformFactory.Instance.SetTableColumnWidth(Handle, _width);
-        Platform.PlatformFactory.Instance.SetTableColumnAlignment(Handle, _alignment);
-        Platform.PlatformFactory.Instance.SetTableColumnResizable(Handle, _resizable);
-        Platform.PlatformFactory.Instance.SetTableColumnMoveable(Handle, _moveable);
+        // TODO: Set initial properties through platform widget interface
+        // TODO: Set initial column properties through platform widget interface
     }
 
     private int ExtractAlignment(int style)
@@ -291,10 +292,8 @@ public class TableColumn : Widget
             _parent.RemoveColumn(this);
         }
 
-        if (Handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.DestroyTableColumn(Handle);
-        }
+        // TODO: Implement platform widget interface for destroying table columns
+        // Platform widget cleanup is handled by parent disposal
 
         base.ReleaseWidget();
     }

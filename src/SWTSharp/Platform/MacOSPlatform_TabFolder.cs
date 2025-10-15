@@ -70,7 +70,11 @@ internal partial class MacOSPlatform
         public int Style { get; set; }
     }
 
-    private int _nextTabItemId = 0;
+    // REMOVED FIELDS (no longer used after TabFolder method removal):
+    // private int _nextTabItemId = 0;
+    // This is now handled by the proper widget interface implementations
+
+    // Field still needed for ToolBar operations (not removed in this cleanup)
     private int _nextToolItemId = 0;
 
     private void InitializeTabFolderSelectors()
@@ -100,178 +104,15 @@ internal partial class MacOSPlatform
         }
     }
 
-    public IntPtr CreateTabFolder(IntPtr parent, int style)
-    {
-        InitializeTabFolderSelectors();
-
-        // Create NSTabView
-        IntPtr tabView = objc_msgSend(_nsTabViewClass, _selAlloc);
-        tabView = objc_msgSend(tabView, _selInit);
-
-        // Set default frame
-        IntPtr selSetFrame = sel_registerName("setFrame:");
-        CGRect frame = new CGRect(0, 0, 300, 200);
-        objc_msgSend_rect(tabView, selSetFrame, frame);
-
-        // Add to parent if provided
-        AddChildToParent(parent, tabView);
-
-        // Store tab folder data
-        _tabFolderData[tabView] = new TabFolderData
-        {
-            TabView = tabView
-        };
-
-        return tabView;
-    }
-
-    public void SetTabSelection(IntPtr handle, int index)
-    {
-        if (handle == IntPtr.Zero || !_tabFolderData.TryGetValue(handle, out var data))
-            return;
-
-        InitializeTabFolderSelectors();
-
-        if (index >= 0 && index < data.TabItems.Count)
-        {
-            objc_msgSend(data.TabView, _selSelectTabViewItemAtIndex, new IntPtr(index));
-        }
-    }
-
-    public int GetTabSelection(IntPtr handle)
-    {
-        if (handle == IntPtr.Zero || !_tabFolderData.TryGetValue(handle, out var data))
-            return -1;
-
-        InitializeTabFolderSelectors();
-
-        // Get index of selected tab
-        IntPtr selectedItem = objc_msgSend(data.TabView, _selSelectedTabViewItem);
-        if (selectedItem == IntPtr.Zero)
-            return -1;
-
-        // Find the index of this item
-        nint index = objc_msgSend_nint(data.TabView, _selIndexOfTabViewItem, selectedItem);
-        return (int)index;
-    }
-
-    // TabItem operations
-    public IntPtr CreateTabItem(IntPtr tabFolderHandle, int style, int index)
-    {
-        if (tabFolderHandle == IntPtr.Zero || !_tabFolderData.TryGetValue(tabFolderHandle, out var folderData))
-            return IntPtr.Zero;
-
-        InitializeTabFolderSelectors();
-
-        // Create NSTabViewItem with unique identifier
-        IntPtr tabViewItem = objc_msgSend(_nsTabViewItemClass, _selAlloc);
-        IntPtr identifier = CreateNSString($"TabItem{_nextTabItemId++}");
-        tabViewItem = objc_msgSend(tabViewItem, _selInitWithIdentifier, identifier);
-
-        // Set default label
-        IntPtr defaultLabel = CreateNSString($"Tab {folderData.TabItems.Count}");
-        objc_msgSend(tabViewItem, _selSetLabel, defaultLabel);
-
-        // Create a container view for the tab content
-        if (_nsViewClass == IntPtr.Zero)
-        {
-            _nsViewClass = objc_getClass("NSView");
-        }
-        IntPtr contentView = objc_msgSend(_nsViewClass, _selAlloc);
-        contentView = objc_msgSend(contentView, _selInit);
-
-        // Set content view to tab item
-        objc_msgSend(tabViewItem, _selSetView, contentView);
-
-        // Add tab item to tab view
-        objc_msgSend(folderData.TabView, _selAddTabViewItem, tabViewItem);
-
-        // Create pseudo-handle for tab item (use high bits to differentiate from other handles)
-        IntPtr tabItemHandle = new IntPtr(0x30000000 + _nextTabItemId - 1);
-
-        // Store tab item data
-        _tabItemData[tabItemHandle] = new TabItemData
-        {
-            TabFolderHandle = tabFolderHandle,
-            TabViewItem = tabViewItem,
-            ContentView = contentView,
-            Index = index >= 0 ? index : folderData.TabItems.Count
-        };
-
-        // Add to folder's tab items list
-        if (index >= 0 && index < folderData.TabItems.Count)
-        {
-            folderData.TabItems.Insert(index, tabItemHandle);
-        }
-        else
-        {
-            folderData.TabItems.Add(tabItemHandle);
-        }
-
-        return tabItemHandle;
-    }
-
-    public void SetTabItemText(IntPtr handle, string text)
-    {
-        if (!_tabItemData.TryGetValue(handle, out var data))
-            return;
-
-        InitializeTabFolderSelectors();
-
-        IntPtr label = CreateNSString(text ?? "");
-        objc_msgSend(data.TabViewItem, _selSetLabel, label);
-    }
-
-    public void SetTabItemControl(IntPtr handle, IntPtr controlHandle)
-    {
-        if (!_tabItemData.TryGetValue(handle, out var data))
-            return;
-
-        if (controlHandle == IntPtr.Zero)
-            return;
-
-        InitializeTabFolderSelectors();
-
-        // Remove the control from its current parent
-        IntPtr selSuperview = _registeredSelectors.TryGetValue("superview", out var superview)
-            ? superview
-            : RegisterSelector("superview");
-        IntPtr currentParent = objc_msgSend(controlHandle, selSuperview);
-        if (currentParent != IntPtr.Zero)
-        {
-            IntPtr selRemoveFromSuperview = _registeredSelectors.TryGetValue("removeFromSuperview", out var removeFromSuperview)
-                ? removeFromSuperview
-                : RegisterSelector("removeFromSuperview");
-            objc_msgSend(controlHandle, selRemoveFromSuperview);
-        }
-
-        // Add control to the tab's content view
-        // _selAddSubview should already be initialized in main Initialize() method
-        if (_selAddSubview == IntPtr.Zero)
-            throw new InvalidOperationException("_selAddSubview was not initialized. This indicates MacOSPlatform.Initialize() was not called.");
-
-        objc_msgSend(data.ContentView, _selAddSubview, controlHandle);
-
-        // Make the control fill the content view
-        objc_msgSend_stret(out CGRect parentFrame, data.ContentView, _selFrame);
-
-        CGRect controlFrame = new CGRect(0, 0, parentFrame.width, parentFrame.height);
-        objc_msgSend_rect(controlHandle, _selSetFrame, controlFrame);
-    }
-
-    public void SetTabItemToolTip(IntPtr handle, string toolTip)
-    {
-        if (!_tabItemData.TryGetValue(handle, out var data))
-            return;
-
-        InitializeTabFolderSelectors();
-
-        IntPtr selSetToolTip = _registeredSelectors.TryGetValue("setToolTip:", out var setToolTip)
-            ? setToolTip
-            : RegisterSelector("setToolTip:");
-        IntPtr toolTipString = CreateNSString(toolTip ?? "");
-        objc_msgSend(data.TabViewItem, selSetToolTip, toolTipString);
-    }
+    // REMOVED METHODS (moved to ITabFolderWidget interface):
+    // - CreateTabFolder(IntPtr parent, int style)
+    // - SetTabSelection(IntPtr handle, int index)
+    // - GetTabSelection(IntPtr handle)
+    // - CreateTabItem(IntPtr tabFolderHandle, int style, int index)
+    // - SetTabItemText(IntPtr handle, string text)
+    // - SetTabItemControl(IntPtr handle, IntPtr controlHandle)
+    // - SetTabItemToolTip(IntPtr handle, string toolTip)
+    // These methods are now implemented via the ITabFolderWidget interface using proper handles
 
     private IntPtr _selInitWithItemIdentifier;
 
@@ -600,6 +441,69 @@ internal partial class MacOSPlatform
         IntPtr selSetView = sel_registerName("setView:");
         objc_msgSend(itemData.ToolbarItem, selSetView, control);
     }
+
+    /// <summary>
+    /// Attaches a toolbar to a window using the existing NSToolBar implementation.
+    /// This method bridges the platform widget interface to the existing pseudo-handle system.
+    /// </summary>
+    public void AttachToolBarToWindow(IntPtr toolbarHandle, IntPtr windowHandle)
+    {
+        if (!_toolBarData.TryGetValue(toolbarHandle, out var toolbarData))
+            return;
+
+        if (windowHandle == IntPtr.Zero)
+            return;
+
+        InitializeToolBarSelectors();
+
+        // Set the toolbar on the window
+        objc_msgSend(windowHandle, _selSetToolbar, toolbarData.Toolbar);
+
+        // Update the toolbar data to remember the window
+        toolbarData.Window = windowHandle;
+    }
+
+    // TabItem bridge methods for IPlatformTabItem implementations
+    // These methods bridge the new interface system to the existing NSTabViewItem implementation
+
+    public void SetTabItemText(IntPtr handle, string text)
+    {
+        if (!_tabItemData.TryGetValue(handle, out var tabItemData))
+            return;
+
+        var nsString = CreateNSString(text ?? string.Empty);
+        objc_msgSend(tabItemData.TabViewItem, _selSetLabel, nsString);
+    }
+
+    public void SetTabItemControl(IntPtr handle, IntPtr controlHandle)
+    {
+        if (!_tabItemData.TryGetValue(handle, out var tabItemData))
+            return;
+
+        objc_msgSend(tabItemData.TabViewItem, _selSetView, controlHandle);
+    }
+
+    // CreateTabItem method for IPlatformTabItem implementations
+    // This creates a TabItem that can be used independently with the IPlatformTabItem interface
+    public IntPtr CreateTabItemForInterface(IntPtr tabFolderHandle, int style, int index)
+    {
+        // For now, this is a placeholder implementation
+        // In a full implementation, this would create an NSTabViewItem and return a pseudo-handle
+        // For Phase 5.1, we'll create a simple pseudo-handle that the IPlatformTabItem can use
+
+        IntPtr pseudoHandle = new IntPtr(0x30000000 + _nextTabItemId++);
+
+        // Create a dummy TabItemData entry for now
+        _tabItemData[pseudoHandle] = new TabItemData
+        {
+            TabFolderHandle = tabFolderHandle,
+            TabViewItem = IntPtr.Zero // Would be actual NSTabViewItem in full implementation
+        };
+
+        return pseudoHandle;
+    }
+
+    private static int _nextTabItemId = 1000;
 
     // Tree operations - using NSOutlineView for hierarchical display
 }

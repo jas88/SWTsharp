@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -122,10 +124,9 @@ public class ProgressBar : Control
     /// </summary>
     private void CreateWidget()
     {
-        var parentHandle = Parent?.Handle ?? IntPtr.Zero;
-        Handle = Platform.PlatformFactory.Instance.CreateProgressBar(parentHandle, Style);
-        Platform.PlatformFactory.Instance.SetProgressBarRange(Handle, _minimum, _maximum);
-        Platform.PlatformFactory.Instance.SetProgressBarSelection(Handle, _selection);
+        // Create IPlatformProgressBar widget using platform widget interface
+        var parentWidget = Parent?.PlatformWidget;
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateProgressBarWidget(parentWidget, Style);
     }
 
     /// <summary>
@@ -189,10 +190,12 @@ public class ProgressBar : Control
     /// </summary>
     private void UpdateSelection()
     {
-        if (Handle != IntPtr.Zero)
+        // Use IPlatformProgressBar interface to update selection
+        if (PlatformWidget is IPlatformProgressBar progressBarWidget)
         {
-            Platform.PlatformFactory.Instance.SetProgressBarRange(Handle, _minimum, _maximum);
-            Platform.PlatformFactory.Instance.SetProgressBarSelection(Handle, _selection);
+            progressBarWidget.Minimum = _minimum;
+            progressBarWidget.Maximum = _maximum;
+            progressBarWidget.Value = _selection;
         }
     }
 
@@ -201,18 +204,17 @@ public class ProgressBar : Control
     /// </summary>
     private void UpdateState()
     {
-        if (Handle != IntPtr.Zero)
+        // Use IPlatformProgressBar interface to update state
+        if (PlatformWidget is IPlatformProgressBar progressBarWidget)
         {
-            Platform.PlatformFactory.Instance.SetProgressBarState(Handle, _state);
+            progressBarWidget.State = _state;
         }
     }
 
     protected override void ReleaseWidget()
     {
-        if (Handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.DestroyWindow(Handle);
-        }
+        // TODO: Implement proper widget disposal through platform widget interface
+        // Platform widget cleanup is handled by parent disposal
         base.ReleaseWidget();
     }
 }

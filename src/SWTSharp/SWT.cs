@@ -201,6 +201,35 @@ public static class SWT
     public const int COMMAND = 1 << 3;
     public const int MODIFIER_MASK = SHIFT | CTRL | ALT | COMMAND;
 
+    // Key codes
+    public const int ARROW_UP = 0x1000001;
+    public const int ARROW_DOWN = 0x1000002;
+    public const int ARROW_LEFT = 0x1000003;
+    public const int ARROW_RIGHT = 0x1000004;
+    public const int PAGE_UP = 0x1000005;
+    public const int PAGE_DOWN = 0x1000006;
+    public const int HOME = 0x1000007;
+    public const int END = 0x1000008;
+    public const int INSERT = 0x1000009;
+    public const int F1 = 0x100000A;
+    public const int F2 = 0x100000B;
+    public const int F3 = 0x100000C;
+    public const int F4 = 0x100000D;
+    public const int F5 = 0x100000E;
+    public const int F6 = 0x100000F;
+    public const int F7 = 0x1000010;
+    public const int F8 = 0x1000011;
+    public const int F9 = 0x1000012;
+    public const int F10 = 0x1000013;
+    public const int F11 = 0x1000014;
+    public const int F12 = 0x1000015;
+    public const int CR = 13; // Carriage return
+    public const int LF = 10; // Line feed
+    public const int BS = 8;  // Backspace
+    public const int DEL = 127; // Delete
+    public const int ESC = 27; // Escape
+    public const int SPACE = 32; // Space bar
+
     // Mouse button state masks
     public const int BUTTON1 = 1 << 19;
     public const int BUTTON2 = 1 << 20;

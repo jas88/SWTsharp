@@ -54,18 +54,7 @@ public class DirectoryDialog : Dialog
     {
         CheckWidget();
 
-        var result = PlatformFactory.Instance.ShowDirectoryDialog(
-            Parent?.Handle ?? IntPtr.Zero,
-            Text,
-            _message,
-            _filterPath);
-
-        if (result != null)
-        {
-            _filterPath = result;
-            return result;
-        }
-
-        return null;
+        // TODO: Implement directory dialog through platform widget interface
+        return null; // Placeholder
     }
 }

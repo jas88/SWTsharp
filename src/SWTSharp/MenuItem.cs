@@ -11,7 +11,7 @@ public class MenuItem : Widget
     private bool _selection;
     private bool _enabled = true;
     private Menu? _menu;
-    private IntPtr _handle;
+    // Handle property removed - replaced with PlatformWidget
     private int _id;
     private static int _nextId = 1000;
 
@@ -46,7 +46,7 @@ public class MenuItem : Widget
         {
             CheckWidget();
             _text = value ?? string.Empty;
-            UpdateText();
+            // TODO: Implement text updates through platform widget interface
         }
     }
 
@@ -75,7 +75,7 @@ public class MenuItem : Widget
             if (_selection != value)
             {
                 _selection = value;
-                UpdateSelection();
+                // TODO: Implement selection updates through platform widget interface
 
                 // If this is a radio item being selected, deselect siblings
                 if (IsRadio && value && _parent != null)
@@ -108,7 +108,7 @@ public class MenuItem : Widget
             if (_enabled != value)
             {
                 _enabled = value;
-                UpdateEnabled();
+                // TODO: Implement enabled state updates through platform widget interface
             }
         }
     }
@@ -134,19 +134,12 @@ public class MenuItem : Widget
             if (_menu != value)
             {
                 _menu = value;
-                UpdateMenu();
+                // TODO: Implement submenu updates through platform widget interface
             }
         }
     }
 
-    /// <summary>
-    /// Gets or sets the platform-specific menu item handle.
-    /// </summary>
-    internal override IntPtr Handle
-    {
-        get => _handle;
-        set => _handle = value;
-    }
+    // Handle property removed - replaced with PlatformWidget
 
     /// <summary>
     /// Gets the unique ID for this menu item.
@@ -199,12 +192,8 @@ public class MenuItem : Widget
             return;
         }
 
-        // Create platform-specific menu item handle
-        Handle = SWTSharp.Platform.PlatformFactory.Instance.CreateMenuItem(
-            _parent.Handle,
-            Style,
-            _id,
-            index);
+        // TODO: Implement menu item creation through platform widget interface
+        // Handle property removed - replaced with PlatformWidget
     }
 
     /// <summary>
@@ -279,36 +268,13 @@ public class MenuItem : Widget
         Selection?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UpdateText()
-    {
-        if (_handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetMenuItemText(_handle, _text);
-        }
-    }
-
+    /// <summary>
+    /// Updates the selection state of the menu item.
+    /// </summary>
     private void UpdateSelection()
     {
-        if (_handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetMenuItemSelection(_handle, _selection);
-        }
-    }
-
-    private void UpdateEnabled()
-    {
-        if (_handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetMenuItemEnabled(_handle, _enabled);
-        }
-    }
-
-    private void UpdateMenu()
-    {
-        if (_handle != IntPtr.Zero && _menu != null)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetMenuItemSubmenu(_handle, _menu.Handle);
-        }
+        // TODO: Implement selection updates through platform widget interface
+        // Platform.PlatformFactory.Instance.SetMenuItemSelection(_handle, _selection);
     }
 
     protected override void ReleaseWidget()
@@ -323,12 +289,7 @@ public class MenuItem : Widget
             _menu = null;
         }
 
-        // Destroy platform menu item
-        if (_handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.DestroyMenuItem(_handle);
-            _handle = IntPtr.Zero;
-        }
+        // TODO: Implement menu item disposal through platform widget interface
 
         _parent = null;
 

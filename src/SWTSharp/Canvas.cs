@@ -52,18 +52,9 @@ public class Canvas : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // Get parent handle
-        IntPtr parentHandle = IntPtr.Zero;
-        if (Parent != null)
-        {
-            parentHandle = Parent.Handle;
-        }
-
-        // Create platform-specific canvas (drawable surface)
-        Handle = Platform.PlatformFactory.Instance.CreateCanvas(parentHandle, Style);
-
-        // Connect paint event handler
-        Platform.PlatformFactory.Instance.ConnectCanvasPaint(Handle, OnPlatformPaint);
+        // TODO: Implement canvas creation through platform widget interface
+        // The canvas should be created as a drawable surface with paint capabilities
+        // TODO: Create IPlatformCanvas widget here
     }
 
     /// <summary>
@@ -76,6 +67,7 @@ public class Canvas : Composite
     /// <param name="gc">Platform-specific graphics context (will be wrapped in GC class)</param>
     private void OnPlatformPaint(int x, int y, int width, int height, object? gc)
     {
+        // TODO: Implement platform paint event connection through platform widget interface
         var args = new PaintEventArgs
         {
             Widget = this,
@@ -102,10 +94,8 @@ public class Canvas : Composite
     public override void Redraw()
     {
         CheckWidget();
-        if (Handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.RedrawCanvas(Handle);
-        }
+        // TODO: Implement canvas redraw through platform widget interface
+        // This should trigger a full repaint of the canvas surface
     }
 
     /// <summary>
@@ -118,34 +108,35 @@ public class Canvas : Composite
     public void Redraw(int x, int y, int width, int height)
     {
         CheckWidget();
-        if (Handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.RedrawCanvasArea(Handle, x, y, width, height);
-        }
+        // TODO: Implement canvas area redraw through platform widget interface
+        // This should trigger a repaint of the specified rectangular area
     }
 
     protected override void UpdateVisible()
     {
-        if (Handle != IntPtr.Zero)
+        // TODO: Implement visibility update through platform widget interface
+        if (PlatformWidget != null)
         {
-            Platform.PlatformFactory.Instance.SetControlVisible(Handle, Visible);
+            // TODO: PlatformWidget.SetVisible(Visible);
         }
     }
 
     protected override void UpdateEnabled()
     {
-        if (Handle != IntPtr.Zero)
+        // TODO: Implement enabled state update through platform widget interface
+        if (PlatformWidget != null)
         {
-            Platform.PlatformFactory.Instance.SetControlEnabled(Handle, Enabled);
+            // TODO: PlatformWidget.SetEnabled(Enabled);
         }
     }
 
     protected override void UpdateBounds()
     {
-        if (Handle != IntPtr.Zero)
+        // TODO: Implement bounds update through platform widget interface
+        if (PlatformWidget != null)
         {
             var (x, y, width, height) = GetBounds();
-            Platform.PlatformFactory.Instance.SetControlBounds(Handle, x, y, width, height);
+            PlatformWidget.SetBounds(x, y, width, height);
         }
     }
 

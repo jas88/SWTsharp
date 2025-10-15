@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -18,13 +20,23 @@ public class Shell : Composite
         get
         {
             CheckWidget();
+            // NEW: Use platform widget
+            if (PlatformWidget is IPlatformWindow window)
+            {
+                return window.GetTitle();
+            }
+            // OLD: Fallback to internal field for backwards compatibility
             return _text;
         }
         set
         {
             CheckWidget();
             _text = value ?? string.Empty;
-            UpdateText();
+            // Use platform widget
+            if (PlatformWidget is IPlatformWindow window)
+            {
+                window.SetTitle(_text);
+            }
         }
     }
 
@@ -36,15 +48,22 @@ public class Shell : Composite
         get
         {
             CheckWidget();
+            // NEW: Use platform widget
+            if (PlatformWidget is IPlatformWindow window)
+            {
+                return window.GetVisible();
+            }
+            // OLD: Fallback to internal field for backwards compatibility
             return _visible;
         }
         set
         {
             CheckWidget();
-            if (_visible != value)
+            _visible = value;
+            // Use platform widget
+            if (PlatformWidget is IPlatformWindow window)
             {
-                _visible = value;
-                UpdateVisibility();
+                window.SetVisible(_visible);
             }
         }
     }
@@ -130,8 +149,8 @@ public class Shell : Composite
 
     protected override void CreateWidget()
     {
-        // Create platform-specific window handle
-        Handle = SWTSharp.Platform.PlatformFactory.Instance.CreateWindow(Style, _text);
+        // Use platform widget
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateWindowWidget(Style, _text);
     }
 
     /// <summary>
@@ -160,7 +179,7 @@ public class Shell : Composite
     public new void SetSize(int width, int height)
     {
         CheckWidget();
-        SWTSharp.Platform.PlatformFactory.Instance.SetWindowSize(Handle, width, height);
+        // TODO: Implement through platform widget interface
     }
 
     /// <summary>
@@ -169,7 +188,7 @@ public class Shell : Composite
     public new void SetLocation(int x, int y)
     {
         CheckWidget();
-        SWTSharp.Platform.PlatformFactory.Instance.SetWindowLocation(Handle, x, y);
+        // TODO: Implement through platform widget interface
     }
 
     /// <summary>
@@ -183,30 +202,8 @@ public class Shell : Composite
         SetLocation(100, 100);
     }
 
-    private void UpdateText()
-    {
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetWindowText(Handle, _text);
-        }
-    }
-
-    private void UpdateVisibility()
-    {
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.SetWindowVisible(Handle, _visible);
-        }
-    }
-
     protected override void ReleaseWidget()
     {
-        // Destroy platform window
-        if (Handle != IntPtr.Zero)
-        {
-            SWTSharp.Platform.PlatformFactory.Instance.DestroyWindow(Handle);
-        }
-
         // Unregister from display
         Display?.RemoveShell(this);
 

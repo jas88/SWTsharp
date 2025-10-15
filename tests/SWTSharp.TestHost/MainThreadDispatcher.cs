@@ -176,7 +176,7 @@ public static class MainThreadDispatcher
 
     /// <summary>
     /// Starts the dispatcher loop on the CURRENT thread.
-    /// This will block until Stop() is called OR all foreground threads exit.
+    /// This will block until Stop() is called.
     /// On macOS, runs CFRunLoop which processes GCD main queue.
     /// On other platforms, uses custom blocking queue.
     /// </summary>
@@ -191,13 +191,6 @@ public static class MainThreadDispatcher
 
         // Signal that run loop is ready for Invoke() calls
         _runLoopReady.Set();
-
-        // Hook ProcessExit to stop the run loop when all foreground threads complete
-        AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
-        {
-            Console.WriteLine("[INFO] MainThreadDispatcher: ProcessExit event fired, stopping run loop");
-            Stop();
-        };
 
         // Windows/Linux OR macOS fallback: use custom dispatch loop
         Console.WriteLine("[INFO] MainThreadDispatcher: Running custom dispatch loop");

@@ -1,4 +1,6 @@
 using SWTSharp.Graphics;
+using SWTSharp.Platform;
+using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp;
 
@@ -17,7 +19,8 @@ public class ToolItem : Widget
     private bool _selection;
     private int _width;
     private Control? _control;
-    private IntPtr _handle;
+    private IPlatformToolItem? _platformToolItem;
+    // Handle property removed - replaced with PlatformWidget
     private int _id;
     private static int _nextId = 2000;
 
@@ -207,14 +210,7 @@ public class ToolItem : Widget
         }
     }
 
-    /// <summary>
-    /// Gets or sets the platform-specific tool item handle.
-    /// </summary>
-    internal override IntPtr Handle
-    {
-        get => _handle;
-        set => _handle = value;
-    }
+    // Handle property removed - replaced with PlatformWidget
 
     /// <summary>
     /// Gets the unique ID for this tool item.
@@ -267,13 +263,14 @@ public class ToolItem : Widget
             return;
         }
 
-        // Create platform-specific tool item handle
-        // Use ToolBarHandle instead of Handle to get the actual toolbar pseudo-handle
-        Handle = Platform.PlatformFactory.Instance.CreateToolItem(
-            _parent.ToolBarHandle,
-            Style,
-            _id,
-            index);
+        // NOTE: ToolItem creation now happens through ToolBar which creates
+        // platform-specific tool items automatically. This CreateWidget method
+        // is a placeholder - actual platform items are created by ToolBar.AddItem()
+        // which internally calls the platform-specific IPlatformToolBar.AddItem()
+
+        // Platform-specific ToolItem creation happens automatically when ToolBar
+        // creates items, so this method is intentionally minimal.
+        // The _platformToolItem field is populated by the ToolBar when it creates items.
     }
 
     /// <summary>
@@ -374,58 +371,70 @@ public class ToolItem : Widget
 
     private void UpdateText()
     {
-        if (_handle != IntPtr.Zero)
+        // Use IPlatformToolItem interface to update text
+        if (_platformToolItem != null)
         {
-            Platform.PlatformFactory.Instance.SetToolItemText(_handle, _text);
+            _platformToolItem.SetText(_text);
         }
     }
 
     private void UpdateImage()
     {
-        if (_handle != IntPtr.Zero)
+        // Use IPlatformToolItem interface to update image
+        if (_platformToolItem != null && _image != null)
         {
-            Platform.PlatformFactory.Instance.SetToolItemImage(_handle, _image?.Handle ?? IntPtr.Zero);
+            var imageAdapter = new MacOSImage(_image);
+            _platformToolItem.SetImage(imageAdapter);
         }
     }
 
     private void UpdateToolTipText()
     {
-        if (_handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.SetToolItemToolTip(_handle, _toolTipText);
-        }
+        // TODO: Add tooltip support to IPlatformToolItem interface
+        // For now, tooltip text is stored but not implemented in platform widget
+        // if (_platformToolItem != null)
+        // {
+        //     _platformToolItem.SetToolTip(_toolTipText);
+        // }
     }
 
     private void UpdateSelection()
     {
-        if (_handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.SetToolItemSelection(_handle, _selection);
-        }
+        // TODO: Add selection support to IPlatformToolItem interface for CHECK/RADIO items
+        // For now, selection state is stored but not implemented in platform widget
+        // if (_platformToolItem != null && (IsCheck || IsRadio))
+        // {
+        //     _platformToolItem.SetSelected(_selection);
+        // }
     }
 
     private void UpdateEnabled()
     {
-        if (_handle != IntPtr.Zero)
+        // Use IPlatformToolItem interface to update enabled state
+        if (_platformToolItem != null)
         {
-            Platform.PlatformFactory.Instance.SetToolItemEnabled(_handle, _enabled);
+            _platformToolItem.SetEnabled(_enabled);
         }
     }
 
     private void UpdateWidth()
     {
-        if (_handle != IntPtr.Zero && IsSeparator)
-        {
-            Platform.PlatformFactory.Instance.SetToolItemWidth(_handle, _width);
-        }
+        // TODO: Add width support to IPlatformToolItem interface for SEPARATOR items
+        // For now, width is stored but not implemented in platform widget
+        // if (_platformToolItem != null && IsSeparator)
+        // {
+        //     _platformToolItem.SetWidth(_width);
+        // }
     }
 
     private void UpdateControl()
     {
-        if (_handle != IntPtr.Zero && _control != null)
-        {
-            Platform.PlatformFactory.Instance.SetToolItemControl(_handle, _control.Handle);
-        }
+        // TODO: Add control support to IPlatformToolItem interface for custom tool items
+        // For now, control is stored but not implemented in platform widget
+        // if (_platformToolItem != null && _control != null)
+        // {
+        //     _platformToolItem.SetControl(_control.PlatformWidget);
+        // }
     }
 
     protected override void ReleaseWidget()
@@ -439,12 +448,9 @@ public class ToolItem : Widget
         // Release image reference (don't dispose it, it may be shared)
         _image = null;
 
-        // Destroy platform tool item
-        if (_handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.DestroyToolItem(_handle);
-            _handle = IntPtr.Zero;
-        }
+        // Dispose platform tool item
+        _platformToolItem?.Dispose();
+        _platformToolItem = null;
 
         _parent = null;
 

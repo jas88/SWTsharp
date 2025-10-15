@@ -30,11 +30,13 @@
 
     <!-- Documentation -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- Missing XML documentation -->
+    <NoWarn>$(NoWarn);CS1591;CS0618</NoWarn> <!-- Missing XML documentation; Obsolete deprecation warnings (Phase 4 cleanup) -->
 
     <!-- Analyzer suppressions -->
     <!-- CA1852: Suppress for partial platform classes that cannot be sealed -->
     <NoWarn>$(NoWarn);CA1852</NoWarn>
+    <!-- CA1859: Suppress analyzer suggesting concrete types over interfaces (interfaces needed for cross-platform) -->
+    <NoWarn>$(NoWarn);CA1859</NoWarn>
 
     <!-- P/Invoke and cross-platform suppressions -->
     <NoWarn>$(NoWarn);CA1707</NoWarn> <!-- Identifiers should not contain underscores (native API names) -->

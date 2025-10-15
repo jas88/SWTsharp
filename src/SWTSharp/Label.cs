@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -20,6 +22,12 @@ public class Label : Control
         get
         {
             CheckWidget();
+            // NEW: Use platform widget
+            if (PlatformWidget is IPlatformTextWidget textWidget && !_isSeparator)
+            {
+                return textWidget.GetText();
+            }
+            // OLD: Fallback to internal field for backwards compatibility
             return _text;
         }
         set
@@ -29,7 +37,11 @@ public class Label : Control
                 return; // Separators don't have text
 
             _text = value ?? string.Empty;
-            UpdateText();
+            // Use platform widget
+            if (PlatformWidget is IPlatformTextWidget textWidget)
+            {
+                textWidget.SetText(_text);
+            }
         }
     }
 
@@ -54,7 +66,7 @@ public class Label : Control
                 (value == SWT.LEFT || value == SWT.CENTER || value == SWT.RIGHT))
             {
                 _alignment = value;
-                UpdateAlignment();
+                // TODO: Implement alignment updates through platform widget interface
             }
         }
     }
@@ -104,41 +116,24 @@ public class Label : Control
 
     private void CreateWidget()
     {
-        IntPtr parentHandle = Parent?.Handle ?? IntPtr.Zero;
-        bool wrap = (Style & SWT.WRAP) != 0;
-
-        Handle = SWTSharp.Platform.PlatformFactory.Instance.CreateLabel(
-            parentHandle,
-            Style,
-            _alignment,
-            wrap);
-
-        if (Handle == IntPtr.Zero)
-            throw new InvalidOperationException("Failed to create native label");
+        // Use platform widget
+        PlatformWidget = SWTSharp.Platform.PlatformFactory.Instance.CreateLabelWidget(
+            Parent?.PlatformWidget,
+            Style
+        );
 
         // Set initial text if this is a text label (not a separator)
         if (!_isSeparator && !string.IsNullOrEmpty(_text))
         {
-            SWTSharp.Platform.PlatformFactory.Instance.SetLabelText(Handle, _text);
+            // Use platform widget
+            if (PlatformWidget is IPlatformTextWidget textWidget)
+            {
+                textWidget.SetText(_text);
+            }
         }
     }
 
-    private void UpdateText()
-    {
-        if (Handle == IntPtr.Zero || _isSeparator)
-            return;
-
-        SWTSharp.Platform.PlatformFactory.Instance.SetLabelText(Handle, _text);
-    }
-
-    private void UpdateAlignment()
-    {
-        if (Handle == IntPtr.Zero || _isSeparator)
-            return;
-
-        SWTSharp.Platform.PlatformFactory.Instance.SetLabelAlignment(Handle, _alignment);
-    }
-
+    
     /// <summary>
     /// Returns a string representation of this label.
     /// </summary>
@@ -157,5 +152,18 @@ public class Label : Control
         if (_alignment == SWT.CENTER) return "CENTER";
         if (_alignment == SWT.RIGHT) return "RIGHT";
         return "LEFT";
+    }
+
+    protected override void ReleaseWidget()
+    {
+        // NEW: Dispose platform widget
+        if (PlatformWidget != null)
+        {
+            PlatformWidget.Dispose();
+            PlatformWidget = null;
+        }
+
+        // Platform handles cleanup via parent destruction
+        base.ReleaseWidget();
     }
 }

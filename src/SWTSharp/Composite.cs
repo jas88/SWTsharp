@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -123,9 +125,11 @@ public class Composite : Control
     /// </summary>
     protected virtual void CreateWidget()
     {
-        // Create platform-specific composite/container handle
-        IntPtr parentHandle = Parent?.Handle ?? IntPtr.Zero;
-        Handle = Platform.PlatformFactory.Instance.CreateComposite(parentHandle, Style);
+        // Use platform widget
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateCompositeWidget(
+            Parent?.PlatformWidget,
+            Style
+        );
     }
 
     /// <summary>
@@ -145,6 +149,13 @@ public class Composite : Control
             if (!_children.Contains(control))
             {
                 _children.Add(control);
+
+                // NEW: Add child to platform widget as well
+                if (PlatformWidget is IPlatformComposite composite && control.PlatformWidget != null)
+                {
+                    composite.AddChild(control.PlatformWidget);
+                }
+
                 OnChildAdded(control);
             }
         }
@@ -166,6 +177,12 @@ public class Composite : Control
         {
             if (_children.Remove(control))
             {
+                // NEW: Remove child from platform widget as well
+                if (PlatformWidget is IPlatformComposite composite && control.PlatformWidget != null)
+                {
+                    composite.RemoveChild(control.PlatformWidget);
+                }
+
                 OnChildRemoved(control);
             }
         }
@@ -343,11 +360,9 @@ public class Composite : Control
         _layout = null;
         _tabList = null;
 
-        // Destroy platform composite handle
-        if (Handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.DestroyWindow(Handle);
-        }
+        // Destroy platform composite widget
+        // TODO: Implement proper disposal through platform widget interface
+        // Platform widget cleanup is handled by parent disposal
 
         base.ReleaseWidget();
     }

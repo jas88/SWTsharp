@@ -1,4 +1,5 @@
 using SWTSharp.Events;
+using SWTSharp.Platform;
 
 namespace SWTSharp;
 
@@ -156,10 +157,8 @@ public class Spinner : Composite
             if (_textLimit != value && value >= 0)
             {
                 _textLimit = value;
-                if (Handle != IntPtr.Zero)
-                {
-                    Platform.PlatformFactory.Instance.SetSpinnerTextLimit(Handle, _textLimit);
-                }
+                // TODO: Implement text limit setting via platform widget interface
+                // Platform.PlatformFactory.Instance.SetSpinnerTextLimit(Handle, _textLimit);
             }
         }
     }
@@ -179,9 +178,12 @@ public class Spinner : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        var parentHandle = Parent?.Handle ?? IntPtr.Zero;
-        Handle = Platform.PlatformFactory.Instance.CreateSpinner(parentHandle, Style);
-        Platform.PlatformFactory.Instance.SetSpinnerValues(Handle, _selection, _minimum, _maximum, _digits, _increment, _pageIncrement);
+        // Create IPlatformSpinner widget using platform widget interface
+        var parentWidget = Parent?.PlatformWidget;
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateSpinnerWidget(parentWidget, Style);
+
+        // Set initial spinner values and connect event handlers
+        UpdateValues();
         ConnectEventHandlers();
     }
 
@@ -228,9 +230,14 @@ public class Spinner : Composite
     /// </summary>
     private void UpdateValues()
     {
-        if (Handle != IntPtr.Zero)
+        // Use IPlatformSpinner interface to update spinner values
+        if (PlatformWidget is IPlatformSpinner spinnerWidget)
         {
-            Platform.PlatformFactory.Instance.SetSpinnerValues(Handle, _selection, _minimum, _maximum, _digits, _increment, _pageIncrement);
+            spinnerWidget.Minimum = _minimum;
+            spinnerWidget.Maximum = _maximum;
+            spinnerWidget.Value = _selection;
+            spinnerWidget.Increment = _increment;
+            spinnerWidget.Digits = _digits;
         }
     }
 
@@ -239,10 +246,13 @@ public class Spinner : Composite
     /// </summary>
     private void ConnectEventHandlers()
     {
-        if (Handle != IntPtr.Zero)
+        // Connect spinner event handlers to platform widget
+        // Event handling will be implemented in Phase 5.8
+        if (PlatformWidget is IPlatformSpinner spinnerWidget)
         {
-            Platform.PlatformFactory.Instance.ConnectSpinnerChanged(Handle, OnNativeSelectionChanged);
-            Platform.PlatformFactory.Instance.ConnectSpinnerModified(Handle, OnNativeModified);
+            // TODO: Connect spinner events through platform widget interface in Phase 5.8
+            // spinnerWidget.ValueChanged += OnNativeSelectionChanged;
+            // spinnerWidget.TextChanged += OnNativeModified;
         }
     }
 
@@ -277,10 +287,8 @@ public class Spinner : Composite
 
     protected override void ReleaseWidget()
     {
-        if (Handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.DestroyWindow(Handle);
-        }
+        // TODO: Implement proper widget disposal through platform widget interface
+        // Platform widget cleanup is handled by parent disposal
         base.ReleaseWidget();
     }
 }

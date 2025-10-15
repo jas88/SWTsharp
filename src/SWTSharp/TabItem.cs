@@ -1,3 +1,6 @@
+using SWTSharp.Platform;
+using SWTSharp.Platform.MacOS;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -10,7 +13,7 @@ public class TabItem : Widget
     private string _text = string.Empty;
     private string _toolTipText = string.Empty;
     private Control? _control;
-    private IntPtr _handle;
+    private IPlatformTabItem? _platformTabItem;
 
     /// <summary>
     /// Gets the parent TabFolder.
@@ -77,15 +80,7 @@ public class TabItem : Widget
         }
     }
 
-    /// <summary>
-    /// Gets or sets the platform-specific tab item handle.
-    /// TabItem uses its own internal handle instead of the inherited Handle property.
-    /// </summary>
-    internal override IntPtr Handle
-    {
-        get => _handle;
-        set => _handle = value;
-    }
+    // Handle property removed - replaced with PlatformWidget
 
     /// <summary>
     /// Creates a new tab item and appends it to the parent TabFolder.
@@ -118,16 +113,27 @@ public class TabItem : Widget
     /// </summary>
     private void CreateWidget(int index)
     {
-        // Create platform-specific tab item
-        Handle = Platform.PlatformFactory.Instance.CreateTabItem(_parent.Handle, Style, index);
-
-        if (Handle == IntPtr.Zero)
+        // Create platform tab item using IPlatformTabItem interface
+        // TODO: Add CreateTabItem method to IPlatform interface in Phase 5.7
+        // For now, use MacOS implementation directly
+        if (Platform.PlatformFactory.Instance is MacOSPlatform macOSPlatform)
         {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create tab item");
+            _platformTabItem = new MacOSTabItem(macOSPlatform, IntPtr.Zero);
+        }
+        else
+        {
+            // Fallback for other platforms - create stub implementation
+            throw new SWTException(SWT.ERROR_NOT_IMPLEMENTED, "TabItem platform widget not implemented for this platform");
         }
 
         // Add this item to parent's collection
         _parent.AddItem(this, index);
+
+        // Set initial properties using platform widget
+        if (_platformTabItem != null)
+        {
+            _platformTabItem.SetText(_text);
+        }
     }
 
     /// <summary>
@@ -146,11 +152,12 @@ public class TabItem : Widget
 
         _control = control;
 
-        // Update platform
-        if (_handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.SetTabItemControl(_handle, control?.Handle ?? IntPtr.Zero);
-        }
+        // TODO: Update platform via IPlatformWidget interface
+        // Update platform using new interface
+        // if (_handle != IntPtr.Zero)
+        // {
+        //     Platform.PlatformFactory.Instance.SetTabItemControl(PlatformWidget, control?.PlatformWidget ?? IntPtr.Zero);
+        // }
 
         // Show control if this tab is currently selected
         if (_control != null && _parent.Selection == this)
@@ -230,9 +237,10 @@ public class TabItem : Widget
     /// </summary>
     private void UpdateText()
     {
-        if (_handle != IntPtr.Zero)
+        // Use IPlatformTabItem interface to update text
+        if (_platformTabItem != null)
         {
-            Platform.PlatformFactory.Instance.SetTabItemText(_handle, _text);
+            _platformTabItem.SetText(_text);
         }
     }
 
@@ -241,10 +249,12 @@ public class TabItem : Widget
     /// </summary>
     private void UpdateToolTip()
     {
-        if (_handle != IntPtr.Zero)
-        {
-            Platform.PlatformFactory.Instance.SetTabItemToolTip(_handle, _toolTipText);
-        }
+        // TODO: Add tooltip support to IPlatformTabItem interface
+        // For now, tooltip text is stored but not implemented in platform widget
+        // if (_platformTabItem != null)
+        // {
+        //     _platformTabItem.SetToolTip(_toolTipText);
+        // }
     }
 
     protected override void ReleaseWidget()
@@ -258,7 +268,10 @@ public class TabItem : Widget
         // Don't dispose the control - it's owned by the application
         _control = null;
 
-        // Platform cleanup happens via parent destruction
+        // Dispose platform tab item
+        _platformTabItem?.Dispose();
+        _platformTabItem = null;
+
         base.ReleaseWidget();
     }
 }

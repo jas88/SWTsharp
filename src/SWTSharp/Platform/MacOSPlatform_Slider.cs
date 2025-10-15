@@ -18,6 +18,12 @@ internal partial class MacOSPlatform
 
     // objc_msgSend_double is declared in main MacOSPlatform.cs
 
+    // REMOVED METHODS (moved to ISliderWidget interface):
+    // - CreateSlider(IntPtr parent, int style)
+    // - SetSliderValues(IntPtr handle, int selection, int minimum, int maximum, int thumb, int increment, int pageIncrement)
+    // - ConnectSliderChanged(IntPtr handle, Action<int> callback)
+    // These methods are now implemented via the ISliderWidget interface using proper handles
+
     private void InitializeSliderSelectors()
     {
         if (_nsSliderClass == IntPtr.Zero)
@@ -33,68 +39,6 @@ internal partial class MacOSPlatform
             if (_selSetDoubleValue == IntPtr.Zero)
                 _selSetDoubleValue = sel_registerName("setDoubleValue:");
         }
-    }
-
-    public IntPtr CreateSlider(IntPtr parent, int style)
-    {
-        InitializeSliderSelectors();
-
-        // Create NSSlider
-        IntPtr slider = objc_msgSend(_nsSliderClass, _selAlloc);
-        slider = objc_msgSend(slider, _selInit);
-
-        // Set slider type based on style
-        bool isVertical = (style & SWT.VERTICAL) != 0;
-        objc_msgSend(slider, _selSetSliderType, new IntPtr(NSLinearSlider));
-
-        // Set default frame (orientation handled by width/height ratio)
-        var frame = isVertical ? new CGRect(0, 0, 20, 200) : new CGRect(0, 0, 200, 20);
-        objc_msgSend_rect(slider, _selSetFrame, frame);
-
-        // Set default values
-        objc_msgSend_double(slider, _selSetMinValue, 0.0);
-        objc_msgSend_double(slider, _selSetMaxValue, 100.0);
-        objc_msgSend_double(slider, _selSetDoubleValue, 0.0);
-
-        // Add to parent if provided
-        if (parent != IntPtr.Zero)
-        {
-            IntPtr selContentView = sel_registerName("contentView");
-            IntPtr contentView = objc_msgSend(parent, selContentView);
-            objc_msgSend(contentView, _selAddSubview, slider);
-        }
-
-        return slider;
-    }
-
-    public void SetSliderValues(IntPtr handle, int selection, int minimum, int maximum, int thumb, int increment, int pageIncrement)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        InitializeSliderSelectors();
-
-        // Set min and max values
-        objc_msgSend_double(handle, _selSetMinValue, (double)minimum);
-        objc_msgSend_double(handle, _selSetMaxValue, (double)maximum);
-
-        // Set current value
-        objc_msgSend_double(handle, _selSetDoubleValue, (double)selection);
-
-        // Note: NSSlider doesn't have direct thumb, increment, or pageIncrement properties
-        // These would need to be handled through custom behaviors or ignored
-    }
-
-    public void ConnectSliderChanged(IntPtr handle, Action<int> callback)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        _sliderCallbacks[handle] = callback;
-
-        // Note: In a full implementation, you would set up target-action pattern here
-        // This requires creating a custom Objective-C class to handle callbacks
-        // For now, this stores the callback for future implementation
     }
 
     // Shared selectors (_selSetMinValue, _selSetMaxValue, _selSetDoubleValue) are in main MacOSPlatform.cs

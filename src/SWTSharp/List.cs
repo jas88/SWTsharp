@@ -1,3 +1,6 @@
+using SWTSharp.Platform;
+using SWTSharp.Events;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -160,7 +163,12 @@ public class List : Control
             throw new ArgumentNullException(nameof(item));
         }
         _items.Add(item);
-        Platform.PlatformFactory.Instance.AddListItem(Handle, item, _items.Count - 1);
+
+        // Use IPlatformList interface to add item
+        if (PlatformWidget is IPlatformList listWidget)
+        {
+            listWidget.AddItem(item);
+        }
     }
 
     /// <summary>
@@ -180,7 +188,16 @@ public class List : Control
             throw new ArgumentOutOfRangeException(nameof(index));
         }
         _items.Insert(index, item);
-        Platform.PlatformFactory.Instance.AddListItem(Handle, item, index);
+
+        // For IPlatformList interface, we need to refresh all items since it doesn't support insert at index
+        if (PlatformWidget is IPlatformList listWidget)
+        {
+            listWidget.ClearItems();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                listWidget.AddItem(_items[i]);
+            }
+        }
 
         // Update selected indices
         for (int i = 0; i < _selectedIndices.Count; i++)
@@ -204,7 +221,16 @@ public class List : Control
             throw new ArgumentOutOfRangeException(nameof(index));
         }
         _items.RemoveAt(index);
-        Platform.PlatformFactory.Instance.RemoveListItem(Handle, index);
+
+        // Use IPlatformList interface to refresh items after removal
+        if (PlatformWidget is IPlatformList listWidget)
+        {
+            listWidget.ClearItems();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                listWidget.AddItem(_items[i]);
+            }
+        }
 
         // Update selected indices
         _selectedIndices.Remove(index);
@@ -257,7 +283,12 @@ public class List : Control
         CheckWidget();
         _items.Clear();
         _selectedIndices.Clear();
-        Platform.PlatformFactory.Instance.ClearListItems(Handle);
+
+        // Use IPlatformList interface to clear items
+        if (PlatformWidget is IPlatformList listWidget)
+        {
+            listWidget.ClearItems();
+        }
     }
 
     /// <summary>
@@ -404,7 +435,9 @@ public class List : Control
     public int GetTopIndex()
     {
         CheckWidget();
-        return Platform.PlatformFactory.Instance.GetListTopIndex(Handle);
+        // TODO: Implement platform widget interface for getting list top index
+        // return Platform.PlatformFactory.Instance.GetListTopIndex(Handle);
+        return 0;
     }
 
     /// <summary>
@@ -415,7 +448,8 @@ public class List : Control
         CheckWidget();
         if (index >= 0 && index < _items.Count)
         {
-            Platform.PlatformFactory.Instance.SetListTopIndex(Handle, index);
+            // TODO: Implement platform widget interface for setting list top index
+            // Platform.PlatformFactory.Instance.SetListTopIndex(Handle, index);
         }
     }
 
@@ -434,26 +468,307 @@ public class List : Control
 
     private void CreateWidget()
     {
-        Handle = Platform.PlatformFactory.Instance.CreateList(Parent?.Handle ?? IntPtr.Zero, Style);
-        if (Handle == IntPtr.Zero)
+        // Create IPlatformList widget using platform widget interface
+        var parentWidget = Parent?.PlatformWidget;
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateListWidget(parentWidget, Style);
+
+        // Subscribe to platform widget events
+        if (PlatformWidget is IPlatformList listWidget)
         {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create list control");
+            listWidget.SelectionChanged += OnPlatformSelectionChanged;
+            listWidget.ItemDoubleClick += OnPlatformItemDoubleClick;
+        }
+
+        // Connect standard widget events
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.Click += OnPlatformClick;
+            eventHandling.FocusGained += OnPlatformFocusGained;
+            eventHandling.FocusLost += OnPlatformFocusLost;
+            eventHandling.KeyDown += OnPlatformKeyDown;
+            eventHandling.KeyUp += OnPlatformKeyUp;
         }
     }
 
     private void UpdateItems()
     {
-        Platform.PlatformFactory.Instance.ClearListItems(Handle);
-        for (int i = 0; i < _items.Count; i++)
+        // Use IPlatformList interface to update items
+        if (PlatformWidget is IPlatformList listWidget)
         {
-            Platform.PlatformFactory.Instance.AddListItem(Handle, _items[i], i);
+            listWidget.ClearItems();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                listWidget.AddItem(_items[i]);
+            }
         }
     }
 
     private void UpdateSelection()
     {
-        Platform.PlatformFactory.Instance.SetListSelection(Handle, _selectedIndices.ToArray());
+        // Use IPlatformList interface to update selection
+        if (PlatformWidget is IPlatformList listWidget)
+        {
+            if (_multiSelect)
+            {
+                listWidget.SelectionIndices = _selectedIndices.ToArray();
+            }
+            else
+            {
+                listWidget.SelectionIndex = _selectedIndices.Count > 0 ? _selectedIndices[0] : -1;
+            }
+        }
         OnSelectionChanged(EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Handles platform widget selection changed events.
+    /// </summary>
+    private void OnPlatformSelectionChanged(object? sender, int selectedIndex)
+    {
+        CheckWidget();
+
+        // Handle single selection mode
+        if (!_multiSelect)
+        {
+            if (_selectedIndices.Count != 1 || _selectedIndices[0] != selectedIndex)
+            {
+                _selectedIndices.Clear();
+                if (selectedIndex >= 0 && selectedIndex < _items.Count)
+                {
+                    _selectedIndices.Add(selectedIndex);
+                }
+
+                // Create SWT Selection event
+                var selectionEvent = new Event
+                {
+                    Index = selectedIndex,
+                    Time = Environment.TickCount,
+                    Item = selectedIndex >= 0 ? _items[selectedIndex] : null
+                };
+                NotifyListeners(SWT.Selection, selectionEvent);
+
+                // Raise the legacy SelectionChanged event for backwards compatibility
+                OnSelectionChanged(EventArgs.Empty);
+            }
+        }
+        else
+        {
+            // Multi-selection mode - toggle selection
+            if (selectedIndex >= 0 && selectedIndex < _items.Count)
+            {
+                if (!_selectedIndices.Remove(selectedIndex))
+                {
+                    _selectedIndices.Add(selectedIndex);
+                }
+
+                // Create SWT Selection event
+                var selectionEvent = new Event
+                {
+                    Index = selectedIndex,
+                    Time = Environment.TickCount,
+                    Item = _items[selectedIndex],
+                    Detail = _selectedIndices.Contains(selectedIndex) ? SWT.NONE : SWT.NONE
+                };
+                NotifyListeners(SWT.Selection, selectionEvent);
+
+                // Raise the legacy SelectionChanged event for backwards compatibility
+                OnSelectionChanged(EventArgs.Empty);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget item double-click events.
+    /// </summary>
+    private void OnPlatformItemDoubleClick(object? sender, int itemIndex)
+    {
+        CheckWidget();
+
+        var doubleClickEvent = new Event
+        {
+            Index = itemIndex,
+            Time = Environment.TickCount,
+            Item = itemIndex >= 0 ? _items[itemIndex] : null
+        };
+        NotifyListeners(SWT.DefaultSelection, doubleClickEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget click events.
+    /// </summary>
+    private void OnPlatformClick(object? sender, int button)
+    {
+        CheckWidget();
+
+        // Create SWT MouseDown event
+        var mouseDownEvent = new Event
+        {
+            Button = button,
+            Time = Environment.TickCount,
+            StateMask = GetCurrentStateMask()
+        };
+        NotifyListeners(SWT.MouseDown, mouseDownEvent);
+
+        // Create SWT MouseUp event
+        var mouseUpEvent = new Event
+        {
+            Button = button,
+            Time = Environment.TickCount,
+            StateMask = GetCurrentStateMask()
+        };
+        NotifyListeners(SWT.MouseUp, mouseUpEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus gained events.
+    /// </summary>
+    private void OnPlatformFocusGained(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusIn, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus lost events.
+    /// </summary>
+    private void OnPlatformFocusLost(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusOut, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key down events.
+    /// </summary>
+    private void OnPlatformKeyDown(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyDown, keyEvent);
+
+        // Handle keyboard navigation
+        if (e.KeyCode == SWT.ARROW_UP || e.KeyCode == SWT.ARROW_LEFT)
+        {
+            NavigateSelection(-1);
+        }
+        else if (e.KeyCode == SWT.ARROW_DOWN || e.KeyCode == SWT.ARROW_RIGHT)
+        {
+            NavigateSelection(1);
+        }
+        else if (e.KeyCode == SWT.PAGE_UP)
+        {
+            NavigateSelection(-10);
+        }
+        else if (e.KeyCode == SWT.PAGE_DOWN)
+        {
+            NavigateSelection(10);
+        }
+        else if (e.KeyCode == SWT.HOME)
+        {
+            Select(0);
+        }
+        else if (e.KeyCode == SWT.END)
+        {
+            Select(_items.Count - 1);
+        }
+        else if (e.KeyCode == SWT.CR || e.KeyCode == SWT.LF)
+        {
+            // Enter key - trigger default selection
+            int currentIndex = GetSelectionIndex();
+            if (currentIndex >= 0)
+            {
+                OnPlatformItemDoubleClick(this, currentIndex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget key up events.
+    /// </summary>
+    private void OnPlatformKeyUp(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyUp, keyEvent);
+    }
+
+    /// <summary>
+    /// Navigates selection by the specified amount.
+    /// </summary>
+    private void NavigateSelection(int delta)
+    {
+        if (_items.Count == 0) return;
+
+        int currentIndex = GetSelectionIndex();
+        int newIndex = currentIndex + delta;
+
+        // Clamp to valid range
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex >= _items.Count) newIndex = _items.Count - 1;
+
+        if (newIndex != currentIndex)
+        {
+            if (!_multiSelect)
+            {
+                Select(newIndex);
+            }
+            else
+            {
+                // In multi-select mode, move focus without changing selection
+                // This would require additional platform support
+                Select(newIndex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the current keyboard and mouse state mask.
+    /// </summary>
+    private int GetCurrentStateMask()
+    {
+        int stateMask = 0;
+        // TODO: Implement platform-specific state detection
+        // For now, return 0 as placeholder
+        return stateMask;
+    }
+
+    /// <summary>
+    /// Converts platform key event arguments to SWT state mask.
+    /// </summary>
+    private int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
+    {
+        int stateMask = 0;
+        if (e.Shift) stateMask |= SWT.SHIFT;
+        if (e.Control) stateMask |= SWT.CTRL;
+        if (e.Alt) stateMask |= SWT.ALT;
+        // TODO: Add Command key detection on macOS
+        return stateMask;
     }
 
     /// <summary>
@@ -466,6 +781,22 @@ public class List : Control
 
     protected override void ReleaseWidget()
     {
+        // Unsubscribe from platform widget events to prevent memory leaks
+        if (PlatformWidget is IPlatformList listWidget)
+        {
+            listWidget.SelectionChanged -= OnPlatformSelectionChanged;
+            listWidget.ItemDoubleClick -= OnPlatformItemDoubleClick;
+        }
+
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.Click -= OnPlatformClick;
+            eventHandling.FocusGained -= OnPlatformFocusGained;
+            eventHandling.FocusLost -= OnPlatformFocusLost;
+            eventHandling.KeyDown -= OnPlatformKeyDown;
+            eventHandling.KeyUp -= OnPlatformKeyUp;
+        }
+
         _items.Clear();
         _selectedIndices.Clear();
         base.ReleaseWidget();

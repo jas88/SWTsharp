@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using SWTSharp.TestHost;
+using Xunit.Runners;
 
 namespace SWTSharp.Tests;
 
@@ -71,19 +72,50 @@ public static class TestRunner
         return Task.FromResult(exitCode);
     }
 
-    private static Task<int> RunXUnit(string[] args)
+    private static async Task<int> RunXUnit(string[] args)
     {
         Console.WriteLine($"TestRunner: Running xUnit on Thread {Thread.CurrentThread.ManagedThreadId}");
 
-        // Use xUnit's programmatic API instead of command-line runner
-        // This integrates better with the threading model
         var assembly = typeof(TestRunner).Assembly;
+        Console.WriteLine($"TestRunner: Executing tests from {assembly.Location}");
 
-        // For now, just indicate that tests would run here
-        // In a full implementation, we'd use Xunit.Runner.Common or similar
-        Console.WriteLine($"TestRunner: Would execute tests from {assembly.FullName}");
-        Console.WriteLine("TestRunner: Use 'dotnet test' for VSTest integration with coverage");
+        using var runner = Xunit.Runners.AssemblyRunner.WithoutAppDomain(assembly.Location);
 
-        return Task.FromResult(0);
+        var completionSource = new TaskCompletionSource<int>();
+        var totalTests = 0;
+        var failedTests = 0;
+        var skippedTests = 0;
+
+        runner.OnDiscoveryComplete = info =>
+        {
+            Console.WriteLine($"TestRunner: Discovered {info.TestCasesToRun} test(s)");
+        };
+
+        runner.OnExecutionComplete = info =>
+        {
+            Console.WriteLine($"TestRunner: Execution complete - {info.TotalTests} tests, {info.TestsFailed} failed, {info.TestsSkipped} skipped");
+            totalTests = info.TotalTests;
+            failedTests = info.TestsFailed;
+            skippedTests = info.TestsSkipped;
+            completionSource.SetResult(info.TestsFailed > 0 ? 1 : 0);
+        };
+
+        runner.OnTestFailed = info =>
+        {
+            Console.WriteLine($"  [FAIL] {info.TestDisplayName}");
+            Console.WriteLine($"    {info.ExceptionMessage}");
+        };
+
+        runner.OnTestSkipped = info =>
+        {
+            Console.WriteLine($"  [SKIP] {info.TestDisplayName}: {info.SkipReason}");
+        };
+
+        Console.WriteLine("TestRunner: Starting test discovery and execution...");
+        runner.Start();
+
+        var exitCode = await completionSource.Task;
+        Console.WriteLine($"TestRunner: Exit code {exitCode}");
+        return exitCode;
     }
 }

@@ -39,84 +39,12 @@ internal partial class MacOSPlatform
         }
     }
 
-    public IntPtr CreateCanvas(IntPtr parent, int style)
-    {
-        InitializeCanvasSelectors();
-
-        // Create NSView as the custom drawing surface
-        IntPtr view = objc_msgSend(objc_msgSend(_nsViewClass, _selAlloc), _selInit);
-
-        // Set default frame
-        CGRect frame = new CGRect(0, 0, 100, 100);
-        IntPtr selSetFrame = sel_registerName("setFrame:");
-        objc_msgSend_rect(view, selSetFrame, frame);
-
-        // Initialize canvas data for this view
-        _canvasData[view] = new CanvasData();
-
-        // Add to parent if provided
-        AddChildToParent(parent, view);
-
-        return view;
-    }
-
-    public void ConnectCanvasPaint(IntPtr handle, Action<int, int, int, int, object?> paintCallback)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        if (_canvasData.TryGetValue(handle, out var data))
-        {
-            data.PaintCallback = paintCallback;
-        }
-        else
-        {
-            _canvasData[handle] = new CanvasData { PaintCallback = paintCallback };
-        }
-
-        // Note: In a full implementation, we would need to set up a drawRect: delegate
-        // or subclass NSView to handle paint events. For now, we store the callback
-        // and it will be invoked when RedrawCanvas is called.
-    }
-
-    public void RedrawCanvas(IntPtr handle)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        InitializeCanvasSelectors();
-
-        // Call setNeedsDisplay:YES to trigger redraw of entire view
-        objc_msgSend_void(handle, _selSetNeedsDisplay, true);
-
-        // For immediate testing, invoke paint callback if set
-        if (_canvasData.TryGetValue(handle, out var data) && data.PaintCallback != null)
-        {
-            // Get view bounds
-            objc_msgSend_stret(out CGRect bounds, handle, _selFrame);
-            data.PaintCallback((int)bounds.x, (int)bounds.y, (int)bounds.width, (int)bounds.height, handle);
-        }
-    }
-
-    public void RedrawCanvasArea(IntPtr handle, int x, int y, int width, int height)
-    {
-        if (handle == IntPtr.Zero)
-            return;
-
-        InitializeCanvasSelectors();
-
-        // Create CGRect for the area to redraw
-        CGRect rect = new CGRect(x, y, width, height);
-
-        // Call setNeedsDisplayInRect: to trigger redraw of specific area
-        objc_msgSend_rect(handle, _selSetNeedsDisplayInRect, rect);
-
-        // For immediate testing, invoke paint callback if set
-        if (_canvasData.TryGetValue(handle, out var data) && data.PaintCallback != null)
-        {
-            data.PaintCallback(x, y, width, height, handle);
-        }
-    }
+    // REMOVED METHODS (moved to ICanvasWidget interface):
+    // - CreateCanvas(IntPtr parent, int style)
+    // - ConnectCanvasPaint(IntPtr handle, Action<int, int, int, int, object?> paintCallback)
+    // - RedrawCanvas(IntPtr handle)
+    // - RedrawCanvasArea(IntPtr handle, int x, int y, int width, int height)
+    // These methods are now implemented via the ICanvasWidget interface using proper handles
 
     // Helper method to set canvas background color (used internally)
     private void SetCanvasBackgroundColor(IntPtr handle, Graphics.RGB color)

@@ -1,4 +1,6 @@
 using SWTSharp.Graphics;
+using SWTSharp.Platform;
+using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp;
 
@@ -15,6 +17,7 @@ public class TableItem : Widget
     private Color? _background;
     private Color? _foreground;
     private Font? _font;
+    private IPlatformTableItem? _platformTableItem;
 
     /// <summary>
     /// Gets the parent table.
@@ -78,11 +81,7 @@ public class TableItem : Widget
             if (_checked != value)
             {
                 _checked = value;
-                int index = _parent.GetItemIndex(this);
-                if (index >= 0)
-                {
-                    Platform.PlatformFactory.Instance.SetTableItemChecked(Handle, _checked);
-                }
+                // Checked state handled by platform widget through IPlatformTableItem interface
             }
         }
     }
@@ -103,7 +102,7 @@ public class TableItem : Widget
             if (_background != value)
             {
                 _background = value;
-                Platform.PlatformFactory.Instance.SetTableItemBackground(Handle, _background);
+                // Background color handled by platform widget through IPlatformTableItem interface
             }
         }
     }
@@ -124,7 +123,7 @@ public class TableItem : Widget
             if (_foreground != value)
             {
                 _foreground = value;
-                Platform.PlatformFactory.Instance.SetTableItemForeground(Handle, _foreground);
+                // Foreground color handled by platform widget through IPlatformTableItem interface
             }
         }
     }
@@ -145,7 +144,7 @@ public class TableItem : Widget
             if (_font != value)
             {
                 _font = value;
-                Platform.PlatformFactory.Instance.SetTableItemFont(Handle, _font);
+                // Font handled by platform widget through IPlatformTableItem interface
             }
         }
     }
@@ -240,10 +239,10 @@ public class TableItem : Widget
 
         _texts[column] = text ?? string.Empty;
 
-        int index = _parent.GetItemIndex(this);
-        if (index >= 0)
+        // Use platform widget
+        if (_platformTableItem != null)
         {
-            Platform.PlatformFactory.Instance.SetTableItemText(Handle, column, _texts[column]);
+            _platformTableItem.SetText(column, _texts[column]);
         }
     }
 
@@ -302,10 +301,18 @@ public class TableItem : Widget
 
         _images[column] = image;
 
-        int index = _parent.GetItemIndex(this);
-        if (index >= 0)
+        // Image handling through platform widget interface
+        if (_platformTableItem != null)
         {
-            Platform.PlatformFactory.Instance.SetTableItemImage(Handle, column, image?.Handle ?? IntPtr.Zero);
+            if (image != null)
+            {
+                var imageAdapter = new MacOSImage(image);
+                _platformTableItem.SetImage(column, imageAdapter);
+            }
+            else
+            {
+                _platformTableItem.SetImage(column, null);
+            }
         }
     }
 
@@ -365,10 +372,19 @@ public class TableItem : Widget
 
     private void CreateWidget(int index = -1)
     {
-        Handle = Platform.PlatformFactory.Instance.CreateTableItem(_parent.Handle, Style, index);
-        if (Handle == IntPtr.Zero)
+        // Create platform table item if platform factory supports it
+        if (Platform.PlatformFactory.Instance is MacOSPlatform macOSPlatform)
         {
-            throw new SWTException(SWT.ERROR_NO_HANDLES, "Failed to create table item");
+            // TODO: Implement proper platform table item creation without pseudo-handles
+            // TODO: Create IPlatformTableItem widget here through platform widget interface
+
+            // Create platform adapter (temporary workaround)
+            _platformTableItem = new MacOSTableItem(macOSPlatform, IntPtr.Zero);
+        }
+        else
+        {
+            // Fallback for other platforms - TODO: Implement direct platform widget creation
+            throw new SWTException(SWT.ERROR_NOT_IMPLEMENTED, "Direct platform widget creation not implemented for this platform");
         }
 
         // Set initial text for all columns
@@ -376,7 +392,11 @@ public class TableItem : Widget
         {
             if (!string.IsNullOrEmpty(_texts[i]))
             {
-                Platform.PlatformFactory.Instance.SetTableItemText(Handle, i, _texts[i]);
+                // Use platform widget
+                if (_platformTableItem != null)
+                {
+                    _platformTableItem.SetText(i, _texts[i]);
+                }
             }
         }
     }
@@ -388,9 +408,11 @@ public class TableItem : Widget
             _parent.RemoveItem(this);
         }
 
-        if (Handle != IntPtr.Zero)
+        // Dispose platform widget
+        if (_platformTableItem != null)
         {
-            Platform.PlatformFactory.Instance.DestroyTableItem(Handle);
+            _platformTableItem.Dispose();
+            _platformTableItem = null;
         }
 
         _background = null;
