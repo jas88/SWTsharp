@@ -54,7 +54,7 @@ jobs:
           retention-days: 30
 
   test-macos:
-    name: Test on macOS (Non-GUI Tests Only)
+    name: Test on macOS (All Tests with CFRunLoop)
     runs-on: macos-latest
 
     steps:
@@ -72,15 +72,22 @@ jobs:
       - name: Build
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
-      # NOTE: macOS GUI tests require windowing environment not available in CI headless runners
-      # CI runs NON-GUI tests only using xUnit trait filtering
-      # Per CLAUDE.md: GUI tests need Thread 1 dispatch with NSApplication run loop + display connection
-      #
-      # Run full test suite locally: dotnet run --project tests/SWTSharp.Tests
+      # NOTE: GitHub Actions macOS runners have WindowServer running with loginwindow active
+      # Custom test runner uses CFRunLoop on Thread 1 with GCD dispatch for proper GUI support
+      # This enables ALL tests (including GUI tests) to run in CI
 
-      - name: Run non-GUI tests
-        run: dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --filter "Category!=GUI" --logger "trx;LogFileName=test-results.trx"
-        continue-on-error: true
+      - name: Run all tests (including GUI tests)
+        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          directory: ./tests/SWTSharp.Tests/TestResults
+          flags: macos
+          name: macos-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results
         if: always()
