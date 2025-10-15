@@ -60,8 +60,11 @@ public class Program
             }
             finally
             {
-                MainThreadDispatcher.Stop();
+                // Signal completion FIRST, then stop the run loop
                 completionSignal.Set();
+
+                // Stop the main thread run loop so RunLoop() can exit
+                MainThreadDispatcher.Stop();
             }
         })
         {
@@ -71,17 +74,18 @@ public class Program
 
         testThread.Start();
 
-        // Run dispatch loop on Thread 1
+        // Run dispatch loop on Thread 1 (blocks until Stop() is called)
         Console.WriteLine("Starting main thread dispatch loop...");
         MainThreadDispatcher.RunLoop();
 
-        // Wait for test thread completion
-        if (!completionSignal.Wait(TimeSpan.FromSeconds(300)))
+        // RunLoop() has exited, wait for test thread to finish cleanup
+        if (!completionSignal.Wait(TimeSpan.FromSeconds(5)))
         {
-            Console.Error.WriteLine("FATAL: Test thread did not complete within 5 minutes");
+            Console.Error.WriteLine("FATAL: Test thread did not complete cleanup within 5 seconds after RunLoop stopped");
             return 1;
         }
 
+        Console.WriteLine("Tests completed successfully, exiting...");
         return exitCode;
     }
 
