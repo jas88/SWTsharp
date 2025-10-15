@@ -53,21 +53,36 @@ public class Program
     private static Assembly? OnAppDomainAssemblyResolve(object? sender, ResolveEventArgs args)
     {
         var assemblyName = new AssemblyName(args.Name);
+        Console.WriteLine($"[RESOLVE] AppDomain resolving: {assemblyName.Name} v{assemblyName.Version}");
+
         var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        if (appDir == null) return null;
+        if (appDir == null)
+        {
+            Console.WriteLine($"[RESOLVE] AppDomain failed: appDir is null");
+            return null;
+        }
 
         // Try direct match
         var dllPath = Path.Combine(appDir, $"{assemblyName.Name}.dll");
+        Console.WriteLine($"[RESOLVE] Checking: {dllPath}");
+
         if (File.Exists(dllPath))
         {
             try
             {
-                return Assembly.LoadFrom(dllPath);
+                Console.WriteLine($"[RESOLVE] Loading from: {dllPath}");
+                var loaded = Assembly.LoadFrom(dllPath);
+                Console.WriteLine($"[RESOLVE] ✓ Successfully loaded {assemblyName.Name}");
+                return loaded;
             }
-            catch
+            catch (Exception ex)
             {
-                // Continue to other strategies
+                Console.WriteLine($"[RESOLVE] ✗ Failed to load {assemblyName.Name}: {ex.Message}");
             }
+        }
+        else
+        {
+            Console.WriteLine($"[RESOLVE] ✗ File not found: {dllPath}");
         }
 
         return null;
@@ -78,20 +93,35 @@ public class Program
     /// </summary>
     private static Assembly? OnAssemblyLoadContextResolving(AssemblyLoadContext context, AssemblyName assemblyName)
     {
+        Console.WriteLine($"[RESOLVE] AssemblyLoadContext resolving: {assemblyName.Name} v{assemblyName.Version}");
+
         var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        if (appDir == null) return null;
+        if (appDir == null)
+        {
+            Console.WriteLine($"[RESOLVE] AssemblyLoadContext failed: appDir is null");
+            return null;
+        }
 
         var dllPath = Path.Combine(appDir, $"{assemblyName.Name}.dll");
+        Console.WriteLine($"[RESOLVE] Checking: {dllPath}");
+
         if (File.Exists(dllPath))
         {
             try
             {
-                return context.LoadFromAssemblyPath(dllPath);
+                Console.WriteLine($"[RESOLVE] Loading via context: {dllPath}");
+                var loaded = context.LoadFromAssemblyPath(dllPath);
+                Console.WriteLine($"[RESOLVE] ✓ Successfully loaded {assemblyName.Name} via context");
+                return loaded;
             }
-            catch
+            catch (Exception ex)
             {
-                // Continue to other strategies
+                Console.WriteLine($"[RESOLVE] ✗ Failed to load {assemblyName.Name} via context: {ex.Message}");
             }
+        }
+        else
+        {
+            Console.WriteLine($"[RESOLVE] ✗ File not found: {dllPath}");
         }
 
         return null;
