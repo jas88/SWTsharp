@@ -1,7 +1,9 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using Xunit;
 using Xunit.Abstractions;
 using SWTSharp.Tests.Infrastructure;
@@ -17,19 +19,52 @@ public class Program
 {
     public static int Main(string[] args)
     {
-        Console.WriteLine($"SWTSharp Test Runner");
-        Console.WriteLine($"Platform: {RuntimeInformation.OSDescription}");
-        Console.WriteLine($"Thread: {Thread.CurrentThread.ManagedThreadId}");
-        Console.WriteLine();
+        // Set up assembly resolution to find xunit.core and other dependencies
+        AssemblyLoadContext.Default.Resolving += OnResolving;
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        try
         {
-            return RunTestsOnMacOS();
+            Console.WriteLine($"SWTSharp Test Runner");
+            Console.WriteLine($"Platform: {RuntimeInformation.OSDescription}");
+            Console.WriteLine($"Thread: {Thread.CurrentThread.ManagedThreadId}");
+            Console.WriteLine();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return RunTestsOnMacOS();
+            }
+            else
+            {
+                return RunTests();
+            }
         }
-        else
+        finally
         {
-            return RunTests();
+            AssemblyLoadContext.Default.Resolving -= OnResolving;
         }
+    }
+
+    private static Assembly? OnResolving(AssemblyLoadContext context, AssemblyName assemblyName)
+    {
+        // Look for assemblies in the application directory
+        var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        if (appDir == null) return null;
+
+        // Try direct match first
+        var dllPath = Path.Combine(appDir, $"{assemblyName.Name}.dll");
+        if (File.Exists(dllPath))
+        {
+            try
+            {
+                return context.LoadFromAssemblyPath(dllPath);
+            }
+            catch
+            {
+                // If loading fails, continue to next strategy
+            }
+        }
+
+        return null;
     }
 
     private static int RunTestsOnMacOS()
