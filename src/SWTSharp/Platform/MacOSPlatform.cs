@@ -741,12 +741,26 @@ internal partial class MacOSPlatform : IPlatform
     /// Executes an action synchronously on the macOS main thread using GCD.
     /// This is required for NSWindow and other AppKit operations that MUST run on the process's first thread.
     /// </summary>
+    [DllImport(LibSystem, EntryPoint = "pthread_main_np")]
+    private static extern int pthread_main_np();
+
     public void ExecuteOnMainThread(Action action)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action));
 
-        // If a custom executor is set (e.g., by TestHost), use it instead of GCD
+        // CRITICAL: Check if already on main thread BEFORE delegating to CustomMainThreadExecutor
+        // pthread_main_np() returns 1 if current thread is main thread, 0 otherwise
+        // This prevents deadlock when CustomMainThreadExecutor uses GCD dispatch_sync_f to Thread 1
+        // while we're already ON Thread 1 (e.g., running in CFRunLoop)
+        if (pthread_main_np() != 0)
+        {
+            // Already on main thread - execute directly without dispatching
+            action();
+            return;
+        }
+
+        // Not on main thread - delegate to CustomMainThreadExecutor if available
         if (CustomMainThreadExecutor != null)
         {
             CustomMainThreadExecutor(action);
