@@ -33,18 +33,19 @@ internal static class PlatformFactory
 
     private static IPlatform CreatePlatform()
     {
-        #if WINDOWS
+        // All platform implementations compiled into binary
+        // Runtime OS detection selects correct implementation
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return new Win32Platform();
         }
-        #endif
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return new MacOSPlatform();
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return new LinuxPlatform();
         }
