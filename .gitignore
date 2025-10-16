@@ -16,6 +16,8 @@
 x64/
 x86/
 [Ww][Ii][Nn]32/
+# Exception: Don't ignore Win32 source code directory
+!src/SWTSharp/Platform/Win32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
