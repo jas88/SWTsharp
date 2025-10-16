@@ -12,7 +12,7 @@ internal partial class Win32Platform : IPlatform
 
     public IPlatformWindow CreateWindowWidget(int style, string title)
     {
-        return new Win32.Win32Window(style, title);
+        return new SWTSharp.Platform.Win32.Win32Window(style, title);
     }
 
     public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
