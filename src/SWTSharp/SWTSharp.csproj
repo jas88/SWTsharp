@@ -22,6 +22,12 @@
     <DefineConstants>$(DefineConstants);LINUX</DefineConstants>
   </PropertyGroup>
 
+  <!-- Exclude Win32 platform files on non-Windows platforms -->
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <Compile Remove="Platform\Win32Platform*.cs" />
+    <Compile Remove="Platform\Win32\**\*.cs" />
+  </ItemGroup>
+
   <PropertyGroup>
     <PackageId>SWTSharp</PackageId>
     <Version>0.2.0</Version>

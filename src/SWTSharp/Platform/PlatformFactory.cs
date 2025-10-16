@@ -33,11 +33,14 @@ internal static class PlatformFactory
 
     private static IPlatform CreatePlatform()
     {
+        #if WINDOWS
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return new Win32Platform();
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        #endif
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return new MacOSPlatform();
         }
