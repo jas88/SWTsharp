@@ -35,6 +35,9 @@ public static class GCDDispatcher
         IntPtr context,
         IntPtr work);
 
+    [DllImport(LibSystem, EntryPoint = "pthread_main_np")]
+    private static extern int pthread_main_np();
+
     [DllImport("/System/Library/Frameworks/AppKit.framework/AppKit")]
     private static extern void NSApplicationLoad();
 
@@ -130,8 +133,16 @@ public static class GCDDispatcher
             return;
         }
 
-        // TODO: Check if we're already on main thread to avoid deadlock
-        // For now, wrap in exception handler
+        // Check if we're already on the main thread to avoid deadlock
+        // pthread_main_np() returns 1 if current thread is main thread, 0 otherwise
+        if (pthread_main_np() != 0)
+        {
+            // Already on main thread, execute directly
+            action();
+            return;
+        }
+
+        // Not on main thread, dispatch synchronously to main thread
         var wrapper = new SyncWorkContext { Action = action };
         var handle = GCHandle.Alloc(wrapper);
 
