@@ -326,4 +326,8 @@ public static class SWT
     public const int DRAW_TAB = 1 << 18;
     public const int DRAW_MNEMONIC = 1 << 19;
     public const int DRAW_TRANSPARENT = 1 << 30;
+
+    // Tracker styles (combined with directional constants)
+    public const int UP = 1 << 7;
+    public const int DOWN = 1 << 10;
 }

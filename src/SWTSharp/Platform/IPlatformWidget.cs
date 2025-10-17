@@ -787,3 +787,177 @@ public interface IPlatformSpinner : IPlatformWidget, IPlatformValueEvents, IPlat
     int Digits { get; set; }
 }
 
+/// <summary>
+/// Platform link (hyperlink) widget.
+/// </summary>
+public interface IPlatformLink : IPlatformWidget, IPlatformEventHandling
+{
+    /// <summary>
+    /// Sets the link text with HTML-like markup.
+    /// </summary>
+    void SetText(string text);
+
+    /// <summary>
+    /// Gets the link text.
+    /// </summary>
+    string GetText();
+
+    /// <summary>
+    /// Occurs when a link is clicked.
+    /// </summary>
+    event EventHandler<string>? LinkClicked;
+}
+
+/// <summary>
+/// Platform sash (resizable divider) widget.
+/// </summary>
+public interface IPlatformSash : IPlatformWidget, IPlatformEventHandling
+{
+    /// <summary>
+    /// Sets the sash position.
+    /// </summary>
+    void SetPosition(int position);
+
+    /// <summary>
+    /// Gets the sash position.
+    /// </summary>
+    int GetPosition();
+
+    /// <summary>
+    /// Occurs when the sash position changes.
+    /// </summary>
+    event EventHandler<int>? PositionChanged;
+}
+
+/// <summary>
+/// Platform scrollbar widget.
+/// </summary>
+public interface IPlatformScrollBar : IPlatformWidget, IPlatformValueEvents, IPlatformEventHandling
+{
+    /// <summary>
+    /// Gets or sets the current value.
+    /// </summary>
+    int Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum value.
+    /// </summary>
+    int Minimum { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum value.
+    /// </summary>
+    int Maximum { get; set; }
+
+    /// <summary>
+    /// Gets or sets the increment value.
+    /// </summary>
+    int Increment { get; set; }
+
+    /// <summary>
+    /// Gets or sets the page increment value.
+    /// </summary>
+    int PageIncrement { get; set; }
+
+    /// <summary>
+    /// Gets or sets the thumb (visible range) size.
+    /// </summary>
+    int Thumb { get; set; }
+}
+
+/// <summary>
+/// Platform styled text (rich text editor) widget.
+/// </summary>
+public interface IPlatformStyledText : IPlatformWidget, IPlatformEventHandling
+{
+    /// <summary>
+    /// Sets the text content.
+    /// </summary>
+    void SetText(string text);
+
+    /// <summary>
+    /// Gets the text content.
+    /// </summary>
+    string GetText();
+
+    /// <summary>
+    /// Sets whether the text is editable.
+    /// </summary>
+    void SetEditable(bool editable);
+
+    /// <summary>
+    /// Inserts text at the current caret position.
+    /// </summary>
+    void Insert(string text);
+
+    /// <summary>
+    /// Replaces text in a range.
+    /// </summary>
+    void ReplaceTextRange(int start, int length, string text);
+
+    /// <summary>
+    /// Sets the text selection range.
+    /// </summary>
+    void SetSelection(int start, int end);
+
+    /// <summary>
+    /// Gets the current text selection range.
+    /// </summary>
+    (int Start, int End) GetSelection();
+
+    /// <summary>
+    /// Gets the selected text.
+    /// </summary>
+    string GetSelectionText();
+
+    /// <summary>
+    /// Sets the caret offset.
+    /// </summary>
+    void SetCaretOffset(int offset);
+
+    /// <summary>
+    /// Gets the caret offset.
+    /// </summary>
+    int GetCaretOffset();
+
+    /// <summary>
+    /// Sets a style range.
+    /// </summary>
+    void SetStyleRange(StyleRange range);
+
+    /// <summary>
+    /// Gets the line at the specified index.
+    /// </summary>
+    string GetLine(int lineIndex);
+
+    /// <summary>
+    /// Gets the number of lines.
+    /// </summary>
+    int GetLineCount();
+
+    /// <summary>
+    /// Copies the selected text to the clipboard.
+    /// </summary>
+    void Copy();
+
+    /// <summary>
+    /// Cuts the selected text to the clipboard.
+    /// </summary>
+    void Cut();
+
+    /// <summary>
+    /// Pastes text from the clipboard.
+    /// </summary>
+    void Paste();
+
+    /// <summary>
+    /// Occurs when the text is modified.
+    /// </summary>
+    event EventHandler<string>? TextChanged;
+
+    /// <summary>
+    /// Occurs when the selection changes.
+    /// </summary>
+    event EventHandler<int>? SelectionChanged;
+}
+

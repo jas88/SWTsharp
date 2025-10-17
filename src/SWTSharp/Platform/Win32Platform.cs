@@ -397,6 +397,33 @@ internal partial class Win32Platform : IPlatform
 #if NET8_0_OR_GREATER
     [LibraryImport(User32, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+#else
+    [DllImport(User32, SetLastError = true)]
+    private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+#endif
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(User32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsWindowVisible(IntPtr hWnd);
+#else
+    [DllImport(User32)]
+    private static extern bool IsWindowVisible(IntPtr hWnd);
+#endif
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(User32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsWindowEnabled(IntPtr hWnd);
+#else
+    [DllImport(User32)]
+    private static extern bool IsWindowEnabled(IntPtr hWnd);
+#endif
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(User32, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 #else
     [DllImport(User32, SetLastError = true)]
@@ -853,6 +880,9 @@ internal partial class Win32Platform : IPlatform
     // Window messages still needed by remaining widget implementations
     private const uint WM_GETTEXT = 0x000D;
     private const uint WM_GETTEXTLENGTH = 0x000E;
+    private const uint WM_COPY = 0x0301;
+    private const uint WM_CUT = 0x0300;
+    private const uint WM_PASTE = 0x0302;
 
     // Edit control (Text) constants - REMOVED: Now handled by platform widget interfaces
     // Removed: All ES_ constants (edit control styles)

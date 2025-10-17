@@ -290,6 +290,37 @@ internal partial class LinuxPlatform : IPlatform
         Vertical = 1
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct GtkAllocation
+    {
+        public int x;
+        public int y;
+        public int width;
+        public int height;
+    }
+
+    // GTK widget allocation and visibility functions (not duplicate - new functions)
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_widget_get_allocation(IntPtr widget, out GtkAllocation allocation);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool gtk_widget_get_visible(IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool gtk_widget_get_sensitive(IntPtr widget);
+
+    // NOTE: gtk_widget_set_sensitive, gtk_scrolled_window_new, gtk_scrolled_window_set_policy,
+    // gtk_box_new, and gtk_container_add are already declared later in this file.
+    // NOTE: gtk_label_new is declared in LinuxPlatform_Label.cs
+    // NOTE: gtk_adjustment_get_value is declared in LinuxPlatform_List.cs
+
+    // GTK adjustment functions (new - not duplicates)
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_adjustment_new(double value, double lower, double upper, double step_increment, double page_increment, double page_size);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_adjustment_configure(IntPtr adjustment, double value, double lower, double upper, double step_increment, double page_increment, double page_size);
+
     private bool _initialized;
     private static readonly bool _enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
 
@@ -711,4 +742,16 @@ internal partial class LinuxPlatform : IPlatform
         return System.Text.Encoding.UTF8.GetString(bytes);
     }
 #endif
+
+    /// <summary>
+    /// Helper method to convert UTF-8 pointer to string (cross-platform).
+    /// </summary>
+    private static string PtrToStringUTF8(IntPtr ptr)
+    {
+#if NET5_0_OR_GREATER
+        return Marshal.PtrToStringUTF8(ptr) ?? string.Empty;
+#else
+        return GetUtf8String(ptr);
+#endif
+    }
 }

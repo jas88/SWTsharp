@@ -51,6 +51,15 @@ public partial interface IPlatform
     IPlatformComposite CreateTreeWidget(IPlatformWidget? parent, int style);
     IPlatformComposite CreateCanvasWidget(IPlatformWidget? parent, int style);
     IPlatformComposite CreateGroupWidget(IPlatformWidget? parent, int style, string text);
+
+    // Additional widgets
+    IPlatformLink CreateLinkWidget(IPlatformWidget? parent, int style);
+    IPlatformSash CreateSashWidget(IPlatformWidget? parent, int style);
+    IPlatformScrollBar CreateScrollBarWidget(IPlatformWidget? parent, int style);
+    IPlatformStyledText CreateStyledTextWidget(IPlatformWidget? parent, int style);
+    IPlatformTracker CreateTracker(IPlatformWidget? parent, int style);
+    IPlatformDateTime CreateDateTimeWidget(IPlatformWidget? parent, int style);
+    IPlatformExpandBar CreateExpandBarWidget(IPlatformWidget? parent, int style);
 }
 
 /// <summary>
@@ -90,3 +99,8 @@ public struct FontDialogResult
     public Graphics.RGB? Color { get; set; }
 }
 
+// CoolBar widget factory (Phase 5.9)
+public partial interface IPlatform
+{
+    IPlatformCoolBar CreateCoolBarWidget(IPlatformWidget? parent, int style);
+}

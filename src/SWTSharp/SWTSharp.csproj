@@ -33,7 +33,7 @@
 
     <!-- Documentation -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591;CS0618</NoWarn> <!-- Missing XML documentation; Obsolete deprecation warnings (Phase 4 cleanup) -->
+    <NoWarn>$(NoWarn);CS1591;CS0618;CS0067;CS0169;CS1573</NoWarn> <!-- Missing XML documentation; Obsolete warnings; Unused events; Unused fields; Missing param tags (implementation in progress) -->
 
     <!-- Analyzer suppressions -->
     <!-- CA1852: Suppress for partial platform classes that cannot be sealed -->

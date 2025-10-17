@@ -22,7 +22,11 @@ public class SWTEventArgs : EventArgs
 
     public SWTEventArgs()
     {
-        Time = DateTime.Now;
+        // Convert System.DateTime to SWTSharp.DateTime
+        var now = System.DateTime.Now;
+        Time = new DateTime(null!, SWT.TIME | SWT.DATE);
+        Time.SetDate(now.Year, now.Month - 1, now.Day);
+        Time.SetTime(now.Hour, now.Minute, now.Second);
     }
 }
 
