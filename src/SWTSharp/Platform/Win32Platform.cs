@@ -95,38 +95,122 @@ internal partial class Win32Platform : IPlatform
     // Advanced widget factory methods for Phase 5.3
     public IPlatformCombo CreateComboWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Win32Combo in Phase 5.3
-        throw new NotImplementedException("CreateComboWidget will be implemented in Phase 5.3");
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating combo widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var combo = new SWTSharp.Platform.Win32.Win32Combo(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Combo widget created successfully");
+
+        return combo;
     }
 
     public IPlatformList CreateListWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Win32List in Phase 5.3
-        throw new NotImplementedException("CreateListWidget will be implemented in Phase 5.3");
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating list widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var list = new SWTSharp.Platform.Win32.Win32List(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] List widget created successfully");
+
+        return list;
     }
 
     public IPlatformProgressBar CreateProgressBarWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Win32ProgressBar in Phase 5.3
-        throw new NotImplementedException("CreateProgressBarWidget will be implemented in Phase 5.3");
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating progressbar widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var progressBar = new SWTSharp.Platform.Win32.Win32ProgressBar(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] ProgressBar widget created successfully");
+
+        return progressBar;
     }
 
     public IPlatformSlider CreateSliderWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Win32Slider in Phase 5.3
-        throw new NotImplementedException("CreateSliderWidget will be implemented in Phase 5.3");
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating slider widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var slider = new SWTSharp.Platform.Win32.Win32Slider(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Slider widget created successfully");
+
+        return slider;
     }
 
     public IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Win32Scale in Phase 5.3
-        throw new NotImplementedException("CreateScaleWidget will be implemented in Phase 5.3");
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating scale widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var scale = new SWTSharp.Platform.Win32.Win32Scale(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Scale widget created successfully");
+
+        return scale;
     }
 
     public IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Win32Spinner in Phase 5.3
-        throw new NotImplementedException("CreateSpinnerWidget will be implemented in Phase 5.3");
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating spinner widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var spinner = new SWTSharp.Platform.Win32.Win32Spinner(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Spinner widget created successfully");
+
+        return spinner;
     }
     private const string User32 = "user32.dll";
     private const string Kernel32 = "kernel32.dll";
