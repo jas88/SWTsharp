@@ -68,8 +68,22 @@ internal partial class Win32Platform : IPlatform
 
     public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Win32Composite in Phase 2
-        throw new NotImplementedException("CreateCompositeWidget will be implemented in Phase 2");
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating composite widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var composite = new SWTSharp.Platform.Win32.Win32Composite(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Composite widget created successfully");
+
+        return composite;
     }
 
     public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)
