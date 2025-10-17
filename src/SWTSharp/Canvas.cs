@@ -52,9 +52,9 @@ public class Canvas : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // TODO: Implement canvas creation through platform widget interface
-        // The canvas should be created as a drawable surface with paint capabilities
-        // TODO: Create IPlatformCanvas widget here
+        // For now, Canvas uses the standard composite widget
+        // TODO: Future enhancement - create IPlatformCanvas with double-buffering and paint events
+        base.CreateWidget();
     }
 
     /// <summary>

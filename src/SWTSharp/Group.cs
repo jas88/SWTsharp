@@ -44,10 +44,9 @@ public class Group : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // TODO: Implement Group widget creation using platform widget interface
-        // TODO: Use IPlatformWidget.CreateGroup with parent widget reference
-        // TODO: Pass style and initial text to platform implementation
-        // TODO: Create IPlatformGroup widget here
+        // For now, Group uses the standard composite widget
+        // TODO: Future enhancement - create IPlatformGroup with native group box (GROUPBOX on Windows, GtkFrame on Linux, NSBox on macOS)
+        base.CreateWidget();
     }
 
     /// <summary>
