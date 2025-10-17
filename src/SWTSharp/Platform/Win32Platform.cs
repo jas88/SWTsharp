@@ -88,8 +88,18 @@ internal partial class Win32Platform : IPlatform
 
     public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)
     {
-        // TODO: Implement Win32ToolBar in Phase 3 (special case)
-        throw new NotImplementedException("CreateToolBarWidget will be implemented in Phase 3");
+        // Extract parent window handle
+        IntPtr parentHandle = ExtractNativeHandle(parent);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating toolbar widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var toolbar = new SWTSharp.Platform.Win32.Win32ToolBar(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Toolbar widget created successfully");
+
+        return toolbar;
     }
 
     // Advanced widget factory methods for Phase 5.3
