@@ -38,7 +38,23 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
     private static readonly ButtonActionCallback _staticClickCallback = OnButtonClickedStatic;
 
     // Event handling
-    public event EventHandler<int>? Click;
+    private bool _eventHandlersSetup;
+    private EventHandler<int>? _click;
+
+    public event EventHandler<int>? Click
+    {
+        add
+        {
+            if (!_eventHandlersSetup)
+            {
+                SetupEventHandlers();
+                _eventHandlersSetup = true;
+            }
+            _click += value;
+        }
+        remove { _click -= value; }
+    }
+
     public event EventHandler<int>? FocusGained;
     public event EventHandler<int>? FocusLost;
     public event EventHandler<PlatformKeyEventArgs>? KeyDown;
@@ -51,8 +67,8 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
         // Create NSButton using objc_msgSend
         _nsButtonHandle = CreateNSButton(parentHandle, style);
 
-        // Setup event handling
-        SetupEventHandlers();
+        // Event handlers are now lazily initialized when first event subscriber is added
+        // This prevents blocking the main thread during button construction
     }
 
     public void SetText(string text)
@@ -409,6 +425,14 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
     }
 
     /// <summary>
+    /// Raises the Click event.
+    /// </summary>
+    private void OnClick()
+    {
+        _click?.Invoke(this, 0);
+    }
+
+    /// <summary>
     /// Static callback method that Objective-C runtime can invoke.
     /// Routes the callback to the appropriate MacOSButton instance.
     /// </summary>
@@ -424,11 +448,7 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
         }
     }
 
-    private void OnClick()
-    {
-        if (_disposed) return;
-        Click?.Invoke(this, 0);
-    }
+    // OnClick method moved above - see line 430
 
     private void OnFocusGained()
     {

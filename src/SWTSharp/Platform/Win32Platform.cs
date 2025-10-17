@@ -78,7 +78,7 @@ internal partial class Win32Platform : IPlatform
         if (_enableLogging)
             Console.WriteLine($"[Win32] Creating composite widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
 
-        var composite = new SWTSharp.Platform.Win32.Win32Composite(parentHandle, style);
+        var composite = new Win32.Win32Composite(parentHandle, style);
 
         if (_enableLogging)
             Console.WriteLine($"[Win32] Composite widget created successfully");

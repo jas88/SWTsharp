@@ -54,7 +54,16 @@ internal partial class MacOSPlatform : IPlatform
     public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
     {
         IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
-        return new MacOSComposite(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating composite widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var composite = new MacOSComposite(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Composite widget created successfully");
+
+        return composite;
     }
 
     public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)

@@ -60,8 +60,22 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformComposite CreateCompositeWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxComposite in Phase 2
-        throw new NotImplementedException("CreateCompositeWidget will be implemented in Phase 2");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating composite widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var composite = new Linux.LinuxComposite(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Composite widget created successfully");
+
+        return composite;
     }
 
     public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)

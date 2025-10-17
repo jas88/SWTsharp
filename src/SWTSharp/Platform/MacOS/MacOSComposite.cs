@@ -1,6 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Drawing;
-using System.Collections.Generic;
 using SWTSharp.Graphics;
 
 namespace SWTSharp.Platform.MacOS;
@@ -11,176 +9,38 @@ namespace SWTSharp.Platform.MacOS;
 /// </summary>
 internal class MacOSComposite : MacOSWidget, IPlatformComposite
 {
+    private const string ObjCLibrary = "/usr/lib/libobjc.A.dylib";
+
     private IntPtr _nsViewHandle;
     private readonly List<IPlatformWidget> _platformChildren = new();
     private bool _disposed;
+    private RGB _background = new RGB(255, 255, 255);
+    private RGB _foreground = new RGB(0, 0, 0);
 
-    // Event handling
+    // Events required by IPlatformContainerEvents
+    #pragma warning disable CS0067
     public event EventHandler<IPlatformWidget>? ChildAdded;
     public event EventHandler<IPlatformWidget>? ChildRemoved;
     public event EventHandler? LayoutRequested;
+    #pragma warning restore CS0067
 
     public MacOSComposite(IntPtr parentHandle, int style)
     {
+        bool enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
+
+        if (enableLogging)
+            Console.WriteLine($"[MacOSComposite] Creating composite. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
         // Create NSView using objc_msgSend
         _nsViewHandle = CreateNSView(parentHandle, style);
-    }
 
-    public void SetBounds(int x, int y, int width, int height)
-    {
-        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
-
-        // objc_msgSend(_nsViewHandle, setFrame:, NSMakeRect(x, y, width, height))
-        var rectClass = objc_getClass("NSValue");
-        var selector = sel_registerName("valueWithRect:");
-        var rect = new NSRect { x = x, y = y, width = width, height = height };
-        var rectValue = objc_msgSend(rectClass, selector, rect);
-
-        var setFrameSelector = sel_registerName("setFrame:");
-        objc_msgSend(_nsViewHandle, setFrameSelector, rectValue);
-
-        // Fire LayoutRequested event when bounds change
-        LayoutRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    public SWTSharp.Graphics.Rectangle GetBounds()
-    {
-        if (_disposed || _nsViewHandle == IntPtr.Zero) return default(SWTSharp.Graphics.Rectangle);
-
-        // objc_msgSend(_nsViewHandle, frame)
-        var selector = sel_registerName("frame");
-        var frameValue = objc_msgSend(_nsViewHandle, selector);
-
-        // Extract NSRect from NSValue
-        var rectSelector = sel_registerName("rectValue");
-        var rect = Marshal.PtrToStructure<NSRect>(objc_msgSend(frameValue, rectSelector));
-
-        return new SWTSharp.Graphics.Rectangle((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height);
-    }
-
-    public void SetVisible(bool visible)
-    {
-        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
-
-        // objc_msgSend(_nsViewHandle, setHidden:, !visible)
-        var selector = sel_registerName("setHidden:");
-        objc_msgSend(_nsViewHandle, selector, !visible);
-    }
-
-    public bool GetVisible()
-    {
-        if (_disposed || _nsViewHandle == IntPtr.Zero) return false;
-
-        // objc_msgSend(_nsViewHandle, isHidden)
-        var selector = sel_registerName("isHidden");
-        var result = objc_msgSend(_nsViewHandle, selector);
-        return result != IntPtr.Zero;
-    }
-
-    public void SetEnabled(bool enabled)
-    {
-        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
-
-        // NSView doesn't have enabled state, but we can store it for child widgets
-        // TODO: Store enabled state for child management
-    }
-
-    public bool GetEnabled()
-    {
-        // NSView doesn't have enabled state
-        return true;
-    }
-
-    public void SetBackground(RGB color)
-    {
-        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
-
-        // TODO: Implement background color setting
-        // This would require NSColor handling
-    }
-
-    public RGB GetBackground()
-    {
-        // TODO: Implement background color getting
-        return new RGB(255, 255, 255); // Default white
-    }
-
-    public void SetForeground(RGB color)
-    {
-        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
-
-        // TODO: Implement foreground color setting
-        // This would require NSColor handling
-    }
-
-    public RGB GetForeground()
-    {
-        // TODO: Implement foreground color getting
-        return new RGB(0, 0, 0); // Default black
-    }
-
-    public void AddChild(IPlatformWidget child)
-    {
-        if (child == null || _disposed) return;
-
-        if (child is MacOSWidget macOSChild)
+        if (_nsViewHandle == IntPtr.Zero)
         {
-            var childHandle = macOSChild.GetNativeHandle();
-
-            // objc_msgSend(_nsViewHandle, addSubview:, childHandle)
-            var selector = sel_registerName("addSubview:");
-            objc_msgSend(_nsViewHandle, selector, childHandle);
-
-            _platformChildren.Add(child);
-
-            // Fire ChildAdded event
-            ChildAdded?.Invoke(this, child);
+            throw new InvalidOperationException("Failed to create NSView for composite");
         }
-    }
 
-    public void RemoveChild(IPlatformWidget child)
-    {
-        if (child == null || _disposed) return;
-
-        if (child is MacOSWidget macOSChild)
-        {
-            var childHandle = macOSChild.GetNativeHandle();
-
-            // objc_msgSend(childHandle, removeFromSuperview)
-            var selector = sel_registerName("removeFromSuperview");
-            objc_msgSend(childHandle, selector);
-
-            _platformChildren.Remove(child);
-
-            // Fire ChildRemoved event
-            ChildRemoved?.Invoke(this, child);
-        }
-    }
-
-    public IReadOnlyList<IPlatformWidget> GetChildren()
-    {
-        return _platformChildren.AsReadOnly();
-    }
-
-    public void Dispose()
-    {
-        if (!_disposed)
-        {
-            // Remove all children first
-            foreach (var child in _platformChildren.ToArray())
-            {
-                RemoveChild(child);
-            }
-
-            if (_nsViewHandle != IntPtr.Zero)
-            {
-                // objc_msgSend(_nsViewHandle, release)
-                var selector = sel_registerName("release");
-                objc_msgSend(_nsViewHandle, selector);
-                _nsViewHandle = IntPtr.Zero;
-            }
-            _disposed = true;
-        }
+        if (enableLogging)
+            Console.WriteLine($"[MacOSComposite] Composite created successfully. Handle: 0x{_nsViewHandle:X}");
     }
 
     public override IntPtr GetNativeHandle()
@@ -188,42 +48,233 @@ internal class MacOSComposite : MacOSWidget, IPlatformComposite
         return _nsViewHandle;
     }
 
-    private IntPtr CreateNSView(IntPtr parentHandle, int style)
+    public void AddChild(IPlatformWidget child)
     {
-        // Implementation should create NSView with proper configuration
-        var viewClass = objc_getClass("NSView");
-        var allocSelector = sel_registerName("alloc");
-        var initSelector = sel_registerName("init");
+        if (child == null || _disposed) return;
 
-        var view = objc_msgSend(viewClass, allocSelector);
-        var initializedView = objc_msgSend(view, initSelector);
-
-        // Add to parent view if provided
-        if (parentHandle != IntPtr.Zero)
+        lock (_platformChildren)
         {
-            var addSubViewSelector = sel_registerName("addSubview:");
-            objc_msgSend(parentHandle, addSubViewSelector, initializedView);
+            if (!_platformChildren.Contains(child))
+            {
+                _platformChildren.Add(child);
+            }
         }
 
-        return initializedView;
+        if (child is MacOSWidget macOSChild)
+        {
+            IntPtr childHandle = macOSChild.GetNativeHandle();
+            if (childHandle != IntPtr.Zero && _nsViewHandle != IntPtr.Zero)
+            {
+                // objc_msgSend(_nsViewHandle, addSubview:, childHandle)
+                IntPtr selector = sel_registerName("addSubview:");
+                objc_msgSend(_nsViewHandle, selector, childHandle);
+            }
+        }
     }
 
-    // Native method declarations
-    [DllImport("/usr/lib/libobjc.A.dylib")]
+    public void RemoveChild(IPlatformWidget child)
+    {
+        if (child == null || _disposed) return;
+
+        lock (_platformChildren)
+        {
+            _platformChildren.Remove(child);
+        }
+
+        if (child is MacOSWidget macOSChild)
+        {
+            IntPtr childHandle = macOSChild.GetNativeHandle();
+            if (childHandle != IntPtr.Zero)
+            {
+                // objc_msgSend(childHandle, removeFromSuperview)
+                IntPtr selector = sel_registerName("removeFromSuperview");
+                objc_msgSend(childHandle, selector);
+            }
+        }
+    }
+
+    public IReadOnlyList<IPlatformWidget> GetChildren()
+    {
+        lock (_platformChildren)
+        {
+            return _platformChildren.ToArray();
+        }
+    }
+
+    public void SetBounds(int x, int y, int width, int height)
+    {
+        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
+
+        // Create NSRect and call setFrame:
+        var frame = new CGRect(x, y, width, height);
+        IntPtr selector = sel_registerName("setFrame:");
+        objc_msgSend_rect(_nsViewHandle, selector, frame);
+    }
+
+    public Rectangle GetBounds()
+    {
+        if (_disposed || _nsViewHandle == IntPtr.Zero) return default;
+
+        // Call frame method to get NSRect
+        IntPtr selector = sel_registerName("frame");
+        objc_msgSend_stret(out CGRect frame, _nsViewHandle, selector);
+
+        return new Rectangle((int)frame.x, (int)frame.y, (int)frame.width, (int)frame.height);
+    }
+
+    public void SetVisible(bool visible)
+    {
+        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
+
+        // NSView uses setHidden: (inverted from visible)
+        IntPtr selector = sel_registerName("setHidden:");
+        objc_msgSend_void(_nsViewHandle, selector, !visible);
+    }
+
+    public bool GetVisible()
+    {
+        if (_disposed || _nsViewHandle == IntPtr.Zero) return false;
+
+        // NSView uses isHidden (inverted from visible)
+        IntPtr selector = sel_registerName("isHidden");
+        bool hidden = objc_msgSend_bool(_nsViewHandle, selector);
+        return !hidden;
+    }
+
+    public void SetEnabled(bool enabled)
+    {
+        if (_disposed || _nsViewHandle == IntPtr.Zero) return;
+        // NSView doesn't have enabled state - this is a no-op for containers
+    }
+
+    public bool GetEnabled()
+    {
+        // NSView doesn't have enabled state - containers are always "enabled"
+        return true;
+    }
+
+    public void SetBackground(RGB color)
+    {
+        _background = color;
+        // TODO: Implement background color via layer or wantsLayer/backgroundColor
+    }
+
+    public RGB GetBackground()
+    {
+        return _background;
+    }
+
+    public void SetForeground(RGB color)
+    {
+        _foreground = color;
+        // TODO: Implement foreground color
+    }
+
+    public RGB GetForeground()
+    {
+        return _foreground;
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        // Dispose children first
+        lock (_platformChildren)
+        {
+            foreach (var child in _platformChildren.ToArray())
+            {
+                if (child is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+            _platformChildren.Clear();
+        }
+
+        // Remove from superview and release
+        if (_nsViewHandle != IntPtr.Zero)
+        {
+            IntPtr removeSelector = sel_registerName("removeFromSuperview");
+            objc_msgSend(_nsViewHandle, removeSelector);
+
+            IntPtr releaseSelector = sel_registerName("release");
+            objc_msgSend(_nsViewHandle, releaseSelector);
+
+            _nsViewHandle = IntPtr.Zero;
+        }
+    }
+
+    private IntPtr CreateNSView(IntPtr parentHandle, int style)
+    {
+        // Get NSView class
+        IntPtr nsViewClass = objc_getClass("NSView");
+
+        // Allocate and initialize
+        IntPtr allocSelector = sel_registerName("alloc");
+        IntPtr view = objc_msgSend(nsViewClass, allocSelector);
+
+        IntPtr initSelector = sel_registerName("init");
+        view = objc_msgSend(view, initSelector);
+
+        // Set a default frame
+        var frame = new CGRect(0, 0, 100, 100);
+        IntPtr setFrameSelector = sel_registerName("setFrame:");
+        objc_msgSend_rect(view, setFrameSelector, frame);
+
+        // Add to parent if provided
+        if (parentHandle != IntPtr.Zero)
+        {
+            IntPtr addSubviewSelector = sel_registerName("addSubview:");
+            objc_msgSend(parentHandle, addSubviewSelector, view);
+        }
+
+        return view;
+    }
+
+    #region ObjC P/Invoke
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CGRect
+    {
+        public double x;
+        public double y;
+        public double width;
+        public double height;
+
+        public CGRect(double x, double y, double width, double height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    [DllImport(ObjCLibrary)]
     private static extern IntPtr objc_getClass(string className);
 
-    [DllImport("/usr/lib/libobjc.A.dylib")]
+    [DllImport(ObjCLibrary)]
     private static extern IntPtr sel_registerName(string selector);
 
-    [DllImport("/usr/lib/libobjc.A.dylib")]
+    [DllImport(ObjCLibrary)]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
 
-    [DllImport("/usr/lib/libobjc.A.dylib")]
+    [DllImport(ObjCLibrary)]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg);
 
-    [DllImport("/usr/lib/libobjc.A.dylib")]
-    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, bool arg);
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, bool arg);
 
-    [DllImport("/usr/lib/libobjc.A.dylib")]
-    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, NSRect arg);
+    [DllImport(ObjCLibrary)]
+    private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    #endregion
 }
