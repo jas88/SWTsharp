@@ -144,12 +144,14 @@ public class TabFolder : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // TODO: Create IPlatformTabFolder widget using platform widget interface
-        // CreateTabFolderWidget method not yet implemented in IPlatform interface
-        // var parentWidget = Parent?.PlatformWidget;
-        // PlatformWidget = Platform.PlatformFactory.Instance.CreateTabFolderWidget(parentWidget, Style);
+        // Use platform widget - must complete before any event subscriptions
+        var widget = PlatformFactory.Instance.CreateTabFolderWidget(
+            Parent?.PlatformWidget,
+            Style
+        );
 
-        // For now, leave PlatformWidget null - TabFolder functionality will be completed in Phase 5.7
+        // Only assign after successful creation
+        PlatformWidget = widget;
     }
 
     /// <summary>

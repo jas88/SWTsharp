@@ -280,6 +280,32 @@ public interface IPlatformImage : IDisposable
 
 
 /// <summary>
+/// Platform tab folder (tab container widget).
+/// </summary>
+public interface IPlatformTabFolder : IPlatformComposite, IPlatformSelectionEvents
+{
+    /// <summary>
+    /// Gets the number of tab items in the folder.
+    /// </summary>
+    int GetItemCount();
+
+    /// <summary>
+    /// Gets the tab item at the specified index.
+    /// </summary>
+    IPlatformTabItem GetItem(int index);
+
+    /// <summary>
+    /// Gets or sets the selected tab index.
+    /// </summary>
+    int SelectionIndex { get; set; }
+
+    /// <summary>
+    /// Creates a new tab item within this folder.
+    /// </summary>
+    IPlatformTabItem CreateTabItem(int style, int index);
+}
+
+/// <summary>
 /// Platform tab item (tab page, not a widget).
 /// </summary>
 public interface IPlatformTabItem : IDisposable, IPlatformEventHandling
@@ -298,6 +324,11 @@ public interface IPlatformTabItem : IDisposable, IPlatformEventHandling
     /// Sets the control displayed when the tab is selected.
     /// </summary>
     void SetControl(IPlatformWidget? control);
+
+    /// <summary>
+    /// Sets the tooltip text for the tab.
+    /// </summary>
+    void SetToolTipText(string toolTip);
 }
 
 /// <summary>

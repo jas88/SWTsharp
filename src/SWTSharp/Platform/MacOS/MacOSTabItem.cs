@@ -67,6 +67,15 @@ internal class MacOSTabItem : IPlatformTabItem
         _platform.SetTabItemControl(_pseudoHandle, controlHandle);
     }
 
+    public void SetToolTipText(string toolTip)
+    {
+        if (_disposed) return;
+
+        // Use the existing platform implementation if available
+        // For now, this is a no-op as the platform may not have this method yet
+        // TODO: Add SetTabItemToolTip to MacOSPlatform_TabFolder.cs
+    }
+
     public IntPtr GetNativeHandle()
     {
         return _pseudoHandle;

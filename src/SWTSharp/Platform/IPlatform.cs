@@ -46,6 +46,7 @@ public partial interface IPlatform
     IPlatformSlider CreateSliderWidget(IPlatformWidget? parent, int style);
     IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style);
     IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style);
+    IPlatformTabFolder CreateTabFolderWidget(IPlatformWidget? parent, int style);
 }
 
 /// <summary>
