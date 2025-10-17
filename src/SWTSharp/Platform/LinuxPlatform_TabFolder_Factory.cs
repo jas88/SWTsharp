@@ -10,9 +10,13 @@ internal partial class LinuxPlatform
     /// </summary>
     public IPlatformTabFolder CreateTabFolderWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement Linux TabFolder using GTK GtkNotebook
-        // For now, throw NotImplementedException to satisfy interface
-        // This will be implemented when Linux platform work continues
-        throw new NotImplementedException("CreateTabFolderWidget will be implemented for Linux in Phase 5.8");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        return new Linux.LinuxTabFolder(parentHandle, style);
     }
 }
