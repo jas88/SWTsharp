@@ -135,6 +135,26 @@ internal partial class LinuxPlatform : IPlatform
         // TODO: Implement LinuxSpinner in Phase 5.3
         throw new NotImplementedException("CreateSpinnerWidget will be implemented in Phase 5.3");
     }
+
+    public IPlatformComposite CreateTreeWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating tree widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var tree = new Linux.LinuxTree(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Tree widget created successfully");
+
+        return tree;
+    }
     private const string GtkLib = "libgtk-3.so.0";
     private const string GdkLib = "libgdk-3.so.0";
     private const string GLibLib = "libglib-2.0.so.0";

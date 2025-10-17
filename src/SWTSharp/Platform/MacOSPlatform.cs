@@ -121,6 +121,21 @@ internal partial class MacOSPlatform : IPlatform
         return new MacOSSpinner(parentHandle, style);
     }
 
+    public IPlatformComposite CreateTreeWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating tree widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var tree = new MacOSTree(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Tree widget created successfully");
+
+        return tree;
+    }
+
     /// <summary>
     /// Optional custom main thread executor for testing scenarios.
     /// When set, ExecuteOnMainThread will use this instead of GCD.

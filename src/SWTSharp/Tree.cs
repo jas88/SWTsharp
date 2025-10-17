@@ -144,8 +144,10 @@ public class Tree : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // TODO: Implement platform widget interface for Tree
-        // TODO: Create IPlatformTree widget here
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateTreeWidget(
+            Parent?.PlatformWidget,
+            Style
+        );
     }
 
     /// <summary>

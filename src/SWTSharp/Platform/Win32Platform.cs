@@ -222,6 +222,26 @@ internal partial class Win32Platform : IPlatform
 
         return spinner;
     }
+
+    public IPlatformComposite CreateTreeWidget(IPlatformWidget? parent, int style)
+    {
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating tree widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var tree = new SWTSharp.Platform.Win32.Win32Tree(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Tree widget created successfully");
+
+        return tree;
+    }
     private const string User32 = "user32.dll";
     private const string Kernel32 = "kernel32.dll";
 

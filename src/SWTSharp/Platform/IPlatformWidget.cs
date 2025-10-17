@@ -191,6 +191,110 @@ public interface IPlatformToolBar : IDisposable
 }
 
 /// <summary>
+/// Platform table widget with rows and columns.
+/// </summary>
+public interface IPlatformTable : IPlatformComposite, IPlatformSelectionEvents
+{
+    /// <summary>
+    /// Adds a column to the table.
+    /// </summary>
+    /// <param name="text">Column header text</param>
+    /// <param name="width">Column width</param>
+    /// <param name="alignment">Column alignment (SWT.LEFT, SWT.RIGHT, SWT.CENTER)</param>
+    /// <returns>Column index</returns>
+    int AddColumn(string text, int width, int alignment);
+
+    /// <summary>
+    /// Removes a column from the table.
+    /// </summary>
+    /// <param name="columnIndex">Index of the column to remove</param>
+    void RemoveColumn(int columnIndex);
+
+    /// <summary>
+    /// Sets column properties.
+    /// </summary>
+    void SetColumnText(int columnIndex, string text);
+    void SetColumnWidth(int columnIndex, int width);
+    void SetColumnAlignment(int columnIndex, int alignment);
+
+    /// <summary>
+    /// Adds an item (row) to the table.
+    /// </summary>
+    /// <returns>Item index</returns>
+    int AddItem();
+
+    /// <summary>
+    /// Adds an item at a specific index.
+    /// </summary>
+    int AddItem(int index);
+
+    /// <summary>
+    /// Removes an item from the table.
+    /// </summary>
+    void RemoveItem(int itemIndex);
+
+    /// <summary>
+    /// Removes all items from the table.
+    /// </summary>
+    void RemoveAllItems();
+
+    /// <summary>
+    /// Sets the text for a specific cell.
+    /// </summary>
+    void SetItemText(int itemIndex, int columnIndex, string text);
+
+    /// <summary>
+    /// Gets the text for a specific cell.
+    /// </summary>
+    string GetItemText(int itemIndex, int columnIndex);
+
+    /// <summary>
+    /// Sets the image for a specific cell.
+    /// </summary>
+    void SetItemImage(int itemIndex, int columnIndex, IPlatformImage? image);
+
+    /// <summary>
+    /// Sets whether the header is visible.
+    /// </summary>
+    void SetHeaderVisible(bool visible);
+
+    /// <summary>
+    /// Gets whether the header is visible.
+    /// </summary>
+    bool GetHeaderVisible();
+
+    /// <summary>
+    /// Sets whether grid lines are visible.
+    /// </summary>
+    void SetLinesVisible(bool visible);
+
+    /// <summary>
+    /// Gets whether grid lines are visible.
+    /// </summary>
+    bool GetLinesVisible();
+
+    /// <summary>
+    /// Sets the selected item indices.
+    /// </summary>
+    void SetSelection(int[] indices);
+
+    /// <summary>
+    /// Gets the selected item indices.
+    /// </summary>
+    int[] GetSelection();
+
+    /// <summary>
+    /// Gets the number of items in the table.
+    /// </summary>
+    int GetItemCount();
+
+    /// <summary>
+    /// Gets the number of columns in the table.
+    /// </summary>
+    int GetColumnCount();
+}
+
+/// <summary>
 /// Platform table item (data row, not a widget).
 /// </summary>
 public interface IPlatformTableItem : IDisposable, IPlatformSelectionEvents

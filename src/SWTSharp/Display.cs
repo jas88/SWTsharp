@@ -194,7 +194,12 @@ public class Display : IDisposable
                 }
             });
 
-            done.Wait();
+            // Add timeout to prevent infinite hangs (fixes macOS deadlock issue)
+            if (!done.Wait(TimeSpan.FromSeconds(10)))
+            {
+                throw new TimeoutException("SyncExec timed out after 10 seconds - possible deadlock in main thread dispatch");
+            }
+
             if (exception != null)
                 throw new InvalidOperationException("Exception occurred during SyncExec", exception);
         }
