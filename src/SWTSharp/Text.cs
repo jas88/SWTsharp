@@ -1,4 +1,5 @@
 using SWTSharp.Events;
+using SWTSharp.Platform;
 
 namespace SWTSharp;
 
@@ -134,12 +135,25 @@ public class Text : Control
 
     private void CreateWidget()
     {
-        // TODO: Implement platform widget interface for Text
-        // TODO: Create IPlatformText widget here
+        // Use platform widget - must complete before subscribing to events
+        var widget = SWTSharp.Platform.PlatformFactory.Instance.CreateTextWidget(
+            Parent?.PlatformWidget,
+            Style
+        );
 
-        // TODO: Set initial text content via platform widget interface
-        // TODO: Set read-only state via platform widget interface
-        // TODO: Set text limit via platform widget interface
+        // Only assign after successful creation
+        PlatformWidget = widget;
+
+        // Set initial properties via platform widget interface
+        if (PlatformWidget is IPlatformTextInput textInput)
+        {
+            textInput.SetText(_text);
+            textInput.SetReadOnly(_readOnly);
+            if (_textLimit != int.MaxValue)
+            {
+                textInput.SetTextLimit(_textLimit);
+            }
+        }
     }
 
     /// <summary>
