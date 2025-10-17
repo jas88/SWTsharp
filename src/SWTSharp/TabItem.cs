@@ -1,5 +1,4 @@
 using SWTSharp.Platform;
-using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp;
 
@@ -113,27 +112,21 @@ public class TabItem : Widget
     /// </summary>
     private void CreateWidget(int index)
     {
-        // Create platform tab item using IPlatformTabItem interface
-        // TODO: Add CreateTabItem method to IPlatform interface in Phase 5.7
-        // For now, use MacOS implementation directly
-        if (Platform.PlatformFactory.Instance is MacOSPlatform macOSPlatform)
+        // TabItem delegates to parent TabFolder's platform widget
+        if (_parent?.PlatformWidget is IPlatformTabFolder platformTabFolder)
         {
-            _platformTabItem = new MacOSTabItem(macOSPlatform, IntPtr.Zero);
-        }
-        else
-        {
-            // Fallback for other platforms - create stub implementation
-            throw new SWTException(SWT.ERROR_NOT_IMPLEMENTED, "TabItem platform widget not implemented for this platform");
+            // Create tab item through platform tab folder
+            _platformTabItem = platformTabFolder.CreateTabItem(Style, index);
+
+            // Set initial text
+            if (_platformTabItem != null)
+            {
+                _platformTabItem.SetText(_text);
+            }
         }
 
         // Add this item to parent's collection
-        _parent.AddItem(this, index);
-
-        // Set initial properties using platform widget
-        if (_platformTabItem != null)
-        {
-            _platformTabItem.SetText(_text);
-        }
+        _parent?.AddItem(this, index);
     }
 
     /// <summary>
