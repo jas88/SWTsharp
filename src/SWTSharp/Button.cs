@@ -142,6 +142,15 @@ public class Button : Control
             // TODO: Unselect other radio buttons in the same group
         }
 
+        // Create SWT Selection event (consistent with other widgets like Combo, List, etc.)
+        var selectionEvent = new Event
+        {
+            Widget = this,
+            Time = Environment.TickCount,
+            Detail = SWT.NONE
+        };
+        NotifyListeners(SWT.Selection, selectionEvent);
+
         // Raise the legacy Click event for backwards compatibility
         Click?.Invoke(this, EventArgs.Empty);
     }

@@ -102,8 +102,22 @@ internal partial class LinuxPlatform : IPlatform
     // Advanced widget factory methods for Phase 5.3
     public IPlatformCombo CreateComboWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxCombo in Phase 5.3
-        throw new NotImplementedException("CreateComboWidget will be implemented in Phase 5.3");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating combo widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var combo = new Linux.LinuxCombo(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Combo widget created successfully");
+
+        return combo;
     }
 
     public IPlatformList CreateListWidget(IPlatformWidget? parent, int style)
@@ -613,19 +627,28 @@ internal partial class LinuxPlatform : IPlatform
     private static extern void g_free(IntPtr mem);
 
     // ========================================================================
-    // Widget implementations are in separate partial class files:
+    // Widget implementations are in separate files:
+    // Platform Widget Interface (Platform/Linux/*.cs):
+    // - LinuxCombo.cs: Combo widget (GtkComboBoxText) - implements IPlatformCombo
+    // - LinuxTabFolder.cs: TabFolder widget (GtkNotebook) - implements IPlatformTabFolder
+    // - LinuxButton.cs: Button widget (GtkButton/GtkToggleButton) - implements IPlatformTextWidget
+    // - LinuxLabel.cs: Label widget (GtkLabel) - implements IPlatformTextWidget
+    // - LinuxText.cs: Text widget (GtkEntry/GtkTextView) - implements IPlatformTextInput
+    // - LinuxComposite.cs: Composite widget (GtkBox/GtkFixed) - implements IPlatformComposite
+    // - LinuxWindow.cs: Window (GtkWindow) - implements IPlatformWindow
+    // - LinuxToolBar.cs: ToolBar (GtkToolbar) - implements IPlatformToolBar
+    // - LinuxTable.cs: Table widget (GtkTreeView) - implements IPlatformTable
+    // - LinuxTree.cs: Tree widget (GtkTreeView) - implements IPlatformComposite
+    // Legacy Partial Class Files (LinuxPlatform_*.cs):
+    // - LinuxPlatform_Combo.cs: Legacy combo methods (deprecated, use LinuxCombo.cs)
     // - LinuxPlatform_List.cs: List widget (GtkListBox)
     // - LinuxPlatform_Group.cs: Group widget (GtkFrame)
     // - LinuxPlatform_Canvas.cs: Canvas widget (GtkDrawingArea)
     // - LinuxPlatform_Slider.cs: Slider widget (GtkScale)
     // - LinuxPlatform_Scale.cs: Scale widget (GtkScale with marks)
     // - LinuxPlatform_Spinner.cs: Spinner widget (GtkSpinButton)
-    // - LinuxPlatform_TabFolder.cs: TabFolder widget (GtkNotebook)
-    // - LinuxPlatform_Tree.cs: Tree widget (GtkTreeView)
-    // - LinuxPlatform_Table.cs: Table widget (GtkTreeView multi-column)
+    // - LinuxPlatform_TabFolder.cs: Legacy TabFolder methods (deprecated)
     // - LinuxPlatform_Dialogs.cs: Dialogs (MessageBox, FileDialog, etc.)
-    // - LinuxPlatform_Label.cs: Label widget (GtkLabel)
-    // - LinuxPlatform_Combo.cs: Combo widget (GtkComboBox)
     // ========================================================================
 
     // ProgressBar control operations - REMOVED: Now handled by platform widget interfaces
