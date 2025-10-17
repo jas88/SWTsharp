@@ -260,6 +260,15 @@ internal class Win32Window : IPlatformWindow
 
     public bool IsDisposed => _disposed;
 
+    /// <summary>
+    /// Gets the native Win32 handle (HWND) for this window.
+    /// Used internally by platform code for parent-child relationships.
+    /// </summary>
+    internal IntPtr GetNativeHandle()
+    {
+        return _hwnd;
+    }
+
     public void AddChild(IPlatformWidget child)
     {
         if (child == null || _disposed) return;

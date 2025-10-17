@@ -12,32 +12,44 @@ internal partial class Win32Platform : IPlatform
 
     public IPlatformWindow CreateWindowWidget(int style, string title)
     {
-        return new SWTSharp.Platform.Win32.Win32Window(style, title);
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating window widget. Style: 0x{style:X}, Title: '{title}'");
+
+        var window = new SWTSharp.Platform.Win32.Win32Window(style, title);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Window widget created successfully");
+
+        return window;
     }
 
     public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
     {
         // Get parent handle - use desktop if no parent
         IntPtr parentHandle = IntPtr.Zero;
-        if (parent != null && parent is IPlatformWidget platformWidget)
+        if (parent != null)
         {
-            // Win32 widgets should expose their handle through the platform interface
-            // For now, we'll need the parent to be created first
-            // This is a temporary workaround - proper fix would expose handle through interface
+            parentHandle = ExtractNativeHandle(parent);
         }
 
-        return new SWTSharp.Platform.Win32.Win32Button(parentHandle, style);
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating button widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var button = new SWTSharp.Platform.Win32.Win32Button(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Button widget created successfully");
+
+        return button;
     }
 
     public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
     {
         // Get parent handle - use desktop if no parent
         IntPtr parentHandle = IntPtr.Zero;
-        if (parent != null && parent is IPlatformWidget platformWidget)
+        if (parent != null)
         {
-            // Win32 widgets should expose their handle through the platform interface
-            // For now, we'll need the parent to be created first
-            // This is a temporary workaround - proper fix would expose handle through interface
+            parentHandle = ExtractNativeHandle(parent);
         }
 
         return new SWTSharp.Platform.Win32.Win32Label(parentHandle, style);
@@ -46,10 +58,9 @@ internal partial class Win32Platform : IPlatform
     public IPlatformTextInput CreateTextWidget(IPlatformWidget? parent, int style)
     {
         IntPtr parentHandle = IntPtr.Zero;
-        if (parent != null && parent is IPlatformWidget platformWidget)
+        if (parent != null)
         {
-            // Win32 widgets should expose their handle through the platform interface
-            // For now, we'll need the parent to be created first
+            parentHandle = ExtractNativeHandle(parent);
         }
 
         return new SWTSharp.Platform.Win32.Win32Text(parentHandle, style);
@@ -291,6 +302,10 @@ internal partial class Win32Platform : IPlatform
     [DllImport(User32, CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern ushort RegisterClass(ref WNDCLASS lpWndClass);
 
+    [DllImport(User32, CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool UnregisterClass(string lpClassName, IntPtr hInstance);
+
 #if NET8_0_OR_GREATER
     [LibraryImport(User32, EntryPoint = "DefWindowProcW")]
     private static partial IntPtr DefWindowProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
@@ -308,21 +323,56 @@ internal partial class Win32Platform : IPlatform
     private const string CanvasClassName = "SWTSharpCanvas";
     private WndProcDelegate? _wndProcDelegate; // SEC-001: Store delegate to prevent GC
     private WndProcDelegate? _canvasWndProcDelegate; // SEC-001: Store canvas delegate to prevent GC
+    private bool _windowClassRegistered;
+    private bool _canvasClassRegistered;
+    private static readonly bool _enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
 
+    /// <summary>
+    /// Initializes the Win32 platform, registering window classes.
+    /// </summary>
     public void Initialize()
     {
+        if (_enableLogging)
+            Console.WriteLine("[Win32] Initializing Win32Platform");
+
         _hInstance = GetModuleHandle(null);
+        if (_hInstance == IntPtr.Zero)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to get module handle");
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Module handle: 0x{_hInstance:X}");
+
         RegisterWindowClass();
         RegisterCanvasClass();
+
+        if (_enableLogging)
+            Console.WriteLine("[Win32] Initialization complete");
     }
 
+    /// <summary>
+    /// Registers the main SWTSharpWindow class for creating windows.
+    /// Handles ERROR_CLASS_ALREADY_EXISTS (1406) by ignoring if class is already registered.
+    /// </summary>
     private void RegisterWindowClass()
     {
+        if (_windowClassRegistered)
+        {
+            if (_enableLogging)
+                Console.WriteLine($"[Win32] Window class '{WindowClassName}' already registered");
+            return;
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Registering window class: {WindowClassName}");
+
         // SEC-001: Store delegate reference before marshalling to prevent GC
         _wndProcDelegate = WndProc;
 
         var wndClass = new WNDCLASS
         {
+            style = CS_HREDRAW | CS_VREDRAW,
             lpfnWndProc = Marshal.GetFunctionPointerForDelegate(_wndProcDelegate),
             hInstance = _hInstance,
             lpszClassName = WindowClassName,
@@ -330,7 +380,32 @@ internal partial class Win32Platform : IPlatform
             hbrBackground = new IntPtr(6) // COLOR_WINDOW + 1
         };
 
-        RegisterClass(ref wndClass);
+        ushort atom = RegisterClass(ref wndClass);
+        if (atom == 0)
+        {
+            int error = Marshal.GetLastWin32Error();
+            const int ERROR_CLASS_ALREADY_EXISTS = 1406;
+
+            if (_enableLogging)
+                Console.WriteLine($"[Win32] Window class registration returned atom 0. Error: {error}");
+
+            // If class already exists, that's fine - we can use the existing registration
+            if (error == ERROR_CLASS_ALREADY_EXISTS)
+            {
+                if (_enableLogging)
+                    Console.WriteLine($"[Win32] Window class already exists (expected)");
+                _windowClassRegistered = true;
+                return;
+            }
+
+            // Any other error is a real problem
+            throw new Win32Exception(error, $"Failed to register window class '{WindowClassName}'");
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Window class registered successfully. Atom: 0x{atom:X}");
+
+        _windowClassRegistered = true;
     }
 
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
@@ -347,6 +422,16 @@ internal partial class Win32Platform : IPlatform
 
     private void RegisterCanvasClass()
     {
+        if (_canvasClassRegistered)
+        {
+            if (_enableLogging)
+                Console.WriteLine($"[Win32] Canvas class '{CanvasClassName}' already registered");
+            return;
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Registering canvas class: {CanvasClassName}");
+
         // SEC-001: Store delegate reference before marshalling to prevent GC
         _canvasWndProcDelegate = CanvasWndProc;
 
@@ -360,7 +445,32 @@ internal partial class Win32Platform : IPlatform
             hbrBackground = IntPtr.Zero // Don't use default background, we'll handle it
         };
 
-        RegisterClass(ref wndClass);
+        ushort atom = RegisterClass(ref wndClass);
+        if (atom == 0)
+        {
+            int error = Marshal.GetLastWin32Error();
+            const int ERROR_CLASS_ALREADY_EXISTS = 1406;
+
+            if (_enableLogging)
+                Console.WriteLine($"[Win32] Canvas class registration returned atom 0. Error: {error}");
+
+            // If class already exists, that's fine - we can use the existing registration
+            if (error == ERROR_CLASS_ALREADY_EXISTS)
+            {
+                if (_enableLogging)
+                    Console.WriteLine($"[Win32] Canvas class already exists (expected)");
+                _canvasClassRegistered = true;
+                return;
+            }
+
+            // Any other error is a real problem
+            throw new Win32Exception(error, $"Failed to register canvas class '{CanvasClassName}'");
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Canvas class registered successfully. Atom: 0x{atom:X}");
+
+        _canvasClassRegistered = true;
     }
 
     private IntPtr CanvasWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
@@ -420,6 +530,54 @@ internal partial class Win32Platform : IPlatform
     private const uint SWP_NOZORDER = 0x0004;
 
     // Internal helper methods (not part of IPlatform interface)
+
+    /// <summary>
+    /// Extracts the native HWND from a platform widget.
+    /// Tries GetNativeHandle() method first, then falls back to reflection for _hwnd field.
+    /// </summary>
+    /// <param name="widget">The platform widget to extract the handle from</param>
+    /// <returns>The native HWND, or IntPtr.Zero if extraction fails</returns>
+    private static IntPtr ExtractNativeHandle(IPlatformWidget widget)
+    {
+        if (widget == null)
+            return IntPtr.Zero;
+
+        var widgetType = widget.GetType();
+
+        // Primary method: Try GetNativeHandle() method (all Win32 widgets now have this as internal)
+        var getNativeHandleMethod = widgetType.GetMethod("GetNativeHandle",
+            System.Reflection.BindingFlags.Public |
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance);
+
+        if (getNativeHandleMethod != null && getNativeHandleMethod.ReturnType == typeof(IntPtr))
+        {
+            var result = getNativeHandleMethod.Invoke(widget, null);
+            if (result is IntPtr hwnd && hwnd != IntPtr.Zero)
+            {
+                return hwnd;
+            }
+        }
+
+        // Fallback: Use reflection to access the private _hwnd field
+        // This provides compatibility with widgets that might not have GetNativeHandle() yet
+        var hwndField = widgetType.GetField("_hwnd",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance);
+
+        if (hwndField != null && hwndField.FieldType == typeof(IntPtr))
+        {
+            var handle = hwndField.GetValue(widget);
+            if (handle is IntPtr hwnd && hwnd != IntPtr.Zero)
+            {
+                return hwnd;
+            }
+        }
+
+        // If all else fails, return zero (will create with desktop as parent)
+        return IntPtr.Zero;
+    }
+
     internal void SetControlEnabled(IntPtr handle, bool enabled)
     {
         EnableWindow(handle, enabled);

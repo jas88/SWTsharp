@@ -23,7 +23,15 @@ internal partial class LinuxPlatform : IPlatform
             parentHandle = linuxWidget.GetNativeHandle();
         }
 
-        return new Linux.LinuxButton(parentHandle, style);
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating button widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var button = new Linux.LinuxButton(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Button widget created successfully");
+
+        return button;
     }
 
     public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
@@ -200,6 +208,7 @@ internal partial class LinuxPlatform : IPlatform
     }
 
     private bool _initialized;
+    private static readonly bool _enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
 
     // Window container mapping - GtkWindow -> container widget
     // This is needed for window management but will be removed when windows migrate to platform widget interfaces
@@ -208,28 +217,48 @@ internal partial class LinuxPlatform : IPlatform
     public void Initialize()
     {
         if (_initialized)
+        {
+            if (_enableLogging)
+                Console.WriteLine("[Linux] GTK already initialized");
             return;
+        }
+
+        if (_enableLogging)
+            Console.WriteLine("[Linux] Initializing GTK");
 
         int argc = 0;
         IntPtr argv = IntPtr.Zero;
 
         if (!gtk_init_check(ref argc, ref argv))
         {
+            if (_enableLogging)
+                Console.WriteLine("[Linux] GTK initialization FAILED");
             throw new InvalidOperationException("Failed to initialize GTK");
         }
 
         _initialized = true;
+
+        if (_enableLogging)
+            Console.WriteLine("[Linux] GTK initialized successfully");
     }
 
     public IntPtr CreateWindow(int style, string title)
     {
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating window. Style: 0x{style:X}, Title: '{title}'");
+
         // Create a top-level window
         IntPtr window = gtk_window_new(GtkWindowType.Toplevel);
 
         if (window == IntPtr.Zero)
         {
+            if (_enableLogging)
+                Console.WriteLine("[Linux] Window creation FAILED - gtk_window_new returned NULL");
             throw new InvalidOperationException("Failed to create GTK window");
         }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] GtkWindow created: 0x{window:X}");
 
         // Set window properties
         gtk_window_set_title(window, title);
@@ -240,11 +269,22 @@ internal partial class LinuxPlatform : IPlatform
         IntPtr container = gtk_fixed_new();
         if (container != IntPtr.Zero)
         {
+            if (_enableLogging)
+                Console.WriteLine($"[Linux] GtkFixed container created: 0x{container:X}");
+
             gtk_container_add(window, container);
             gtk_widget_show(container);
 
             // Map window -> container for child widget additions
             _widgetContainers[window] = container;
+
+            if (_enableLogging)
+                Console.WriteLine($"[Linux] Container added to window");
+        }
+        else
+        {
+            if (_enableLogging)
+                Console.WriteLine("[Linux] WARNING: Container creation failed");
         }
 
         // Connect destroy signal to quit application when window is closed

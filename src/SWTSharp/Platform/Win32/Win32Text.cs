@@ -233,6 +233,15 @@ internal class Win32Text : IPlatformTextInput
         return new RGB(0, 0, 0); // Default black
     }
 
+    /// <summary>
+    /// Gets the native Win32 handle (HWND) for this text control.
+    /// Used internally by platform code for parent-child relationships.
+    /// </summary>
+    internal IntPtr GetNativeHandle()
+    {
+        return _hwnd;
+    }
+
     public void Dispose()
     {
         if (!_disposed)

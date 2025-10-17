@@ -19,7 +19,16 @@ internal partial class MacOSPlatform : IPlatform
     public IPlatformWidget CreateButtonWidget(IPlatformWidget? parent, int style)
     {
         IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
-        return new MacOSButton(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating button widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var button = new MacOSButton(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Button widget created successfully");
+
+        return button;
     }
 
     public IPlatformWidget CreateLabelWidget(IPlatformWidget? parent, int style)
@@ -277,6 +286,9 @@ internal partial class MacOSPlatform : IPlatform
     private IntPtr _selSetMaxValue;
     private IntPtr _selSetDoubleValue;
 
+    // Diagnostic logging
+    private static readonly bool _enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
+
     // Cached classes
     private IntPtr _nsApplicationClass;
     private IntPtr _nsWindowClass;
@@ -302,9 +314,19 @@ internal partial class MacOSPlatform : IPlatform
 
     public MacOSPlatform()
     {
+        if (_enableLogging)
+        {
+            Console.WriteLine("[macOS] MacOSPlatform constructor called");
+            Console.WriteLine($"[macOS] Thread check - pthread_main_np(): {pthread_main_np()}");
+        }
+
         // Ensure ObjC runtime is initialized on UI thread
         // ObjCRuntime now calls NSApplicationLoad() before class lookups
         ObjCRuntime.EnsureInitialized();
+
+        if (_enableLogging)
+            Console.WriteLine("[macOS] ObjCRuntime initialized");
+
         Initialize();
     }
 
@@ -351,12 +373,19 @@ internal partial class MacOSPlatform : IPlatform
     {
         // Make Initialize() idempotent - can be called multiple times safely
         if (_initialized)
+        {
+            if (_enableLogging)
+                Console.WriteLine("[macOS] Already initialized");
             return;
+        }
 
         lock (_initLock)
         {
             if (_initialized)
                 return;
+
+            if (_enableLogging)
+                Console.WriteLine("[macOS] Initializing MacOSPlatform...");
 
             // Initialize selectors with validation
             _selAlloc = RegisterSelector("alloc");
@@ -406,11 +435,17 @@ internal partial class MacOSPlatform : IPlatform
         // This ensures critical selectors are registered early and any missing selectors fail fast
         // Note: Some selectors (ToolBar, Tree, etc.) are still lazily initialized to avoid
         // loading unused Cocoa classes during startup
+        if (_enableLogging)
+            Console.WriteLine("[macOS] Initializing widget selectors...");
+
         InitializeButtonSelectors();
         InitializeMenuSelectors();
         InitializeTextSelectors();
 
             _initialized = true;
+
+            if (_enableLogging)
+                Console.WriteLine("[macOS] Initialization complete");
         }
     }
 
@@ -485,11 +520,17 @@ internal partial class MacOSPlatform : IPlatform
 
     public IntPtr CreateWindow(int style, string title)
     {
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating window. Style: 0x{style:X}, Title: '{title}'");
+
         IntPtr result = IntPtr.Zero;
 
         // NSWindow MUST be created on the main thread
         ExecuteOnMainThread(() =>
         {
+            if (_enableLogging)
+                Console.WriteLine($"[macOS] Executing window creation on thread {pthread_main_np()}");
+
             // Determine window style mask
             ulong styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable;
 
@@ -518,6 +559,9 @@ internal partial class MacOSPlatform : IPlatform
             SetWindowText(window, title);
 
             result = window;
+
+            if (_enableLogging)
+                Console.WriteLine($"[macOS] NSWindow created successfully: 0x{window:X}");
         });
 
         return result;
@@ -753,8 +797,16 @@ internal partial class MacOSPlatform : IPlatform
         // pthread_main_np() returns 1 if current thread is main thread, 0 otherwise
         // This prevents deadlock when CustomMainThreadExecutor uses GCD dispatch_sync_f to Thread 1
         // while we're already ON Thread 1 (e.g., running in CFRunLoop)
-        if (pthread_main_np() != 0)
+        int isMainThread = pthread_main_np();
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] ExecuteOnMainThread - pthread_main_np(): {isMainThread}");
+
+        if (isMainThread != 0)
         {
+            if (_enableLogging)
+                Console.WriteLine("[macOS] Already on main thread - executing directly");
+
             // Already on main thread - execute directly without dispatching
             action();
             return;
@@ -763,9 +815,15 @@ internal partial class MacOSPlatform : IPlatform
         // Not on main thread - delegate to CustomMainThreadExecutor if available
         if (CustomMainThreadExecutor != null)
         {
+            if (_enableLogging)
+                Console.WriteLine("[macOS] Delegating to CustomMainThreadExecutor");
+
             CustomMainThreadExecutor(action);
             return;
         }
+
+        if (_enableLogging)
+            Console.WriteLine("[macOS] ERROR: No CustomMainThreadExecutor and not on main thread");
 
         // Without TestHost's CustomMainThreadExecutor, we can't guarantee main thread execution
         // Tests MUST be run via TestHost which provides the main thread dispatcher

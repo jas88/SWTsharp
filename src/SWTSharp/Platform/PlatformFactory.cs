@@ -35,18 +35,36 @@ internal static class PlatformFactory
     {
         // All platform implementations compiled into binary
         // Runtime OS detection selects correct implementation
+
+        // Diagnostic logging
+        bool enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
+
+        if (enableLogging)
+        {
+            Console.WriteLine($"[PlatformFactory] Detecting platform...");
+            Console.WriteLine($"[PlatformFactory] OS: {RuntimeInformation.OSDescription}");
+            Console.WriteLine($"[PlatformFactory] Architecture: {RuntimeInformation.OSArchitecture}");
+            Console.WriteLine($"[PlatformFactory] Framework: {RuntimeInformation.FrameworkDescription}");
+        }
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
+            if (enableLogging)
+                Console.WriteLine($"[PlatformFactory] Creating Win32Platform");
             return new Win32Platform();
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
+            if (enableLogging)
+                Console.WriteLine($"[PlatformFactory] Creating MacOSPlatform");
             return new MacOSPlatform();
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
+            if (enableLogging)
+                Console.WriteLine($"[PlatformFactory] Creating LinuxPlatform");
             return new LinuxPlatform();
         }
 

@@ -233,7 +233,11 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
 
     public override IntPtr GetNativeHandle()
     {
-        return _gtkWindowHandle;
+        // CRITICAL FIX: Return the GtkFixed container, NOT the GtkWindow.
+        // GtkWindow is a GtkBin and can only contain ONE widget.
+        // Child widgets must be added to the GtkFixed container, not directly to the window.
+        // This prevents "GtkBin can only contain one widget at a time" warnings.
+        return _container != IntPtr.Zero ? _container : _gtkWindowHandle;
     }
 
     // GTK Window Type Enumeration

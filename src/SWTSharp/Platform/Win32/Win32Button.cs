@@ -291,6 +291,15 @@ internal partial class Win32Button : IPlatformTextWidget
         SendMessage(_hwnd, BM_SETCHECK, new IntPtr(selected ? BST_CHECKED : BST_UNCHECKED), IntPtr.Zero);
     }
 
+    /// <summary>
+    /// Gets the native Win32 handle (HWND) for this button.
+    /// Used internally by platform code for parent-child relationships.
+    /// </summary>
+    internal IntPtr GetNativeHandle()
+    {
+        return _hwnd;
+    }
+
     public void Dispose()
     {
         if (!_disposed)
