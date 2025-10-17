@@ -179,7 +179,11 @@ public class Shell : Composite
     public new void SetSize(int width, int height)
     {
         CheckWidget();
-        // TODO: Implement through platform widget interface
+        if (PlatformWidget != null)
+        {
+            var bounds = PlatformWidget.GetBounds();
+            PlatformWidget.SetBounds(bounds.X, bounds.Y, width, height);
+        }
     }
 
     /// <summary>
@@ -188,7 +192,11 @@ public class Shell : Composite
     public new void SetLocation(int x, int y)
     {
         CheckWidget();
-        // TODO: Implement through platform widget interface
+        if (PlatformWidget != null)
+        {
+            var bounds = PlatformWidget.GetBounds();
+            PlatformWidget.SetBounds(x, y, bounds.Width, bounds.Height);
+        }
     }
 
     /// <summary>
@@ -197,9 +205,21 @@ public class Shell : Composite
     public void Center()
     {
         CheckWidget();
-        // TODO: Get screen dimensions and calculate center position
-        // For now, just use a reasonable default position
-        SetLocation(100, 100);
+        if (PlatformWidget != null)
+        {
+            var bounds = PlatformWidget.GetBounds();
+
+            // Use reasonable default screen dimensions for centering
+            // Most common screen resolutions are at least 1024x768
+            // This provides a good approximation until Display.GetPrimaryMonitorBounds is implemented
+            int screenWidth = 1920;
+            int screenHeight = 1080;
+
+            int x = (screenWidth - bounds.Width) / 2;
+            int y = (screenHeight - bounds.Height) / 2;
+
+            SetLocation(x, y);
+        }
     }
 
     protected override void ReleaseWidget()

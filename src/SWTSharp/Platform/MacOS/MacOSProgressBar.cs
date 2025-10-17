@@ -1,16 +1,18 @@
+using System;
 using System.Runtime.InteropServices;
 using SWTSharp.Graphics;
 
 namespace SWTSharp.Platform.MacOS;
 
 /// <summary>
-/// macOS implementation of IPlatformProgressBar that adapts the existing NSProgressIndicator implementation.
-/// This bridges the existing pseudo-handle system to the new platform widget interface.
+/// macOS implementation of IPlatformProgressBar using NSProgressIndicator.
+/// Provides complete progress bar functionality with native macOS progress controls.
 /// </summary>
 internal class MacOSProgressBar : MacOSWidget, IPlatformProgressBar
 {
-    private readonly MacOSPlatform _platform;
-    private readonly IntPtr _pseudoHandle; // The pseudo-handle used by existing implementation
+    private const string ObjCLibrary = "/usr/lib/libobjc.A.dylib";
+
+    private IntPtr _nsProgressIndicatorHandle;
     private bool _disposed;
     private int _value = 0;
     private int _minimum = 0;
@@ -22,19 +24,29 @@ internal class MacOSProgressBar : MacOSWidget, IPlatformProgressBar
 
     public MacOSProgressBar(IntPtr parentHandle, int style)
     {
-        _platform = new MacOSPlatform(); // Get platform instance for method calls
+        bool enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
 
-        // TODO: Implement CreateProgressBar in MacOSPlatform
-        // _pseudoHandle = _platform.CreateProgressBar(parentHandle, style);
-        _pseudoHandle = IntPtr.Zero; // Placeholder
+        if (enableLogging)
+            Console.WriteLine($"[MacOSProgressBar] Creating progress bar. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
 
-        if (_pseudoHandle == IntPtr.Zero)
+        // Create NSProgressIndicator
+        _nsProgressIndicatorHandle = CreateNSProgressIndicator(parentHandle, style);
+
+        if (_nsProgressIndicatorHandle == IntPtr.Zero)
         {
-            // For now, create a dummy handle to avoid null reference exceptions
-            _pseudoHandle = new IntPtr(0x62000000); // Pseudo-handle pattern
-            // throw new InvalidOperationException("Failed to create NSProgressIndicator - CreateProgressBar not implemented yet");
+            throw new InvalidOperationException("Failed to create NSProgressIndicator");
         }
+
+        if (enableLogging)
+            Console.WriteLine($"[MacOSProgressBar] Progress bar created successfully. Handle: 0x{_nsProgressIndicatorHandle:X}");
     }
+
+    public override IntPtr GetNativeHandle()
+    {
+        return _nsProgressIndicatorHandle;
+    }
+
+    #region IPlatformProgressBar Implementation
 
     public int Value
     {
@@ -45,14 +57,15 @@ internal class MacOSProgressBar : MacOSWidget, IPlatformProgressBar
         }
         set
         {
-            if (_disposed) return;
+            if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return;
 
             var oldValue = _value;
             _value = Math.Max(_minimum, Math.Min(_maximum, value));
-            // TODO: Implement SetProgressBarValue in MacOSPlatform
-            // _platform.SetProgressBarValue(_pseudoHandle, _value);
 
-            // Fire ValueChanged event if value actually changed
+            // Call setDoubleValue:
+            IntPtr selector = sel_registerName("setDoubleValue:");
+            objc_msgSend_double(_nsProgressIndicatorHandle, selector, (double)_value);
+
             if (oldValue != _value)
             {
                 ValueChanged?.Invoke(this, _value);
@@ -69,14 +82,15 @@ internal class MacOSProgressBar : MacOSWidget, IPlatformProgressBar
         }
         set
         {
-            if (_disposed) return;
+            if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return;
 
             _minimum = value;
             if (_maximum < _minimum) _maximum = _minimum;
             if (_value < _minimum) _value = _minimum;
 
-            // TODO: Implement SetProgressBarRange in MacOSPlatform
-            // _platform.SetProgressBarRange(_pseudoHandle, _minimum, _maximum);
+            // Call setMinValue:
+            IntPtr selector = sel_registerName("setMinValue:");
+            objc_msgSend_double(_nsProgressIndicatorHandle, selector, (double)_minimum);
         }
     }
 
@@ -89,14 +103,15 @@ internal class MacOSProgressBar : MacOSWidget, IPlatformProgressBar
         }
         set
         {
-            if (_disposed) return;
+            if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return;
 
             _maximum = value;
             if (_minimum > _maximum) _minimum = _maximum;
             if (_value > _maximum) _value = _maximum;
 
-            // TODO: Implement SetProgressBarRange in MacOSPlatform
-            // _platform.SetProgressBarRange(_pseudoHandle, _minimum, _maximum);
+            // Call setMaxValue:
+            IntPtr selector = sel_registerName("setMaxValue:");
+            objc_msgSend_double(_nsProgressIndicatorHandle, selector, (double)_maximum);
         }
     }
 
@@ -110,56 +125,71 @@ internal class MacOSProgressBar : MacOSWidget, IPlatformProgressBar
         set
         {
             if (_disposed) return;
-
             _state = value;
-            // TODO: Implement SetProgressBarState in MacOSPlatform
-            // _platform.SetProgressBarState(_pseudoHandle, _state);
+            // macOS doesn't have direct state support like Windows
+            // Different states would require different visual treatments
         }
     }
 
-    // IPlatformWidget interface implementation
+    #endregion
+
+    #region IPlatformWidget Implementation
+
     public void SetBounds(int x, int y, int width, int height)
     {
-        if (_disposed) return;
-        _platform.SetControlBounds(_pseudoHandle, x, y, width, height);
+        if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return;
+
+        var frame = new CGRect(x, y, width, height);
+        IntPtr selector = sel_registerName("setFrame:");
+        objc_msgSend_rect(_nsProgressIndicatorHandle, selector, frame);
     }
 
     public Rectangle GetBounds()
     {
-        if (_disposed) return default(Rectangle);
-        // For now, return default bounds - would need to implement GetControlBounds
-        return default(Rectangle);
+        if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return default;
+
+        IntPtr selector = sel_registerName("frame");
+        objc_msgSend_stret(out CGRect frame, _nsProgressIndicatorHandle, selector);
+
+        return new Rectangle((int)frame.x, (int)frame.y, (int)frame.width, (int)frame.height);
     }
 
     public void SetVisible(bool visible)
     {
-        if (_disposed) return;
-        _platform.SetControlVisible(_pseudoHandle, visible);
+        if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return;
+
+        IntPtr selector = sel_registerName("setHidden:");
+        objc_msgSend_void(_nsProgressIndicatorHandle, selector, !visible);
     }
 
     public bool GetVisible()
     {
-        if (_disposed) return false;
-        // For now, return true - would need to implement GetControlVisible
-        return true;
+        if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return false;
+
+        IntPtr selector = sel_registerName("isHidden");
+        bool hidden = objc_msgSend_bool(_nsProgressIndicatorHandle, selector);
+        return !hidden;
     }
 
     public void SetEnabled(bool enabled)
     {
-        if (_disposed) return;
-        _platform.SetControlEnabled(_pseudoHandle, enabled);
+        if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return;
+
+        IntPtr selector = sel_registerName("setEnabled:");
+        objc_msgSend_void(_nsProgressIndicatorHandle, selector, enabled);
     }
 
     public bool GetEnabled()
     {
-        if (_disposed) return false;
-        // For now, return true - would need to implement GetControlEnabled
-        return true;
+        if (_disposed || _nsProgressIndicatorHandle == IntPtr.Zero) return false;
+
+        IntPtr selector = sel_registerName("isEnabled");
+        return objc_msgSend_bool(_nsProgressIndicatorHandle, selector);
     }
 
     public void SetBackground(RGB color)
     {
-        // Not implemented for progress bars
+        // NSProgressIndicator doesn't support custom background colors
     }
 
     public RGB GetBackground()
@@ -169,33 +199,124 @@ internal class MacOSProgressBar : MacOSWidget, IPlatformProgressBar
 
     public void SetForeground(RGB color)
     {
-        // Not implemented for progress bars
+        // NSProgressIndicator doesn't support custom foreground colors directly
     }
 
     public RGB GetForeground()
     {
-        return new RGB(0, 0, 0); // Default black
+        return new RGB(0, 120, 215); // Default blue
     }
 
-    public override IntPtr GetNativeHandle()
-    {
-        return _pseudoHandle;
-    }
+    #endregion
+
+    #region IDisposable Implementation
 
     public void Dispose()
     {
-        if (!_disposed)
+        if (_disposed) return;
+        _disposed = true;
+
+        if (_nsProgressIndicatorHandle != IntPtr.Zero)
         {
-            // TODO: Implement DestroyProgressBar in MacOSPlatform
-            // _platform.DestroyProgressBar(_pseudoHandle);
-            _disposed = true;
+            IntPtr removeSelector = sel_registerName("removeFromSuperview");
+            objc_msgSend(_nsProgressIndicatorHandle, removeSelector);
+
+            IntPtr releaseSelector = sel_registerName("release");
+            objc_msgSend(_nsProgressIndicatorHandle, releaseSelector);
+
+            _nsProgressIndicatorHandle = IntPtr.Zero;
         }
     }
 
-    // Event handling methods
-    private void OnValueChanged()
+    #endregion
+
+    #region Private Helper Methods
+
+    private IntPtr CreateNSProgressIndicator(IntPtr parentHandle, int style)
     {
-        if (_disposed) return;
-        ValueChanged?.Invoke(this, _value);
+        // Get NSProgressIndicator class
+        IntPtr progressClass = objc_getClass("NSProgressIndicator");
+
+        // Allocate and initialize
+        IntPtr allocSelector = sel_registerName("alloc");
+        IntPtr progressIndicator = objc_msgSend(progressClass, allocSelector);
+
+        IntPtr initSelector = sel_registerName("init");
+        progressIndicator = objc_msgSend(progressIndicator, initSelector);
+
+        // Set initial frame
+        var frame = new CGRect(0, 0, 200, 20);
+        IntPtr setFrameSelector = sel_registerName("setFrame:");
+        objc_msgSend_rect(progressIndicator, setFrameSelector, frame);
+
+        // Set to determinate style (bar style)
+        IntPtr setIndeterminateSelector = sel_registerName("setIndeterminate:");
+        objc_msgSend_void(progressIndicator, setIndeterminateSelector, false);
+
+        // Set range
+        IntPtr setMinValueSelector = sel_registerName("setMinValue:");
+        objc_msgSend_double(progressIndicator, setMinValueSelector, 0.0);
+
+        IntPtr setMaxValueSelector = sel_registerName("setMaxValue:");
+        objc_msgSend_double(progressIndicator, setMaxValueSelector, 100.0);
+
+        // Add to parent if provided
+        if (parentHandle != IntPtr.Zero)
+        {
+            IntPtr addSubviewSelector = sel_registerName("addSubview:");
+            objc_msgSend(parentHandle, addSubviewSelector, progressIndicator);
+        }
+
+        return progressIndicator;
     }
+
+    #endregion
+
+    #region ObjC P/Invoke
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CGRect
+    {
+        public double x;
+        public double y;
+        public double width;
+        public double height;
+
+        public CGRect(double x, double y, double width, double height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr objc_getClass(string className);
+
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr sel_registerName(string selector);
+
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg);
+
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, bool arg);
+
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg);
+
+    [DllImport(ObjCLibrary)]
+    private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    #endregion
 }

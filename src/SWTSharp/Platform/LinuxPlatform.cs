@@ -169,6 +169,26 @@ internal partial class LinuxPlatform : IPlatform
 
         return tree;
     }
+
+    public IPlatformComposite CreateCanvasWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating canvas widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var canvas = new Linux.LinuxCanvas(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Canvas widget created successfully");
+
+        return canvas;
+    }
     private const string GtkLib = "libgtk-3.so.0";
     private const string GdkLib = "libgdk-3.so.0";
     private const string GLibLib = "libglib-2.0.so.0";

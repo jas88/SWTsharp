@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using SWTSharp.Platform.Linux;
 
 namespace SWTSharp.Platform;
 
@@ -7,24 +7,28 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class LinuxPlatform
 {
-    // GTK Frame imports for Group widget
-    [DllImport(GtkLib)]
-    private static extern IntPtr gtk_frame_new(string label);
-
-    [DllImport(GtkLib)]
-    private static extern void gtk_frame_set_label(IntPtr frame, string label);
-
-    // Group operations
-    public IntPtr CreateGroup(IntPtr parent, int style, string text)
+    public IPlatformComposite CreateGroupWidget(IPlatformWidget? parent, int style, string text)
     {
-        // Create GtkFrame with label
-        IntPtr frame = gtk_frame_new(text);
-        gtk_widget_show(frame);
-        return frame;
-    }
+        // Get parent handle
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent is Linux.LinuxComposite composite)
+        {
+            parentHandle = composite.GetNativeHandle();
+        }
+        else if (parent is Linux.LinuxWindow window)
+        {
+            parentHandle = window.GetNativeHandle();
+        }
+        else if (parent is Linux.LinuxGroup group)
+        {
+            // Use the internal container handle for nested groups
+            parentHandle = group.GetContainerHandle();
+        }
+        else if (parent is Linux.LinuxTabFolder tabFolder)
+        {
+            parentHandle = tabFolder.GetNativeHandle();
+        }
 
-    public void SetGroupText(IntPtr handle, string text)
-    {
-        gtk_frame_set_label(handle, text);
+        return new Linux.LinuxGroup(parentHandle, style, text);
     }
 }

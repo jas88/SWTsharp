@@ -136,6 +136,21 @@ internal partial class MacOSPlatform : IPlatform
         return tree;
     }
 
+    public IPlatformComposite CreateCanvasWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating canvas widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var canvas = new MacOSCanvas(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Canvas widget created successfully");
+
+        return canvas;
+    }
+
     /// <summary>
     /// Optional custom main thread executor for testing scenarios.
     /// When set, ExecuteOnMainThread will use this instead of GCD.

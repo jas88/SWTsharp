@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp.Platform;
 
@@ -7,35 +7,28 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class MacOSPlatform
 {
-    // Group widget selectors and constants
-    private IntPtr _nsBoxClass;
-    private IntPtr _selSetTitlePosition;
-    private IntPtr _selSetBorderType;
-
-    // NSBox title positions
-    private const int NSNoTitle = 0;
-    private const int NSAboveTop = 1;
-    private const int NSAtTop = 2;
-    private const int NSBelowTop = 3;
-
-    // NSBox border types
-    private const int NSNoBorder = 0;
-    private const int NSLineBorder = 1;
-    private const int NSBezelBorder = 2;
-    private const int NSGrooveBorder = 3;
-
-    // REMOVED METHODS (moved to IGroupWidget interface):
-    // - CreateGroup(IntPtr parent, int style, string text)
-    // - SetGroupText(IntPtr handle, string text)
-    // These methods are now implemented via the IGroupWidget interface using proper handles
-
-    private void InitializeGroupSelectors()
+    public IPlatformComposite CreateGroupWidget(IPlatformWidget? parent, int style, string text)
     {
-        if (_nsBoxClass == IntPtr.Zero)
+        // Get parent handle
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent is MacOS.MacOSComposite composite)
         {
-            _nsBoxClass = objc_getClass("NSBox");
-            _selSetTitlePosition = sel_registerName("setTitlePosition:");
-            _selSetBorderType = sel_registerName("setBorderType:");
+            parentHandle = composite.GetNativeHandle();
         }
+        else if (parent is MacOS.MacOSWindow window)
+        {
+            parentHandle = window.GetNativeHandle();
+        }
+        else if (parent is MacOS.MacOSGroup group)
+        {
+            // Use the content view handle for nested groups
+            parentHandle = group.GetContentViewHandle();
+        }
+        else if (parent is MacOS.MacOSTabFolder tabFolder)
+        {
+            parentHandle = tabFolder.GetNativeHandle();
+        }
+
+        return new MacOS.MacOSGroup(parentHandle, style, text);
     }
 }

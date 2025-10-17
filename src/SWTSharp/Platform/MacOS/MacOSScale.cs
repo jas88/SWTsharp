@@ -1,64 +1,81 @@
+using System;
 using System.Runtime.InteropServices;
 using SWTSharp.Graphics;
 
 namespace SWTSharp.Platform.MacOS;
 
 /// <summary>
-/// macOS implementation of IPlatformScale that adapts the existing NSSlider implementation with ticks.
-/// This bridges the existing pseudo-handle system to the new platform widget interface.
+/// macOS implementation of IPlatformScale using NSSlider with tick marks.
+/// Provides complete scale functionality with native macOS slider controls and visible tick marks.
 /// </summary>
 internal class MacOSScale : MacOSWidget, IPlatformScale
 {
-    private readonly MacOSPlatform _platform;
-    private readonly IntPtr _pseudoHandle; // The pseudo-handle used by existing implementation
+    private const string ObjCLibrary = "/usr/lib/libobjc.A.dylib";
+
+    private IntPtr _nsSliderHandle;
     private bool _disposed;
     private int _value = 50;
     private int _minimum = 0;
     private int _maximum = 100;
     private int _increment = 1;
-    private bool _showTicks = false;
+    private bool _showTicks = true; // Scale shows ticks by default
 
     // Event handling
     public event EventHandler<int>? ValueChanged;
+    #pragma warning disable CS0067
     public event EventHandler<int>? Click;
     public event EventHandler<int>? FocusGained;
     public event EventHandler<int>? FocusLost;
     public event EventHandler<PlatformKeyEventArgs>? KeyDown;
     public event EventHandler<PlatformKeyEventArgs>? KeyUp;
+    #pragma warning restore CS0067
 
     public MacOSScale(IntPtr parentHandle, int style)
     {
-        _platform = new MacOSPlatform(); // Get platform instance for method calls
+        bool enableLogging = Environment.GetEnvironmentVariable("SWTSHARP_DEBUG") == "1";
 
-        // TODO: Implement CreateScale in MacOSPlatform
-        // _pseudoHandle = _platform.CreateScale(parentHandle, style);
-        _pseudoHandle = IntPtr.Zero; // Placeholder
+        if (enableLogging)
+            Console.WriteLine($"[MacOSScale] Creating scale. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
 
-        if (_pseudoHandle == IntPtr.Zero)
+        // Create NSSlider with tick marks
+        _nsSliderHandle = CreateNSSliderWithTicks(parentHandle, style);
+
+        if (_nsSliderHandle == IntPtr.Zero)
         {
-            // For now, create a dummy handle to avoid null reference exceptions
-            _pseudoHandle = new IntPtr(0x64000000); // Pseudo-handle pattern
-            // throw new InvalidOperationException("Failed to create NSScale - CreateScale not implemented yet");
+            throw new InvalidOperationException("Failed to create NSSlider for scale");
         }
+
+        if (enableLogging)
+            Console.WriteLine($"[MacOSScale] Scale created successfully. Handle: 0x{_nsSliderHandle:X}");
     }
+
+    public override IntPtr GetNativeHandle()
+    {
+        return _nsSliderHandle;
+    }
+
+    #region IPlatformScale Implementation
 
     public int Value
     {
         get
         {
-            if (_disposed) return 0;
-            return _value;
+            if (_disposed || _nsSliderHandle == IntPtr.Zero) return 0;
+
+            IntPtr selector = sel_registerName("doubleValue");
+            double value = objc_msgSend_double_ret(_nsSliderHandle, selector);
+            return (int)value;
         }
         set
         {
-            if (_disposed) return;
+            if (_disposed || _nsSliderHandle == IntPtr.Zero) return;
 
             var oldValue = _value;
             _value = Math.Max(_minimum, Math.Min(_maximum, value));
-            // TODO: Implement SetScaleValue in MacOSPlatform
-            // _platform.SetScaleValue(_pseudoHandle, _value);
 
-            // Fire ValueChanged event if value actually changed
+            IntPtr selector = sel_registerName("setDoubleValue:");
+            objc_msgSend_double(_nsSliderHandle, selector, (double)_value);
+
             if (oldValue != _value)
             {
                 ValueChanged?.Invoke(this, _value);
@@ -75,14 +92,16 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
         }
         set
         {
-            if (_disposed) return;
+            if (_disposed || _nsSliderHandle == IntPtr.Zero) return;
 
             _minimum = value;
             if (_maximum < _minimum) _maximum = _minimum;
             if (_value < _minimum) _value = _minimum;
 
-            // TODO: Implement SetScaleRange in MacOSPlatform
-            // _platform.SetScaleRange(_pseudoHandle, _minimum, _maximum);
+            IntPtr selector = sel_registerName("setMinValue:");
+            objc_msgSend_double(_nsSliderHandle, selector, (double)_minimum);
+
+            UpdateTickMarks();
         }
     }
 
@@ -95,14 +114,16 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
         }
         set
         {
-            if (_disposed) return;
+            if (_disposed || _nsSliderHandle == IntPtr.Zero) return;
 
             _maximum = value;
             if (_minimum > _maximum) _minimum = _maximum;
             if (_value > _maximum) _value = _maximum;
 
-            // TODO: Implement SetScaleRange in MacOSPlatform
-            // _platform.SetScaleRange(_pseudoHandle, _minimum, _maximum);
+            IntPtr selector = sel_registerName("setMaxValue:");
+            objc_msgSend_double(_nsSliderHandle, selector, (double)_maximum);
+
+            UpdateTickMarks();
         }
     }
 
@@ -118,8 +139,7 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
             if (_disposed) return;
 
             _increment = Math.Max(1, value);
-            // TODO: Implement SetScaleIncrement in MacOSPlatform
-            // _platform.SetScaleIncrement(_pseudoHandle, _increment);
+            UpdateTickMarks();
         }
     }
 
@@ -132,57 +152,86 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
         }
         set
         {
-            if (_disposed) return;
+            if (_disposed || _nsSliderHandle == IntPtr.Zero) return;
 
             _showTicks = value;
-            // TODO: Implement SetScaleShowTicks in MacOSPlatform
-            // _platform.SetScaleShowTicks(_pseudoHandle, _showTicks);
+
+            if (_showTicks)
+            {
+                UpdateTickMarks();
+
+                // Enable tick marks
+                IntPtr setTickMarkPositionSelector = sel_registerName("setTickMarkPosition:");
+                objc_msgSend(_nsSliderHandle, setTickMarkPositionSelector, 1); // NSTickMarkPositionBelow
+            }
+            else
+            {
+                // Disable tick marks
+                IntPtr setNumberOfTickMarksSelector = sel_registerName("setNumberOfTickMarks:");
+                objc_msgSend(_nsSliderHandle, setNumberOfTickMarksSelector, 0);
+            }
         }
     }
 
-    // IPlatformWidget interface implementation
+    #endregion
+
+    #region IPlatformWidget Implementation
+
     public void SetBounds(int x, int y, int width, int height)
     {
-        if (_disposed) return;
-        _platform.SetControlBounds(_pseudoHandle, x, y, width, height);
+        if (_disposed || _nsSliderHandle == IntPtr.Zero) return;
+
+        var frame = new CGRect(x, y, width, height);
+        IntPtr selector = sel_registerName("setFrame:");
+        objc_msgSend_rect(_nsSliderHandle, selector, frame);
     }
 
     public Rectangle GetBounds()
     {
-        if (_disposed) return default(Rectangle);
-        // For now, return default bounds - would need to implement GetControlBounds
-        return default(Rectangle);
+        if (_disposed || _nsSliderHandle == IntPtr.Zero) return default;
+
+        IntPtr selector = sel_registerName("frame");
+        objc_msgSend_stret(out CGRect frame, _nsSliderHandle, selector);
+
+        return new Rectangle((int)frame.x, (int)frame.y, (int)frame.width, (int)frame.height);
     }
 
     public void SetVisible(bool visible)
     {
-        if (_disposed) return;
-        _platform.SetControlVisible(_pseudoHandle, visible);
+        if (_disposed || _nsSliderHandle == IntPtr.Zero) return;
+
+        IntPtr selector = sel_registerName("setHidden:");
+        objc_msgSend_void(_nsSliderHandle, selector, !visible);
     }
 
     public bool GetVisible()
     {
-        if (_disposed) return false;
-        // For now, return true - would need to implement GetControlVisible
-        return true;
+        if (_disposed || _nsSliderHandle == IntPtr.Zero) return false;
+
+        IntPtr selector = sel_registerName("isHidden");
+        bool hidden = objc_msgSend_bool(_nsSliderHandle, selector);
+        return !hidden;
     }
 
     public void SetEnabled(bool enabled)
     {
-        if (_disposed) return;
-        _platform.SetControlEnabled(_pseudoHandle, enabled);
+        if (_disposed || _nsSliderHandle == IntPtr.Zero) return;
+
+        IntPtr selector = sel_registerName("setEnabled:");
+        objc_msgSend_void(_nsSliderHandle, selector, enabled);
     }
 
     public bool GetEnabled()
     {
-        if (_disposed) return false;
-        // For now, return true - would need to implement GetControlEnabled
-        return true;
+        if (_disposed || _nsSliderHandle == IntPtr.Zero) return false;
+
+        IntPtr selector = sel_registerName("isEnabled");
+        return objc_msgSend_bool(_nsSliderHandle, selector);
     }
 
     public void SetBackground(RGB color)
     {
-        // Not implemented for scales
+        // NSSlider doesn't support custom background colors
     }
 
     public RGB GetBackground()
@@ -192,63 +241,152 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
 
     public void SetForeground(RGB color)
     {
-        // Not implemented for scales
+        // NSSlider doesn't support custom foreground colors directly
     }
 
     public RGB GetForeground()
     {
-        return new RGB(0, 0, 0); // Default black
+        return new RGB(0, 120, 215); // Default blue
     }
 
-    public override IntPtr GetNativeHandle()
-    {
-        return _pseudoHandle;
-    }
+    #endregion
+
+    #region IDisposable Implementation
 
     public void Dispose()
     {
-        if (!_disposed)
+        if (_disposed) return;
+        _disposed = true;
+
+        if (_nsSliderHandle != IntPtr.Zero)
         {
-            // TODO: Implement DestroyScale in MacOSPlatform
-            // _platform.DestroyScale(_pseudoHandle);
-            _disposed = true;
+            IntPtr removeSelector = sel_registerName("removeFromSuperview");
+            objc_msgSend(_nsSliderHandle, removeSelector);
+
+            IntPtr releaseSelector = sel_registerName("release");
+            objc_msgSend(_nsSliderHandle, releaseSelector);
+
+            _nsSliderHandle = IntPtr.Zero;
         }
     }
 
-    // Event handling methods
-    private void OnValueChanged()
+    #endregion
+
+    #region Private Helper Methods
+
+    private IntPtr CreateNSSliderWithTicks(IntPtr parentHandle, int style)
     {
-        if (_disposed) return;
-        ValueChanged?.Invoke(this, _value);
+        // Get NSSlider class
+        IntPtr sliderClass = objc_getClass("NSSlider");
+
+        // Allocate and initialize
+        IntPtr allocSelector = sel_registerName("alloc");
+        IntPtr slider = objc_msgSend(sliderClass, allocSelector);
+
+        IntPtr initSelector = sel_registerName("init");
+        slider = objc_msgSend(slider, initSelector);
+
+        // Set initial frame
+        var frame = new CGRect(0, 0, 200, 30); // Slightly taller for tick marks
+        IntPtr setFrameSelector = sel_registerName("setFrame:");
+        objc_msgSend_rect(slider, setFrameSelector, frame);
+
+        // Set range
+        IntPtr setMinValueSelector = sel_registerName("setMinValue:");
+        objc_msgSend_double(slider, setMinValueSelector, 0.0);
+
+        IntPtr setMaxValueSelector = sel_registerName("setMaxValue:");
+        objc_msgSend_double(slider, setMaxValueSelector, 100.0);
+
+        // Set initial value
+        IntPtr setDoubleValueSelector = sel_registerName("setDoubleValue:");
+        objc_msgSend_double(slider, setDoubleValueSelector, 50.0);
+
+        // Configure tick marks
+        IntPtr setNumberOfTickMarksSelector = sel_registerName("setNumberOfTickMarks:");
+        objc_msgSend(slider, setNumberOfTickMarksSelector, 11); // 0, 10, 20, ..., 100
+
+        IntPtr setTickMarkPositionSelector = sel_registerName("setTickMarkPosition:");
+        objc_msgSend(slider, setTickMarkPositionSelector, 1); // NSTickMarkPositionBelow
+
+        IntPtr setAllowsTickMarkValuesOnlySelector = sel_registerName("setAllowsTickMarkValuesOnly:");
+        objc_msgSend_void(slider, setAllowsTickMarkValuesOnlySelector, false);
+
+        // Add to parent if provided
+        if (parentHandle != IntPtr.Zero)
+        {
+            IntPtr addSubviewSelector = sel_registerName("addSubview:");
+            objc_msgSend(parentHandle, addSubviewSelector, slider);
+        }
+
+        return slider;
     }
 
-    private void OnClick()
+    private void UpdateTickMarks()
     {
-        if (_disposed) return;
-        Click?.Invoke(this, 0);
+        if (_disposed || _nsSliderHandle == IntPtr.Zero || !_showTicks) return;
+
+        // Calculate number of tick marks based on increment
+        int range = _maximum - _minimum;
+        int tickCount = Math.Max(2, (range / _increment) + 1);
+
+        IntPtr selector = sel_registerName("setNumberOfTickMarks:");
+        objc_msgSend(_nsSliderHandle, selector, tickCount);
     }
 
-    private void OnFocusGained()
+    #endregion
+
+    #region ObjC P/Invoke
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CGRect
     {
-        if (_disposed) return;
-        FocusGained?.Invoke(this, 0);
+        public double x;
+        public double y;
+        public double width;
+        public double height;
+
+        public CGRect(double x, double y, double width, double height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
     }
 
-    private void OnFocusLost()
-    {
-        if (_disposed) return;
-        FocusLost?.Invoke(this, 0);
-    }
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr objc_getClass(string className);
 
-    private void OnKeyDown(PlatformKeyEventArgs args)
-    {
-        if (_disposed) return;
-        KeyDown?.Invoke(this, args);
-    }
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr sel_registerName(string selector);
 
-    private void OnKeyUp(PlatformKeyEventArgs args)
-    {
-        if (_disposed) return;
-        KeyUp?.Invoke(this, args);
-    }
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, int arg);
+
+    [DllImport(ObjCLibrary)]
+    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg);
+
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, bool arg);
+
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg);
+
+    [DllImport(ObjCLibrary)]
+    private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary)]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
+    private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);
+
+    #endregion
 }

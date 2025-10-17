@@ -47,7 +47,10 @@ public partial interface IPlatform
     IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style);
     IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style);
     IPlatformTabFolder CreateTabFolderWidget(IPlatformWidget? parent, int style);
+    IPlatformTable CreateTableWidget(IPlatformWidget? parent, int style);
     IPlatformComposite CreateTreeWidget(IPlatformWidget? parent, int style);
+    IPlatformComposite CreateCanvasWidget(IPlatformWidget? parent, int style);
+    IPlatformComposite CreateGroupWidget(IPlatformWidget? parent, int style, string text);
 }
 
 /// <summary>

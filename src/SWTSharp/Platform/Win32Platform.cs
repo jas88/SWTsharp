@@ -242,6 +242,26 @@ internal partial class Win32Platform : IPlatform
 
         return tree;
     }
+
+    public IPlatformComposite CreateCanvasWidget(IPlatformWidget? parent, int style)
+    {
+        // Get parent handle - use desktop if no parent
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent != null)
+        {
+            parentHandle = ExtractNativeHandle(parent);
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Creating canvas widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var canvas = new SWTSharp.Platform.Win32.Win32Canvas(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Canvas widget created successfully");
+
+        return canvas;
+    }
     private const string User32 = "user32.dll";
     private const string Kernel32 = "kernel32.dll";
 
