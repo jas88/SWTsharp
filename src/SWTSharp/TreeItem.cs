@@ -1,5 +1,4 @@
 using SWTSharp.Platform;
-using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp;
 
@@ -16,7 +15,6 @@ public class TreeItem : Widget
     private readonly Tree? _parentTree;
     private readonly TreeItem? _parentItem;
     private readonly System.Collections.Generic.List<TreeItem> _items = new();
-    private IPlatformTreeItem? _platformTreeItem;
 
     /// <summary>
     /// Gets or sets the text displayed in the tree item.
@@ -34,11 +32,7 @@ public class TreeItem : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                // Use platform widget
-                if (_platformTreeItem != null)
-                {
-                    _platformTreeItem.SetText(_text);
-                }
+                // TODO: Update platform tree item text through parent Tree's platform widget
             }
         }
     }
@@ -59,12 +53,7 @@ public class TreeItem : Widget
             if (_image != value)
             {
                 _image = value;
-                // Use platform widget
-                if (_platformTreeItem != null && _image != null)
-                {
-                    var imageAdapter = new MacOSImage(_image);
-                    _platformTreeItem.SetImage(imageAdapter);
-                }
+                // TODO: Update platform tree item image through parent Tree's platform widget
             }
         }
     }
@@ -93,11 +82,7 @@ public class TreeItem : Widget
             if (_checked != value)
             {
                 _checked = value;
-                // Use platform widget
-                if (_platformTreeItem != null)
-                {
-                    _platformTreeItem.SetChecked(_checked);
-                }
+                // TODO: Update platform tree item checked state through parent Tree's platform widget
             }
         }
     }
@@ -118,11 +103,7 @@ public class TreeItem : Widget
             if (_expanded != value)
             {
                 _expanded = value;
-                // Use platform widget
-                if (_platformTreeItem != null)
-                {
-                    _platformTreeItem.SetExpanded(_expanded);
-                }
+                // TODO: Update platform tree item expanded state through parent Tree's platform widget
 
                 if (_expanded)
                 {
@@ -243,33 +224,10 @@ public class TreeItem : Widget
     /// </summary>
     private void CreateWidget(IPlatformWidget? treeWidget, IPlatformWidget? parentItemWidget, int index)
     {
-        // Create platform tree item if platform factory supports it
-        if (Platform.PlatformFactory.Instance is MacOSPlatform macOSPlatform)
-        {
-            // TODO: Implement proper platform tree item creation without pseudo-handles
-            // TODO: Create IPlatformTreeItem widget here through platform widget interface
-
-            // Create platform adapter (temporary workaround)
-            _platformTreeItem = new MacOSTreeItem(macOSPlatform, IntPtr.Zero);
-        }
-        else
-        {
-            // Fallback for other platforms - TODO: Implement direct platform widget creation
-            throw new SWTException(SWT.ERROR_NOT_IMPLEMENTED, "Direct platform widget creation not implemented for this platform");
-        }
-
-        // Set initial properties using platform widget
-        if (_platformTreeItem != null)
-        {
-            _platformTreeItem.SetText(_text);
-            if (_image != null)
-            {
-                var imageAdapter = new MacOSImage(_image);
-                _platformTreeItem.SetImage(imageAdapter);
-            }
-            _platformTreeItem.SetExpanded(_expanded);
-            _platformTreeItem.SetChecked(_checked);
-        }
+        // TreeItem is a data structure managed by the parent Tree's platform widget
+        // The parent Tree handles the platform-specific implementation
+        // TODO: Integrate with platform tree widget to add this item to the tree hierarchy
+        // For now, TreeItem stores data locally and parent Tree queries it as needed
     }
 
     /// <summary>
@@ -435,12 +393,8 @@ public class TreeItem : Widget
         }
         _items.Clear();
 
-        // Dispose platform widget
-        if (_platformTreeItem != null)
-        {
-            _platformTreeItem.Dispose();
-            _platformTreeItem = null;
-        }
+        // TreeItem is managed by parent Tree's platform widget
+        // No direct platform widget disposal needed
 
         _image = null;
         base.ReleaseWidget();

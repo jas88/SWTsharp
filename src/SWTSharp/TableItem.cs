@@ -1,6 +1,5 @@
 using SWTSharp.Graphics;
 using SWTSharp.Platform;
-using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp;
 
@@ -17,7 +16,6 @@ public class TableItem : Widget
     private Color? _background;
     private Color? _foreground;
     private Font? _font;
-    private IPlatformTableItem? _platformTableItem;
 
     /// <summary>
     /// Gets the parent table.
@@ -239,10 +237,14 @@ public class TableItem : Widget
 
         _texts[column] = text ?? string.Empty;
 
-        // Use platform widget
-        if (_platformTableItem != null)
+        // Update platform table
+        if (_parent?.PlatformWidget is IPlatformTable platformTable)
         {
-            _platformTableItem.SetText(column, _texts[column]);
+            int rowIndex = _parent.GetItemIndex(this);
+            if (rowIndex >= 0)
+            {
+                platformTable.SetItemText(rowIndex, column, _texts[column]);
+            }
         }
     }
 
@@ -301,17 +303,15 @@ public class TableItem : Widget
 
         _images[column] = image;
 
-        // Image handling through platform widget interface
-        if (_platformTableItem != null)
+        // Update platform table
+        if (_parent?.PlatformWidget is IPlatformTable platformTable)
         {
-            if (image != null)
+            int rowIndex = _parent.GetItemIndex(this);
+            if (rowIndex >= 0)
             {
-                var imageAdapter = new MacOSImage(image);
-                _platformTableItem.SetImage(column, imageAdapter);
-            }
-            else
-            {
-                _platformTableItem.SetImage(column, null);
+                // TODO: Convert Image to IPlatformImage for SetItemImage
+                // For now, SetItemImage is not implemented in platform widgets
+                platformTable.SetItemImage(rowIndex, column, null);
             }
         }
     }
@@ -372,30 +372,32 @@ public class TableItem : Widget
 
     private void CreateWidget(int index = -1)
     {
-        // Create platform table item if platform factory supports it
-        if (Platform.PlatformFactory.Instance is MacOSPlatform macOSPlatform)
-        {
-            // TODO: Implement proper platform table item creation without pseudo-handles
-            // TODO: Create IPlatformTableItem widget here through platform widget interface
+        // TableItem is a data structure managed by the parent Table's platform widget
+        // The parent Table handles the platform-specific implementation
+        // No platform widget creation needed here - just notify parent to add the item
 
-            // Create platform adapter (temporary workaround)
-            _platformTableItem = new MacOSTableItem(macOSPlatform, IntPtr.Zero);
-        }
-        else
+        if (_parent?.PlatformWidget is IPlatformTable platformTable)
         {
-            // Fallback for other platforms - TODO: Implement direct platform widget creation
-            throw new SWTException(SWT.ERROR_NOT_IMPLEMENTED, "Direct platform widget creation not implemented for this platform");
-        }
+            // Add item to platform table and get the row index
+            int rowIndex = index >= 0 ? index : platformTable.AddItem();
 
-        // Set initial text for all columns
-        for (int i = 0; i < _texts.Length; i++)
-        {
-            if (!string.IsNullOrEmpty(_texts[i]))
+            // Set initial text for all columns
+            for (int i = 0; i < _texts.Length; i++)
             {
-                // Use platform widget
-                if (_platformTableItem != null)
+                if (!string.IsNullOrEmpty(_texts[i]))
                 {
-                    _platformTableItem.SetText(i, _texts[i]);
+                    platformTable.SetItemText(rowIndex, i, _texts[i]);
+                }
+            }
+
+            // Set initial image if provided
+            for (int i = 0; i < _images.Length; i++)
+            {
+                if (_images[i] != null)
+                {
+                    // TODO: Convert Image to IPlatformImage for SetItemImage
+                    // For now, SetItemImage is not implemented in platform widgets
+                    platformTable.SetItemImage(rowIndex, i, null);
                 }
             }
         }
@@ -408,12 +410,8 @@ public class TableItem : Widget
             _parent.RemoveItem(this);
         }
 
-        // Dispose platform widget
-        if (_platformTableItem != null)
-        {
-            _platformTableItem.Dispose();
-            _platformTableItem = null;
-        }
+        // TableItem is managed by parent Table's platform widget
+        // No direct platform widget disposal needed
 
         _background = null;
         _foreground = null;
