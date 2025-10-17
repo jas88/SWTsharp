@@ -66,8 +66,23 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformToolBar CreateToolBarWidget(IPlatformWindow parent, int style)
     {
-        // TODO: Implement LinuxToolBar in Phase 3 (special case)
-        throw new NotImplementedException("CreateToolBarWidget will be implemented in Phase 3");
+        // Extract parent window handle
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWindow linuxWindow)
+        {
+            parentHandle = linuxWindow.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating toolbar widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var toolbar = new SWTSharp.Platform.Linux.LinuxToolBar(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Toolbar widget created successfully");
+
+        return toolbar;
     }
 
     // Advanced widget factory methods for Phase 5.3
