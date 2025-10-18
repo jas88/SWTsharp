@@ -115,6 +115,11 @@ public class Browser : Composite
     public event EventHandler<BrowserNavigatedEventArgs>? Navigated;
 
     /// <summary>
+    /// Occurs when the browser location changes. Alias for Navigated.
+    /// </summary>
+    public event EventHandler<BrowserNavigatedEventArgs>? LocationChanged;
+
+    /// <summary>
     /// Occurs when navigation fails.
     /// </summary>
     public event EventHandler<BrowserNavigationErrorEventArgs>? NavigationError;
@@ -219,6 +224,16 @@ public class Browser : Composite
     }
 
     /// <summary>
+    /// Sets the URL and navigates to it. Alias for Navigate().
+    /// </summary>
+    /// <param name="url">The URL to navigate to</param>
+    /// <returns>True if navigation started successfully</returns>
+    public bool SetUrl(string url)
+    {
+        return Navigate(url);
+    }
+
+    /// <summary>
     /// Sets the HTML content directly.
     /// </summary>
     /// <param name="html">The HTML content to display</param>
@@ -234,6 +249,16 @@ public class Browser : Composite
 
         _text = html;
         return _platformBrowser?.SetText(html, baseUrl) ?? false;
+    }
+
+    /// <summary>
+    /// Gets the current HTML content.
+    /// </summary>
+    /// <returns>The HTML content</returns>
+    public string GetText()
+    {
+        CheckWidget();
+        return _text;
     }
 
     /// <summary>
@@ -265,6 +290,15 @@ public class Browser : Composite
     }
 
     /// <summary>
+    /// Navigates back in the browsing history. Alias for GoBack().
+    /// </summary>
+    /// <returns>True if navigation occurred</returns>
+    public bool Back()
+    {
+        return GoBack();
+    }
+
+    /// <summary>
     /// Navigates forward in the browsing history.
     /// </summary>
     /// <returns>True if navigation occurred</returns>
@@ -272,6 +306,15 @@ public class Browser : Composite
     {
         CheckWidget();
         return _platformBrowser?.GoForward() ?? false;
+    }
+
+    /// <summary>
+    /// Navigates forward in the browsing history. Alias for GoForward().
+    /// </summary>
+    /// <returns>True if navigation occurred</returns>
+    public bool Forward()
+    {
+        return GoForward();
     }
 
     /// <summary>
@@ -368,6 +411,21 @@ public class Browser : Composite
         _platformBrowser?.ClearCache();
     }
 
+    /// <summary>
+    /// Gets the current size of the browser widget.
+    /// </summary>
+    /// <returns>The size as a Point (width, height)</returns>
+    public Graphics.Point GetSize()
+    {
+        CheckWidget();
+        if (PlatformWidget != null)
+        {
+            var bounds = PlatformWidget.GetBounds();
+            return new Graphics.Point(bounds.Width, bounds.Height);
+        }
+        return new Graphics.Point(0, 0);
+    }
+
     // Event handlers that forward platform events to public events
 
     private void OnPlatformNavigating(object? sender, BrowserNavigatingEventArgs e)
@@ -380,6 +438,7 @@ public class Browser : Composite
     {
         CheckWidget();
         Navigated?.Invoke(this, e);
+        LocationChanged?.Invoke(this, e);
     }
 
     private void OnPlatformNavigationError(object? sender, BrowserNavigationErrorEventArgs e)

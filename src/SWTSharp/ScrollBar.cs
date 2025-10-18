@@ -189,6 +189,21 @@ public class ScrollBar : Control
     }
 
     /// <summary>
+    /// Gets the current size of the scrollbar widget.
+    /// </summary>
+    /// <returns>The size as a Point (width, height)</returns>
+    public Graphics.Point GetSize()
+    {
+        CheckWidget();
+        if (PlatformWidget != null)
+        {
+            var bounds = PlatformWidget.GetBounds();
+            return new Graphics.Point(bounds.Width, bounds.Height);
+        }
+        return new Graphics.Point(0, 0);
+    }
+
+    /// <summary>
     /// Gets the current selection value.
     /// </summary>
     public int GetSelection()

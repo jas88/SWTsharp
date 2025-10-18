@@ -77,6 +77,42 @@ public class Link : Control
         return _text;
     }
 
+    /// <summary>
+    /// Gets or sets the bounds of the link control.
+    /// </summary>
+    public Graphics.Rectangle Bounds
+    {
+        get
+        {
+            CheckWidget();
+            var bounds = GetBounds();
+            return new Graphics.Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        }
+        set
+        {
+            CheckWidget();
+            SetBounds(value.X, value.Y, value.Width, value.Height);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the size of the link control.
+    /// </summary>
+    public Graphics.Point Size
+    {
+        get
+        {
+            CheckWidget();
+            var bounds = GetBounds();
+            return new Graphics.Point(bounds.Width, bounds.Height);
+        }
+        set
+        {
+            CheckWidget();
+            SetSize(value.Width, value.Height);
+        }
+    }
+
     private void UpdateText()
     {
         if (PlatformWidget is IPlatformLink linkWidget)

@@ -1,5 +1,6 @@
 using Xunit;
 using SWTSharp;
+using SWTSharp.Graphics;
 using SWTSharp.Tests.Infrastructure;
 
 namespace SWTSharp.Tests.Widgets;
@@ -149,10 +150,10 @@ public class LinkTests : WidgetTestBase
             };
 
             // Simulate link click through platform widget
-            if (link.PlatformWidget is Platform.IPlatformLink platformLink)
+            if (link.PlatformWidget is SWTSharp.Platform.IPlatformLink platformLink)
             {
                 // Trigger the event handler directly (platform simulation)
-                var eventInfo = typeof(Platform.IPlatformLink).GetEvent("LinkClicked");
+                var eventInfo = typeof(SWTSharp.Platform.IPlatformLink).GetEvent("LinkClicked");
                 var field = platformLink.GetType()
                     .GetField("LinkClicked", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 

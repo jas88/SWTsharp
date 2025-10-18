@@ -200,6 +200,11 @@ public class BrowserNavigatedEventArgs : EventArgs
 {
     public string Url { get; set; } = string.Empty;
     public int StatusCode { get; set; }
+
+    /// <summary>
+    /// Gets the URL. Alias for Url property.
+    /// </summary>
+    public string Location => Url;
 }
 
 public class BrowserNavigationErrorEventArgs : EventArgs
@@ -238,6 +243,16 @@ public class BrowserProgressEventArgs : EventArgs
     /// Gets the total number of bytes.
     /// </summary>
     public long TotalBytes { get; set; }
+
+    /// <summary>
+    /// Gets the current progress. Alias for BytesReceived.
+    /// </summary>
+    public int Current => (int)BytesReceived;
+
+    /// <summary>
+    /// Gets the total expected size. Alias for TotalBytes.
+    /// </summary>
+    public int Total => (int)TotalBytes;
 }
 
 /// <summary>
@@ -249,6 +264,11 @@ public class BrowserStatusTextChangedEventArgs : EventArgs
     /// Gets the new status text.
     /// </summary>
     public string StatusText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the status text. Alias for StatusText.
+    /// </summary>
+    public string Text => StatusText;
 }
 
 /// <summary>

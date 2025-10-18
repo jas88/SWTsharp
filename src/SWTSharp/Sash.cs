@@ -80,6 +80,21 @@ public class Sash : Control
         return _position;
     }
 
+    /// <summary>
+    /// Gets the current size of the sash widget.
+    /// </summary>
+    /// <returns>The size as a Point (width, height)</returns>
+    public Graphics.Point GetSize()
+    {
+        CheckWidget();
+        if (PlatformWidget != null)
+        {
+            var bounds = PlatformWidget.GetBounds();
+            return new Graphics.Point(bounds.Width, bounds.Height);
+        }
+        return new Graphics.Point(0, 0);
+    }
+
     private void UpdatePosition()
     {
         if (PlatformWidget is IPlatformSash sashWidget)

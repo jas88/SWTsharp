@@ -157,6 +157,30 @@ public static class SWT
     public const int BOLD = 1 << 0;
     public const int ITALIC = 1 << 1;
 
+    // Cursor constants
+    public const int CURSOR_ARROW = 0;
+    public const int CURSOR_WAIT = 1;
+    public const int CURSOR_CROSS = 2;
+    public const int CURSOR_APPSTARTING = 3;
+    public const int CURSOR_HELP = 4;
+    public const int CURSOR_SIZEALL = 5;
+    public const int CURSOR_SIZENESW = 6;
+    public const int CURSOR_SIZENS = 7;
+    public const int CURSOR_SIZENWSE = 8;
+    public const int CURSOR_SIZEWE = 9;
+    public const int CURSOR_SIZEN = 10;
+    public const int CURSOR_SIZES = 11;
+    public const int CURSOR_SIZEE = 12;
+    public const int CURSOR_SIZEW = 13;
+    public const int CURSOR_SIZENE = 14;
+    public const int CURSOR_SIZESE = 15;
+    public const int CURSOR_SIZESW = 16;
+    public const int CURSOR_SIZENW = 17;
+    public const int CURSOR_UPARROW = 18;
+    public const int CURSOR_IBEAM = 19;
+    public const int CURSOR_NO = 20;
+    public const int CURSOR_HAND = 21;
+
     // Event types
     public const int KeyDown = 1;
     public const int KeyUp = 2;
