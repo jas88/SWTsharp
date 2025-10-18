@@ -104,3 +104,9 @@ public partial interface IPlatform
 {
     IPlatformCoolBar CreateCoolBarWidget(IPlatformWidget? parent, int style);
 }
+
+// Browser widget factory
+public partial interface IPlatform
+{
+    IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style);
+}

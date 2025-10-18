@@ -262,6 +262,17 @@ internal partial class Win32Platform : IPlatform
 
         return canvas;
     }
+
+    // Browser widget factory method
+    // For NET8_0_OR_GREATER: Implementation is in Win32Platform_Browser.cs
+    // For netstandard2.0: Stub implementation below (Browser not supported on older frameworks)
+#if !NET8_0_OR_GREATER
+    public IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style)
+    {
+        throw new NotSupportedException("Browser widget requires .NET 8.0 or greater");
+    }
+#endif
+
     private const string User32 = "user32.dll";
     private const string Kernel32 = "kernel32.dll";
 

@@ -754,4 +754,5 @@ internal partial class LinuxPlatform : IPlatform
         return GetUtf8String(ptr);
 #endif
     }
+
 }

@@ -1453,4 +1453,20 @@ internal partial class MacOSPlatform : IPlatform
     // - MacOSPlatform_Scale.cs: Scale widget (NSSlider with ticks)
     // - MacOSPlatform_Spinner.cs: Spinner widget (NSStepper + NSTextField)
     // - MacOSPlatform_Dialogs.cs: All dialogs (NSAlert, NSOpenPanel, NSColorPanel, NSFontPanel)
+
+    // Browser widget factory method
+    public IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style)
+    {
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating browser widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var browser = new MacOSBrowser(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Browser widget created successfully using WKWebView");
+
+        return browser;
+    }
 }
