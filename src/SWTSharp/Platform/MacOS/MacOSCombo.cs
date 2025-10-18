@@ -2,8 +2,9 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Linq;
 using SWTSharp.Graphics;
+using SWTSharp.Platform.MacOS;
 
-namespace SWTSharp.Platform.MacOS;
+namespace SWTSharp.Platform;
 
 /// <summary>
 /// macOS implementation of IPlatformCombo that adapts the existing NSComboBox implementation.
@@ -11,7 +12,6 @@ namespace SWTSharp.Platform.MacOS;
 /// </summary>
 internal class MacOSCombo : MacOSWidget, IPlatformCombo
 {
-    private readonly MacOSPlatform _platform;
     private readonly IntPtr _pseudoHandle; // The pseudo-handle used by existing implementation
     private readonly List<string> _items = new();
     private bool _disposed;
@@ -28,7 +28,7 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
 
     public MacOSCombo(IntPtr parentHandle, int style)
     {
-        _platform = new MacOSPlatform(); // Get platform instance for method calls
+        // Use singleton platform instance
 
         // TODO: Implement CreateCombo in MacOSPlatform
         // _pseudoHandle = _platform.CreateCombo(parentHandle, style);
@@ -134,7 +134,7 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
     public void SetBounds(int x, int y, int width, int height)
     {
         if (_disposed) return;
-        _platform.SetControlBounds(_pseudoHandle, x, y, width, height);
+        ((MacOSPlatform)PlatformFactory.Instance).SetControlBounds(_pseudoHandle, x, y, width, height);
     }
 
     public Rectangle GetBounds()
@@ -147,7 +147,7 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
     public void SetVisible(bool visible)
     {
         if (_disposed) return;
-        _platform.SetControlVisible(_pseudoHandle, visible);
+        ((MacOSPlatform)PlatformFactory.Instance).SetControlVisible(_pseudoHandle, visible);
     }
 
     public bool GetVisible()
@@ -160,7 +160,7 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
     public void SetEnabled(bool enabled)
     {
         if (_disposed) return;
-        _platform.SetControlEnabled(_pseudoHandle, enabled);
+        ((MacOSPlatform)PlatformFactory.Instance).SetControlEnabled(_pseudoHandle, enabled);
     }
 
     public bool GetEnabled()

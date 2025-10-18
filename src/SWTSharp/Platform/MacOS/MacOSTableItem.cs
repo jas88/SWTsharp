@@ -1,8 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using SWTSharp.Graphics;
+using SWTSharp.Platform.MacOS;
 
-namespace SWTSharp.Platform.MacOS;
+namespace SWTSharp.Platform;
 
 /// <summary>
 /// macOS implementation of IPlatformTableItem that adapts existing NSTableView row data.
@@ -10,7 +11,6 @@ namespace SWTSharp.Platform.MacOS;
 /// </summary>
 internal class MacOSTableItem : IPlatformTableItem
 {
-    private readonly MacOSPlatform _platform;
     private readonly IntPtr _pseudoHandle; // The pseudo-handle used by existing implementation
     private bool _disposed;
 
@@ -18,9 +18,9 @@ internal class MacOSTableItem : IPlatformTableItem
     public event EventHandler<int>? SelectionChanged;
     public event EventHandler<int>? ItemDoubleClick;
 
-    public MacOSTableItem(MacOSPlatform platform, IntPtr pseudoHandle)
+    public MacOSTableItem(MacOSPlatform _, IntPtr pseudoHandle)
     {
-        _platform = platform ?? throw new ArgumentNullException(nameof(platform));
+        // Use singleton platform instance (parameter kept for compatibility)
         _pseudoHandle = pseudoHandle;
     }
 
@@ -29,7 +29,7 @@ internal class MacOSTableItem : IPlatformTableItem
         if (_disposed) return;
 
         // Use the existing platform implementation
-        _platform.SetTableItemText(_pseudoHandle, column, text ?? string.Empty);
+        ((MacOSPlatform)SWTSharp.Platform.PlatformFactory.Instance).SetTableItemText(_pseudoHandle, column, text ?? string.Empty);
     }
 
     public string GetText(int column)
@@ -61,7 +61,7 @@ internal class MacOSTableItem : IPlatformTableItem
         }
 
         // Use the existing platform implementation
-        _platform.SetTableItemImage(_pseudoHandle, column, imageHandle);
+        ((MacOSPlatform)SWTSharp.Platform.PlatformFactory.Instance).SetTableItemImage(_pseudoHandle, column, imageHandle);
     }
 
     public void SetBackground(RGB color)

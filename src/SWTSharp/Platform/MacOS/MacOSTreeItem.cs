@@ -1,7 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
+using SWTSharp.Platform.MacOS;
 
-namespace SWTSharp.Platform.MacOS;
+namespace SWTSharp.Platform;
 
 /// <summary>
 /// macOS implementation of IPlatformTreeItem that adapts existing NSTreeNode data.
@@ -9,7 +10,6 @@ namespace SWTSharp.Platform.MacOS;
 /// </summary>
 internal class MacOSTreeItem : IPlatformTreeItem
 {
-    private readonly MacOSPlatform _platform;
     private readonly IntPtr _pseudoHandle; // The pseudo-handle used by existing implementation
     private bool _disposed;
 
@@ -17,9 +17,9 @@ internal class MacOSTreeItem : IPlatformTreeItem
     public event EventHandler<int>? SelectionChanged;
     public event EventHandler<int>? ItemDoubleClick;
 
-    public MacOSTreeItem(MacOSPlatform platform, IntPtr pseudoHandle)
+    public MacOSTreeItem(MacOSPlatform _, IntPtr pseudoHandle)
     {
-        _platform = platform ?? throw new ArgumentNullException(nameof(platform));
+        // Use singleton platform instance (parameter kept for compatibility)
         _pseudoHandle = pseudoHandle;
     }
 
@@ -28,7 +28,7 @@ internal class MacOSTreeItem : IPlatformTreeItem
         if (_disposed) return;
 
         // Use the existing platform implementation
-        _platform.SetTreeItemText(_pseudoHandle, text ?? string.Empty);
+        ((MacOSPlatform)SWTSharp.Platform.PlatformFactory.Instance).SetTreeItemText(_pseudoHandle, text ?? string.Empty);
     }
 
     public string GetText()
@@ -60,7 +60,7 @@ internal class MacOSTreeItem : IPlatformTreeItem
         }
 
         // Use the existing platform implementation
-        _platform.SetTreeItemImage(_pseudoHandle, imageHandle);
+        ((MacOSPlatform)SWTSharp.Platform.PlatformFactory.Instance).SetTreeItemImage(_pseudoHandle, imageHandle);
     }
 
     public void SetExpanded(bool expanded)
@@ -68,7 +68,7 @@ internal class MacOSTreeItem : IPlatformTreeItem
         if (_disposed) return;
 
         // Use the existing platform implementation
-        _platform.SetTreeItemExpanded(_pseudoHandle, expanded);
+        ((MacOSPlatform)SWTSharp.Platform.PlatformFactory.Instance).SetTreeItemExpanded(_pseudoHandle, expanded);
     }
 
     public bool GetExpanded()
@@ -85,7 +85,7 @@ internal class MacOSTreeItem : IPlatformTreeItem
         if (_disposed) return;
 
         // Use the existing platform implementation
-        _platform.SetTreeItemChecked(_pseudoHandle, @checked);
+        ((MacOSPlatform)SWTSharp.Platform.PlatformFactory.Instance).SetTreeItemChecked(_pseudoHandle, @checked);
     }
 
     public bool GetChecked()

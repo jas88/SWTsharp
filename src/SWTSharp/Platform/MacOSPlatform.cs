@@ -1457,7 +1457,12 @@ internal partial class MacOSPlatform : IPlatform
     // Browser widget factory method
     public IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style)
     {
-        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+        // Extract parent handle inline (following established pattern)
+        IntPtr parentHandle = IntPtr.Zero;
+        if (parent is MacOS.MacOSWidget macOSWidget)
+        {
+            parentHandle = macOSWidget.GetNativeHandle();
+        }
 
         if (_enableLogging)
             Console.WriteLine($"[macOS] Creating browser widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
