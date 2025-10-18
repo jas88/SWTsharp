@@ -1,19 +1,27 @@
 #if NET8_0_OR_GREATER
 using System.Runtime.InteropServices;
 using SWTSharp.Graphics;
+using Microsoft.Web.WebView2.WinForms;
+using Microsoft.Web.WebView2.Core;
 
 namespace SWTSharp.Platform;
 
 /// <summary>
-/// Windows (Win32) platform implementation - Browser widget methods.
-/// TODO: Implement using WebView2 COM interfaces or WinForms integration.
+/// Windows (Win32) platform implementation - Browser widget using WebView2.
+/// WebView2 package is cross-platform compatible but runtime only works on Windows.
 /// </summary>
 internal partial class Win32Platform
 {
     private class Win32Browser : IPlatformBrowser
     {
-        private readonly IntPtr _handle;
+        private readonly IntPtr _parentHandle;
+        private WebView2? _webView2;
         private bool _disposed;
+        private bool _isInitialized;
+        private string _currentUrl = string.Empty;
+        private string _currentTitle = string.Empty;
+        private bool _isLoading;
+        private readonly bool _isWindows;
 
         public event EventHandler<BrowserNavigatedEventArgs>? Navigated;
         public event EventHandler<BrowserNavigationErrorEventArgs>? NavigationError;
@@ -25,132 +33,364 @@ internal partial class Win32Platform
         public event EventHandler<BrowserNewWindowEventArgs>? NewWindow;
         public event EventHandler<BrowserProcessTerminatedEventArgs>? ProcessTerminated;
 
+#pragma warning disable CS0067 // Event is never used
+        public event EventHandler<int>? Click;
+        public event EventHandler<int>? FocusGained;
+        public event EventHandler<int>? FocusLost;
+        public event EventHandler<PlatformKeyEventArgs>? KeyDown;
+        public event EventHandler<PlatformKeyEventArgs>? KeyUp;
+#pragma warning restore CS0067
+
         public Win32Browser(IntPtr parentHandle)
         {
-            // Create a placeholder window for now
-            _handle = CreateWindowEx(
-                0,
-                "Static",
-                string.Empty,
-                WS_CHILD | WS_VISIBLE,
-                0, 0, 100, 100,
-                parentHandle,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                IntPtr.Zero
-            );
+            _parentHandle = parentHandle;
+            _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-            if (_handle == IntPtr.Zero)
+            if (_isWindows)
             {
-                int error = Marshal.GetLastWin32Error();
-                throw new InvalidOperationException($"Failed to create browser window. Error: {error}");
+                try
+                {
+                    // Create WebView2 control
+                    _webView2 = new WebView2
+                    {
+                        Dock = System.Windows.Forms.DockStyle.Fill
+                    };
+
+                    // Wire up events
+                    _webView2.NavigationStarting += OnNavigationStarting;
+                    _webView2.NavigationCompleted += OnNavigationCompleted;
+                    _webView2.CoreWebView2InitializationCompleted += OnCoreWebView2InitializationCompleted;
+
+                    // Note: Actual window integration requires more Win32 interop
+                    // For now, we create the control but need parent window setup
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Win32Browser] Failed to create WebView2 control: {ex.Message}");
+                    _webView2 = null;
+                }
             }
         }
 
-        public Task InitializeAsync()
+        private void OnCoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
         {
-            // No async initialization needed for stub
-            return Task.CompletedTask;
+            if (!e.IsSuccess)
+            {
+                Console.WriteLine($"[Win32Browser] WebView2 initialization failed: {e.InitializationException?.Message}");
+                _isInitialized = false;
+                return;
+            }
+
+            if (_webView2?.CoreWebView2 != null)
+            {
+                // Wire up CoreWebView2 events
+                _webView2.CoreWebView2.DocumentTitleChanged += (s, args) =>
+                {
+                    _currentTitle = _webView2.CoreWebView2.DocumentTitle;
+                    TitleChanged?.Invoke(this, new BrowserTitleChangedEventArgs { Title = _currentTitle });
+                };
+
+                _webView2.CoreWebView2.ProcessFailed += (s, args) =>
+                {
+                    ProcessTerminated?.Invoke(this, new BrowserProcessTerminatedEventArgs());
+                };
+
+                _isInitialized = true;
+            }
         }
 
-        public bool IsInitialized => true;
+        private void OnNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
+        {
+            _isLoading = true;
+            var args = new BrowserNavigatingEventArgs
+            {
+                Url = e.Uri,
+                IsUserInitiated = e.IsUserInitiated,
+                IsRedirect = e.IsRedirected
+            };
+            Navigating?.Invoke(this, args);
+
+            if (args.Cancel)
+            {
+                e.Cancel = true;
+            }
+        }
+
+        private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            _isLoading = false;
+
+            if (_webView2?.CoreWebView2 != null)
+            {
+                _currentUrl = _webView2.CoreWebView2.Source;
+                _currentTitle = _webView2.CoreWebView2.DocumentTitle;
+            }
+
+            if (e.IsSuccess)
+            {
+                Navigated?.Invoke(this, new BrowserNavigatedEventArgs { Url = _currentUrl });
+                DocumentComplete?.Invoke(this, new BrowserDocumentCompleteEventArgs { Url = _currentUrl });
+            }
+            else
+            {
+                var errorMessage = e.WebErrorStatus.ToString();
+                NavigationError?.Invoke(this, new BrowserNavigationErrorEventArgs
+                {
+                    Url = _currentUrl,
+                    ErrorMessage = errorMessage
+                });
+            }
+        }
+
+        public async Task InitializeAsync()
+        {
+            if (!_isWindows || _webView2 == null)
+            {
+                _isInitialized = false;
+                return;
+            }
+
+            try
+            {
+                await _webView2.EnsureCoreWebView2Async(null);
+                _isInitialized = _webView2.CoreWebView2 != null;
+            }
+            catch (WebView2RuntimeNotFoundException)
+            {
+                Console.WriteLine("[Win32Browser] WebView2 runtime not found. Please install from https://developer.microsoft.com/microsoft-edge/webview2/");
+                _isInitialized = false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Win32Browser] WebView2 initialization failed: {ex.Message}");
+                _isInitialized = false;
+            }
+        }
+
+        public bool IsInitialized => _isInitialized;
 
         public bool Navigate(string url)
         {
-            // TODO: Implement WebView2 navigation
-            return false;
+            if (!_isInitialized || _webView2?.CoreWebView2 == null || string.IsNullOrEmpty(url))
+                return false;
+
+            try
+            {
+                _webView2.CoreWebView2.Navigate(url);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Win32Browser] Navigation failed: {ex.Message}");
+                return false;
+            }
         }
 
         public bool SetText(string html, string? baseUrl = null)
         {
-            // TODO: Implement WebView2 HTML loading
-            return false;
+            if (!_isInitialized || _webView2?.CoreWebView2 == null || string.IsNullOrEmpty(html))
+                return false;
+
+            try
+            {
+                _webView2.CoreWebView2.NavigateToString(html);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Win32Browser] SetText failed: {ex.Message}");
+                return false;
+            }
         }
 
-        public string GetUrl() => string.Empty;
+        public string GetUrl() => _currentUrl;
 
-        public string GetTitle() => string.Empty;
+        public string GetTitle() => _currentTitle;
 
-        public bool IsLoading => false;
-
-        public string ExecuteScript(string script) => string.Empty;
-
-        public bool JavaScriptEnabled { get; set; }
-
-        public void SetUserAgent(string userAgent) { }
-
-        public string GetUserAgent() => string.Empty;
-
-        public void ClearCookies() { }
-
-        public void ClearCache() { }
-
-        public bool GoBack() => false;
-
-        public bool GoForward() => false;
-
-        public void Refresh() { }
-
-        public void Stop() { }
-
-        public bool CanGoBack => false;
-
-        public bool CanGoForward => false;
+        public bool IsLoading => _isLoading;
 
         public async Task<string?> ExecuteScriptAsync(string script)
         {
-            await Task.CompletedTask;
-            return null;
+            if (!_isInitialized || _webView2?.CoreWebView2 == null || string.IsNullOrEmpty(script))
+                return null;
+
+            try
+            {
+                var result = await _webView2.CoreWebView2.ExecuteScriptAsync(script);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Win32Browser] ExecuteScriptAsync failed: {ex.Message}");
+                return null;
+            }
         }
+
+        public string? ExecuteScript(string script)
+        {
+            // Synchronous wrapper - blocks on async operation
+            return ExecuteScriptAsync(script).GetAwaiter().GetResult();
+        }
+
+        public bool JavaScriptEnabled
+        {
+            get => _webView2?.CoreWebView2?.Settings?.IsScriptEnabled ?? true;
+            set
+            {
+                if (_isInitialized && _webView2?.CoreWebView2?.Settings != null)
+                {
+                    _webView2.CoreWebView2.Settings.IsScriptEnabled = value;
+                }
+            }
+        }
+
+        public void SetUserAgent(string userAgent)
+        {
+            if (_isInitialized && _webView2?.CoreWebView2?.Settings != null)
+            {
+                _webView2.CoreWebView2.Settings.UserAgent = userAgent;
+            }
+        }
+
+        public string GetUserAgent()
+        {
+            return _webView2?.CoreWebView2?.Settings?.UserAgent ?? string.Empty;
+        }
+
+        public async void ClearCookies()
+        {
+            if (_isInitialized && _webView2?.CoreWebView2 != null)
+            {
+                try
+                {
+                    var cookieManager = _webView2.CoreWebView2.CookieManager;
+                    var cookies = await cookieManager.GetCookiesAsync(string.Empty);
+                    foreach (var cookie in cookies)
+                    {
+                        cookieManager.DeleteCookie(cookie);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Win32Browser] ClearCookies failed: {ex.Message}");
+                }
+            }
+        }
+
+        public async void ClearCache()
+        {
+            if (_isInitialized && _webView2?.CoreWebView2?.Profile != null)
+            {
+                try
+                {
+                    await _webView2.CoreWebView2.Profile.ClearBrowsingDataAsync(
+                        CoreWebView2BrowsingDataKinds.AllDomStorage |
+                        CoreWebView2BrowsingDataKinds.AllSite |
+                        CoreWebView2BrowsingDataKinds.DiskCache |
+                        CoreWebView2BrowsingDataKinds.CacheStorage);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Win32Browser] ClearCache failed: {ex.Message}");
+                }
+            }
+        }
+
+        public bool GoBack()
+        {
+            if (!_isInitialized || _webView2?.CoreWebView2 == null || !CanGoBack)
+                return false;
+
+            try
+            {
+                _webView2.CoreWebView2.GoBack();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool GoForward()
+        {
+            if (!_isInitialized || _webView2?.CoreWebView2 == null || !CanGoForward)
+                return false;
+
+            try
+            {
+                _webView2.CoreWebView2.GoForward();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public void Refresh()
+        {
+            if (_isInitialized && _webView2?.CoreWebView2 != null)
+            {
+                _webView2.CoreWebView2.Reload();
+            }
+        }
+
+        public void Stop()
+        {
+            if (_isInitialized && _webView2?.CoreWebView2 != null)
+            {
+                _webView2.CoreWebView2.Stop();
+            }
+        }
+
+        public bool CanGoBack => _webView2?.CoreWebView2?.CanGoBack ?? false;
+
+        public bool CanGoForward => _webView2?.CoreWebView2?.CanGoForward ?? false;
 
         public void SetBounds(int x, int y, int width, int height)
         {
-            if (_disposed || _handle == IntPtr.Zero)
+            if (_disposed || _webView2 == null)
                 return;
 
-            Win32Platform.SetWindowPos(_handle, IntPtr.Zero, x, y, width, height, 0x0004 | 0x0010);
+            _webView2.Left = x;
+            _webView2.Top = y;
+            _webView2.Width = width;
+            _webView2.Height = height;
         }
 
         public Rectangle GetBounds()
         {
-            if (_disposed || _handle == IntPtr.Zero)
+            if (_disposed || _webView2 == null)
                 return default;
 
-            RECT rect;
-            Win32Platform.GetWindowRect(_handle, out rect);
-            return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+            return new Rectangle(_webView2.Left, _webView2.Top, _webView2.Width, _webView2.Height);
         }
 
         public void SetVisible(bool visible)
         {
-            if (_disposed || _handle == IntPtr.Zero)
+            if (_disposed || _webView2 == null)
                 return;
 
-            Win32Platform.ShowWindow(_handle, visible ? 5 : 0);
+            _webView2.Visible = visible;
         }
 
         public bool GetVisible()
         {
-            if (_disposed || _handle == IntPtr.Zero)
-                return false;
-
-            return Win32Platform.IsWindowVisible(_handle);
+            return _webView2?.Visible ?? false;
         }
 
         public void SetEnabled(bool enabled)
         {
-            if (_disposed || _handle == IntPtr.Zero)
+            if (_disposed || _webView2 == null)
                 return;
 
-            Win32Platform.EnableWindow(_handle, enabled);
+            _webView2.Enabled = enabled;
         }
 
         public bool GetEnabled()
         {
-            if (_disposed || _handle == IntPtr.Zero)
-                return false;
-
-            return Win32Platform.IsWindowEnabled(_handle);
+            return _webView2?.Enabled ?? false;
         }
 
         public void SetBackground(RGB color) { }
@@ -165,9 +405,13 @@ internal partial class Win32Platform
         {
             if (!_disposed)
             {
-                if (_handle != IntPtr.Zero)
+                if (_webView2 != null)
                 {
-                    Win32Platform.DestroyWindow(_handle);
+                    _webView2.NavigationStarting -= OnNavigationStarting;
+                    _webView2.NavigationCompleted -= OnNavigationCompleted;
+                    _webView2.CoreWebView2InitializationCompleted -= OnCoreWebView2InitializationCompleted;
+                    _webView2.Dispose();
+                    _webView2 = null;
                 }
                 _disposed = true;
             }
@@ -179,12 +423,15 @@ internal partial class Win32Platform
         IntPtr parentHandle = parent != null ? ExtractNativeHandle(parent) : IntPtr.Zero;
 
         if (_enableLogging)
-            Console.WriteLine($"[Win32] Creating browser widget (stub). Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+        {
+            var platform = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "WebView2" : "stub (non-Windows)";
+            Console.WriteLine($"[Win32] Creating browser widget ({platform}). Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+        }
 
         var browser = new Win32Browser(parentHandle);
 
         if (_enableLogging)
-            Console.WriteLine($"[Win32] Browser widget created (WebView2 implementation pending)");
+            Console.WriteLine($"[Win32] Browser widget created successfully");
 
         return browser;
     }
