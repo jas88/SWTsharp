@@ -76,7 +76,6 @@
   <!-- WebView2 support for Browser widget on .NET 8+ (Windows runtime only) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0'">
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
-    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
   </ItemGroup>
 
 </Project>
