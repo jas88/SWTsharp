@@ -1,4 +1,7 @@
 using System;
+#if NET5_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace SWTSharp.Platform;
 
@@ -13,6 +16,10 @@ internal partial class LinuxPlatform
     /// <param name="parent">Parent widget (optional)</param>
     /// <param name="style">Widget style flags</param>
     /// <returns>Platform-specific browser widget</returns>
+#if NET5_0_OR_GREATER
+    [RequiresDynamicCode("Browser widget may use WebView2 on Windows which requires dynamic code generation")]
+    [RequiresUnreferencedCode("Browser widget may use WebView2 on Windows which uses reflection and COM interop")]
+#endif
     public IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style)
     {
         IntPtr parentHandle = IntPtr.Zero;

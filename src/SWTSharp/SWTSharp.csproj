@@ -67,6 +67,16 @@
     <!-- Deterministic builds -->
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Trim and AOT support -->
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <!-- AOT compatibility annotations (library doesn't force AOT on consumers) -->
+    <IsAotCompatible Condition="'$(TargetFramework)' != 'netstandard2.0'">true</IsAotCompatible>
+    <!-- Suppress trim warnings for platform-specific reflection code used for native interop -->
+    <!-- IL2075: GetType() usage for reflection in platform code (safe - limited to known types) -->
+    <NoWarn>$(NoWarn);IL2075</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

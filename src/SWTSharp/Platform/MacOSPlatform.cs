@@ -1455,6 +1455,10 @@ internal partial class MacOSPlatform : IPlatform
     // - MacOSPlatform_Dialogs.cs: All dialogs (NSAlert, NSOpenPanel, NSColorPanel, NSFontPanel)
 
     // Browser widget factory method
+#if NET5_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("Browser widget may use WebView2 on Windows which requires dynamic code generation")]
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Browser widget may use WebView2 on Windows which uses reflection and COM interop")]
+#endif
     public IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style)
     {
         // Extract parent handle inline (following established pattern)

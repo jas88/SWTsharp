@@ -1,3 +1,6 @@
+#if NET5_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using SWTSharp.Platform;
 
 namespace SWTSharp;
@@ -6,6 +9,14 @@ namespace SWTSharp;
 /// A browser widget that displays HTML content using platform-native browser controls.
 /// Supports navigation, JavaScript execution, and web content rendering.
 /// </summary>
+/// <remarks>
+/// On Windows with .NET 8+, uses WebView2 which requires dynamic code generation.
+/// Not compatible with Native AOT on Windows. Other platforms may have different requirements.
+/// </remarks>
+#if NET5_0_OR_GREATER
+[RequiresDynamicCode("Browser widget uses WebView2 on Windows which requires dynamic code generation")]
+[RequiresUnreferencedCode("Browser widget uses WebView2 on Windows which uses reflection and COM interop")]
+#endif
 public class Browser : Composite
 {
     private IPlatformBrowser? _platformBrowser;

@@ -108,5 +108,9 @@ public partial interface IPlatform
 // Browser widget factory
 public partial interface IPlatform
 {
+#if NET5_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("Browser widget may use WebView2 on Windows which requires dynamic code generation")]
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Browser widget may use WebView2 on Windows which uses reflection and COM interop")]
+#endif
     IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style);
 }

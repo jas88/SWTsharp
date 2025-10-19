@@ -1,4 +1,5 @@
 #if NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using SWTSharp.Graphics;
 using Microsoft.Web.WebView2.Core;
@@ -11,6 +12,8 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class Win32Platform
 {
+    [RequiresDynamicCode("WebView2 COM interop requires dynamic code generation and is not compatible with Native AOT")]
+    [RequiresUnreferencedCode("WebView2 COM interop requires reflection and is not trim-safe")]
     private class Win32Browser : IPlatformBrowser
     {
         private readonly IntPtr _parentHandle;
@@ -486,6 +489,8 @@ internal partial class Win32Platform
         }
     }
 
+    [RequiresDynamicCode("WebView2 COM interop requires dynamic code generation and is not compatible with Native AOT")]
+    [RequiresUnreferencedCode("WebView2 COM interop requires reflection and is not trim-safe")]
     public IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style)
     {
         IntPtr parentHandle = parent != null ? ExtractNativeHandle(parent) : IntPtr.Zero;
