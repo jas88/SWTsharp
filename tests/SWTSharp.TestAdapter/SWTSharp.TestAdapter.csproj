@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <!-- VSTest Platform Object Model - required for adapter interfaces -->
-    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.11.1" />
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="18.0.0" />
 
     <!-- xUnit v2 packages for discovering and running xUnit v2 tests -->
     <PackageReference Include="xunit.abstractions" Version="2.0.3" />
