@@ -49,7 +49,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-windows
           path: '**/test-results.trx'
@@ -98,7 +98,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-macos
           path: '**/test-results.trx'
@@ -168,7 +168,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-linux
           path: '**/test-results.trx'
@@ -178,14 +178,14 @@ jobs:
         run: dotnet pack --configuration ${{ env.CONFIGURATION }} --no-build --output ./artifacts
 
       - name: Upload NuGet package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nuget-package
           path: ./artifacts/*.nupkg
           retention-days: 90
 
       - name: Upload NuGet symbols
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nuget-symbols
           path: ./artifacts/*.snupkg
