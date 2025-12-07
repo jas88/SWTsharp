@@ -127,7 +127,19 @@ jobs:
       - name: Setup Xvfb and GTK/WebKit (Virtual Display for GUI Tests)
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libglib2.0-0 libx11-dev libwebkit2gtk-4.0-37
+          # Ubuntu 24.04 uses WebKitGTK 4.1, older versions use 4.0
+          # Try to install 4.0 first, fall back to 4.1, or create symlink
+          sudo apt-get install -y xvfb libgtk-3-0 libglib2.0-0 libx11-dev
+          # Try WebKit 4.1 (Ubuntu 24.04) first since that's what ubuntu-latest uses
+          if sudo apt-get install -y libwebkit2gtk-4.1-0 2>/dev/null; then
+            # Create symlink from 4.0 to 4.1 for compatibility
+            if [ -f /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so.0 ]; then
+              sudo ln -sf /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so.0 /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.0.so.37
+            fi
+          else
+            # Fall back to 4.0 if available
+            sudo apt-get install -y libwebkit2gtk-4.0-37 || true
+          fi
           # Start Xvfb on display :99
           sudo Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
           # Wait for Xvfb to be ready
