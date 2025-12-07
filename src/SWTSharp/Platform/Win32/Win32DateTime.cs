@@ -272,8 +272,8 @@ internal class Win32DateTime : IPlatformDateTime
         }
         else if ((style & SWT.CALENDAR) != 0)
         {
-            // For calendar, we use the MonthCalendar control instead
-            return CreateWindowEx(0, "MonthCalendar", "", dwStyle,
+            // For calendar, we use the SysMonthCal32 control (Common Controls)
+            return CreateWindowEx(0, "SysMonthCal32", "", dwStyle,
                 0, 0, 200, 150, parentHandle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         }
         else // SWT.DATE or default

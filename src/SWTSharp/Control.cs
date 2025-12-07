@@ -176,11 +176,11 @@ public abstract class Control : Widget
     }
 
     /// <summary>
-    /// Updates the control's bounds.
+    /// Updates the control's bounds on the platform widget.
     /// </summary>
     protected virtual void UpdateBounds()
     {
-        // Platform-specific bounds update
+        PlatformWidget?.SetBounds(_x, _y, _width, _height);
     }
 
     protected override void ReleaseWidget()
