@@ -107,6 +107,16 @@ internal partial class Win32Platform
             if (_disposed || _handle == IntPtr.Zero) return default;
             RECT rect;
             Win32Platform.GetWindowRect(_handle, out rect);
+
+            // Convert screen coordinates to parent client coordinates
+            var parent = Win32Platform.GetParent(_handle);
+            if (parent != IntPtr.Zero)
+            {
+                var topLeft = new POINT { X = rect.Left, Y = rect.Top };
+                Win32Platform.ScreenToClient(parent, ref topLeft);
+                return new Rectangle(topLeft.X, topLeft.Y, rect.Right - rect.Left, rect.Bottom - rect.Top);
+            }
+
             return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
         }
 
@@ -206,4 +216,21 @@ internal partial class Win32Platform
     }
 
     private Dictionary<IntPtr, Win32Sash> _sashWidgets = new Dictionary<IntPtr, Win32Sash>();
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(User32, SetLastError = true)]
+    private static partial IntPtr GetParent(IntPtr hWnd);
+#else
+    [DllImport(User32, SetLastError = true)]
+    private static extern IntPtr GetParent(IntPtr hWnd);
+#endif
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(User32, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+#else
+    [DllImport(User32, SetLastError = true)]
+    private static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+#endif
 }

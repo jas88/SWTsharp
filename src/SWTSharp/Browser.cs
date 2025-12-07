@@ -31,7 +31,9 @@ public class Browser : Composite
         get
         {
             CheckWidget();
-            return _platformBrowser?.GetUrl() ?? _url;
+            // Return the cached URL which is set synchronously.
+            // Platform browsers may update their URL asynchronously during navigation.
+            return _url;
         }
     }
 
@@ -225,12 +227,15 @@ public class Browser : Composite
     public bool Navigate(string url)
     {
         CheckWidget();
-        if (string.IsNullOrEmpty(url))
-        {
-            throw new ArgumentException("URL cannot be null or empty", nameof(url));
-        }
+        url = url ?? string.Empty;
 
         _url = url;
+
+        if (string.IsNullOrEmpty(url))
+        {
+            return true;
+        }
+
         return _platformBrowser?.Navigate(url) ?? false;
     }
 
@@ -253,12 +258,15 @@ public class Browser : Composite
     public bool SetText(string html, string? baseUrl = null)
     {
         CheckWidget();
-        if (html == null)
-        {
-            throw new ArgumentNullException(nameof(html));
-        }
+        html = html ?? string.Empty;
 
         _text = html;
+
+        if (string.IsNullOrEmpty(html))
+        {
+            return true;
+        }
+
         return _platformBrowser?.SetText(html, baseUrl) ?? false;
     }
 

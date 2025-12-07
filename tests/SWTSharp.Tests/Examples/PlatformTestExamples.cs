@@ -161,15 +161,25 @@ public class PlatformTestExamples : TestBase
 
         RunOnUIThread(() =>
         {
-            button.Click += (s, e) => eventFired = true;
+            // Use SWT Listener instead of Click event
+            // NotifyListeners only triggers SWT listeners, not C# events
+            button.AddListener(SWT.Selection, new TestListener(() => eventFired = true));
             button.NotifyListeners(SWT.Selection, new Event());
         });
 
         // Wait for event to fire
         TestHelpers.AssertCondition(
             () => eventFired,
-            "Button click event should fire"
+            "Button selection event should fire"
         );
+    }
+
+    // Helper class for event testing
+    private class TestListener : IListener
+    {
+        private readonly Action _action;
+        public TestListener(Action action) => _action = action;
+        public void HandleEvent(Event e) => _action();
     }
 
     [Fact]
