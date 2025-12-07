@@ -45,8 +45,8 @@ public static class GCDDispatcher
     private delegate void WorkDelegate(IntPtr context);
 
     private static readonly dispatch_queue_t _mainQueue;
-    private static readonly WorkDelegate _asyncWorkCallback;
-    private static readonly WorkDelegate _syncWorkCallback;
+    private static readonly WorkDelegate _asyncWorkCallback = null!;
+    private static readonly WorkDelegate _syncWorkCallback = null!;
     private static bool _initialized = false;
     private static readonly object _initLock = new object();
 

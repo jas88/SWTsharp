@@ -349,12 +349,10 @@ public class BrowserTests : WidgetTestBase
             using var shell = CreateTestShell();
             var browser = new Browser(shell, SWT.NONE);
 
-            var eventFired = false;
             var receivedLocation = string.Empty;
 
             browser.LocationChanged += (sender, e) =>
             {
-                eventFired = true;
                 receivedLocation = e.Location;
             };
 
@@ -362,6 +360,7 @@ public class BrowserTests : WidgetTestBase
 
             // Note: Event may be asynchronous, so we just verify handler doesn't throw
             Assert.NotNull(browser);
+            _ = receivedLocation; // Suppress unused variable warning
 
             browser.Dispose();
         });
@@ -375,12 +374,10 @@ public class BrowserTests : WidgetTestBase
             using var shell = CreateTestShell();
             var browser = new Browser(shell, SWT.NONE);
 
-            var eventFired = false;
             var receivedTitle = string.Empty;
 
             browser.TitleChanged += (sender, e) =>
             {
-                eventFired = true;
                 receivedTitle = e.Title;
             };
 
@@ -388,6 +385,7 @@ public class BrowserTests : WidgetTestBase
 
             // Note: Event may be asynchronous
             Assert.NotNull(browser);
+            _ = receivedTitle; // Suppress unused variable warning
 
             browser.Dispose();
         });
@@ -401,13 +399,11 @@ public class BrowserTests : WidgetTestBase
             using var shell = CreateTestShell();
             var browser = new Browser(shell, SWT.NONE);
 
-            var eventFired = false;
             var receivedCurrent = 0;
             var receivedTotal = 0;
 
             browser.ProgressChanged += (sender, e) =>
             {
-                eventFired = true;
                 receivedCurrent = e.Current;
                 receivedTotal = e.Total;
             };
@@ -416,6 +412,7 @@ public class BrowserTests : WidgetTestBase
 
             // Note: Event may be asynchronous
             Assert.NotNull(browser);
+            _ = (receivedCurrent, receivedTotal); // Suppress unused variable warning
 
             browser.Dispose();
         });
@@ -429,12 +426,10 @@ public class BrowserTests : WidgetTestBase
             using var shell = CreateTestShell();
             var browser = new Browser(shell, SWT.NONE);
 
-            var eventFired = false;
             var receivedText = string.Empty;
 
             browser.StatusTextChanged += (sender, e) =>
             {
-                eventFired = true;
                 receivedText = e.Text;
             };
 
@@ -442,6 +437,7 @@ public class BrowserTests : WidgetTestBase
 
             // Note: Event may be asynchronous
             Assert.NotNull(browser);
+            _ = receivedText; // Suppress unused variable warning
 
             browser.Dispose();
         });
