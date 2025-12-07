@@ -31,9 +31,9 @@ public class Browser : Composite
         get
         {
             CheckWidget();
-            // Return the cached URL which is set synchronously.
-            // Platform browsers may update their URL asynchronously during navigation.
-            return _url;
+            // Query platform browser for current URL (handles redirects and user navigation)
+            // Fall back to cached URL if platform browser not available
+            return _platformBrowser?.GetUrl() ?? _url;
         }
     }
 
@@ -227,15 +227,13 @@ public class Browser : Composite
     public bool Navigate(string url)
     {
         CheckWidget();
-        url = url ?? string.Empty;
-
-        _url = url;
 
         if (string.IsNullOrEmpty(url))
         {
-            return true;
+            return false;
         }
 
+        _url = url;
         return _platformBrowser?.Navigate(url) ?? false;
     }
 

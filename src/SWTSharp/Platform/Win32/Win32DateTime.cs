@@ -256,7 +256,10 @@ internal class Win32DateTime : IPlatformDateTime
                 dwSize = Marshal.SizeOf<INITCOMMONCONTROLSEX>(),
                 dwICC = ICC_DATE_CLASSES
             };
-            InitCommonControlsEx(ref icex);
+            if (!InitCommonControlsEx(ref icex))
+            {
+                throw new InvalidOperationException("Failed to initialize common controls for DateTime widget");
+            }
             _commonControlsInitialized = true;
         }
     }

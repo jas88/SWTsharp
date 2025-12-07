@@ -129,9 +129,12 @@ jobs:
           sudo apt-get update
           # Install GTK3 and X11 dependencies
           sudo apt-get install -y xvfb libgtk-3-0 libglib2.0-0 libx11-dev
-          # Install WebKitGTK - try 4.1 (Ubuntu 24.04+) first, then 4.0
-          # The LinuxBrowser class dynamically loads the correct version at runtime
-          sudo apt-get install -y libwebkit2gtk-4.1-0 || sudo apt-get install -y libwebkit2gtk-4.0-37 || true
+          # Install WebKitGTK - need BOTH versions:
+          # - 4.1 for NET 5.0+ dynamic loading on Ubuntu 24.04
+          # - 4.0 for netstandard2.0 which uses hardcoded DllImport("libwebkit2gtk-4.0.so.37")
+          # Install 4.1 first (required on 24.04), then 4.0 if available (may not exist on newer distros)
+          sudo apt-get install -y libwebkit2gtk-4.1-0
+          sudo apt-get install -y libwebkit2gtk-4.0-37 || true
           # Start Xvfb on display :99
           sudo Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
           # Wait for Xvfb to be ready
