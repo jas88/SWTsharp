@@ -718,8 +718,7 @@ internal partial class Win32Platform : IPlatform
     // Internal helper methods (not part of IPlatform interface)
 
     /// <summary>
-    /// Extracts the native HWND from a platform widget.
-    /// Tries GetNativeHandle() method first, then falls back to reflection for _hwnd field.
+    /// Extracts the native HWND from a platform widget using type checking.
     /// </summary>
     /// <param name="widget">The platform widget to extract the handle from</param>
     /// <returns>The native HWND, or IntPtr.Zero if extraction fails</returns>
@@ -728,40 +727,30 @@ internal partial class Win32Platform : IPlatform
         if (widget == null)
             return IntPtr.Zero;
 
-        var widgetType = widget.GetType();
-
-        // Primary method: Try GetNativeHandle() method (all Win32 widgets now have this as internal)
-        var getNativeHandleMethod = widgetType.GetMethod("GetNativeHandle",
-            System.Reflection.BindingFlags.Public |
-            System.Reflection.BindingFlags.NonPublic |
-            System.Reflection.BindingFlags.Instance);
-
-        if (getNativeHandleMethod != null && getNativeHandleMethod.ReturnType == typeof(IntPtr))
+        // Use pattern matching to extract native handle from known Win32 widget types
+        return widget switch
         {
-            var result = getNativeHandleMethod.Invoke(widget, null);
-            if (result is IntPtr hwnd && hwnd != IntPtr.Zero)
-            {
-                return hwnd;
-            }
-        }
-
-        // Fallback: Use reflection to access the private _hwnd field
-        // This provides compatibility with widgets that might not have GetNativeHandle() yet
-        var hwndField = widgetType.GetField("_hwnd",
-            System.Reflection.BindingFlags.NonPublic |
-            System.Reflection.BindingFlags.Instance);
-
-        if (hwndField != null && hwndField.FieldType == typeof(IntPtr))
-        {
-            var handle = hwndField.GetValue(widget);
-            if (handle is IntPtr hwnd && hwnd != IntPtr.Zero)
-            {
-                return hwnd;
-            }
-        }
-
-        // If all else fails, return zero (will create with desktop as parent)
-        return IntPtr.Zero;
+            Win32.Win32Window w => w.GetNativeHandle(),
+            Win32.Win32Composite c => c.GetNativeHandle(),
+            Win32.Win32Button b => b.GetNativeHandle(),
+            Win32.Win32Label l => l.GetNativeHandle(),
+            Win32.Win32Text t => t.GetNativeHandle(),
+            Win32.Win32ProgressBar p => p.GetNativeHandle(),
+            Win32.Win32Slider s => s.GetNativeHandle(),
+            Win32.Win32Scale sc => sc.GetNativeHandle(),
+            Win32.Win32Spinner sp => sp.GetNativeHandle(),
+            Win32.Win32Combo cb => cb.GetNativeHandle(),
+            Win32.Win32List li => li.GetNativeHandle(),
+            Win32.Win32TabFolder tf => tf.GetNativeHandle(),
+            Win32.Win32Group g => g.GetNativeHandle(),
+            Win32.Win32Canvas ca => ca.GetNativeHandle(),
+            Win32.Win32Table ta => ta.GetNativeHandle(),
+            Win32.Win32Tree tr => tr.GetNativeHandle(),
+            Win32.Win32ExpandBar eb => eb.GetNativeHandle(),
+            Win32.Win32CoolBar co => co.GetNativeHandle(),
+            Win32.Win32DateTime dt => dt.GetNativeHandle(),
+            _ => IntPtr.Zero
+        };
     }
 
     internal void SetControlEnabled(IntPtr handle, bool enabled)

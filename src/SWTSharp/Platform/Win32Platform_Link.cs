@@ -16,6 +16,24 @@ internal partial class Win32Platform
     private const int NM_CLICK = -2;
     private const int NM_RETURN = -4;
 
+    // Common control class flag for SysLink
+    private const int ICC_LINK_CLASS = 0x00008000;
+
+    private static bool _linkControlsInitialized;
+
+    private static void EnsureLinkControlsInitialized()
+    {
+        if (_linkControlsInitialized) return;
+
+        var icc = new INITCOMMONCONTROLSEX
+        {
+            dwSize = Marshal.SizeOf<INITCOMMONCONTROLSEX>(),
+            dwICC = ICC_LINK_CLASS
+        };
+        InitCommonControlsEx(ref icc);
+        _linkControlsInitialized = true;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct NMHDR
     {
@@ -152,7 +170,15 @@ internal partial class Win32Platform
 
     public IPlatformLink CreateLinkWidget(IPlatformWidget? parent, int style)
     {
+        EnsureLinkControlsInitialized();
+
         IntPtr parentHandle = parent != null ? ExtractNativeHandle(parent) : IntPtr.Zero;
+
+        // SysLink requires a valid parent (WS_CHILD style)
+        if (parentHandle == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Link widget requires a valid parent window");
+        }
 
         uint windowStyle = WS_CHILD | WS_VISIBLE | LWS_TRANSPARENT;
 

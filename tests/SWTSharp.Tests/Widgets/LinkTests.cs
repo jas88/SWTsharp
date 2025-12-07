@@ -12,13 +12,13 @@ public class LinkTests : WidgetTestBase
 {
     public LinkTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Link(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -28,7 +28,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Text_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -39,7 +39,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Text_PlainText_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -50,7 +50,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Text_WithHref_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -61,7 +61,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Text_MultipleLinks_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -72,7 +72,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Text_WithEmptyString_ShouldSucceed()
     {
         AssertPropertyGetSet(
@@ -83,7 +83,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Text_WithNull_ShouldSetEmptyString()
     {
         RunOnUIThread(() =>
@@ -99,7 +99,7 @@ public class LinkTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_GetText_ShouldReturnText()
     {
         RunOnUIThread(() =>
@@ -115,7 +115,7 @@ public class LinkTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_SetText_ShouldUpdateText()
     {
         RunOnUIThread(() =>
@@ -131,7 +131,7 @@ public class LinkTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_LinkSelected_EventShouldFire()
     {
         RunOnUIThread(() =>
@@ -165,19 +165,19 @@ public class LinkTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Link(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Link(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_SetText_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -186,7 +186,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_GetText_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -199,13 +199,13 @@ public class LinkTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Link(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -216,7 +216,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Enabled_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -227,7 +227,7 @@ public class LinkTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Bounds_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -248,7 +248,7 @@ public class LinkTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Size_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -267,7 +267,7 @@ public class LinkTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("windows")]
+    [Fact]
     public void Link_Text_ComplexMarkup_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
