@@ -30,7 +30,12 @@ internal partial class Win32Platform
             dwSize = Marshal.SizeOf<INITCOMMONCONTROLSEX>(),
             dwICC = ICC_LINK_CLASS
         };
-        InitCommonControlsEx(ref icc);
+        bool result = InitCommonControlsEx(ref icc);
+        if (!result)
+        {
+            int error = Marshal.GetLastWin32Error();
+            Console.WriteLine($"[Win32] InitCommonControlsEx for ICC_LINK_CLASS failed. Error: {error}");
+        }
         _linkControlsInitialized = true;
     }
 
@@ -174,10 +179,21 @@ internal partial class Win32Platform
 
         IntPtr parentHandle = parent != null ? ExtractNativeHandle(parent) : IntPtr.Zero;
 
+        if (_enableLogging)
+        {
+            Console.WriteLine($"[Win32] Creating link widget. Parent type: {parent?.GetType().Name ?? "null"}, ParentHandle: 0x{parentHandle:X}, Style: 0x{style:X}");
+        }
+
         // SysLink requires a valid parent (WS_CHILD style)
         if (parentHandle == IntPtr.Zero)
         {
             throw new InvalidOperationException("Link widget requires a valid parent window");
+        }
+
+        // Verify the parent handle is still valid
+        if (!IsWindow(parentHandle))
+        {
+            throw new InvalidOperationException($"Link widget parent handle 0x{parentHandle:X} is not a valid window");
         }
 
         uint windowStyle = WS_CHILD | WS_VISIBLE | LWS_TRANSPARENT;
@@ -204,6 +220,9 @@ internal partial class Win32Platform
             int error = Marshal.GetLastWin32Error();
             throw new InvalidOperationException($"Failed to create link control. Error: {error}");
         }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Link widget created successfully");
 
         var linkWidget = new Win32Link(handle);
         _linkWidgets[handle] = linkWidget;

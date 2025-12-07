@@ -417,6 +417,15 @@ internal partial class Win32Platform : IPlatform
 #if NET8_0_OR_GREATER
     [LibraryImport(User32)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsWindow(IntPtr hWnd);
+#else
+    [DllImport(User32)]
+    private static extern bool IsWindow(IntPtr hWnd);
+#endif
+
+#if NET8_0_OR_GREATER
+    [LibraryImport(User32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool IsWindowVisible(IntPtr hWnd);
 #else
     [DllImport(User32)]
