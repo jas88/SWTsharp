@@ -32,8 +32,9 @@ public class Browser : Composite
         {
             CheckWidget();
             // Query platform browser for current URL (handles redirects and user navigation)
-            // Fall back to cached URL if platform browser not available
-            return _platformBrowser?.GetUrl() ?? _url;
+            // Fall back to cached URL if platform browser returns empty (not yet navigated)
+            var currentUrl = _platformBrowser?.GetUrl() ?? string.Empty;
+            return string.IsNullOrEmpty(currentUrl) ? _url : currentUrl;
         }
     }
 
