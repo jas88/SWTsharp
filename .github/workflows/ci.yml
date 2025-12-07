@@ -124,10 +124,10 @@ jobs:
           languages: csharp
           queries: security-extended,security-and-quality
 
-      - name: Setup Xvfb (Virtual Display for GUI Tests)
+      - name: Setup Xvfb and GTK/WebKit (Virtual Display for GUI Tests)
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libglib2.0-0 libx11-dev
+          sudo apt-get install -y xvfb libgtk-3-0 libglib2.0-0 libx11-dev libwebkit2gtk-4.0-37
           # Start Xvfb on display :99
           sudo Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
           # Wait for Xvfb to be ready
