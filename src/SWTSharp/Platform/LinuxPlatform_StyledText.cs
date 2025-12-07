@@ -9,6 +9,30 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class LinuxPlatform
 {
+    /// <summary>
+    /// GtkTextIter is a struct (not a pointer) that contains iteration state.
+    /// It needs to be exactly 80 bytes to match the GTK3 definition.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct GtkTextIter
+    {
+        // GtkTextIter is an opaque struct of 80 bytes in GTK3
+        private IntPtr dummy1;
+        private IntPtr dummy2;
+        private int dummy3;
+        private int dummy4;
+        private int dummy5;
+        private int dummy6;
+        private int dummy7;
+        private int dummy8;
+        private IntPtr dummy9;
+        private IntPtr dummy10;
+        private IntPtr dummy11;
+        private IntPtr dummy12;
+        private int dummy13;
+        private int dummy14;
+    }
+
     private class LinuxStyledText : IPlatformStyledText
     {
         private readonly LinuxPlatform _platform;
@@ -41,9 +65,9 @@ internal partial class LinuxPlatform
 
         public string GetText()
         {
-            IntPtr start, end;
+            GtkTextIter start, end;
             gtk_text_buffer_get_bounds(_buffer, out start, out end);
-            IntPtr textPtr = gtk_text_buffer_get_text(_buffer, start, end, false);
+            IntPtr textPtr = gtk_text_buffer_get_text(_buffer, ref start, ref end, false);
             return PtrToStringUTF8(textPtr);
         }
 
@@ -61,7 +85,7 @@ internal partial class LinuxPlatform
 
         public void ReplaceTextRange(int start, int length, string text)
         {
-            IntPtr startIter, endIter;
+            GtkTextIter startIter, endIter;
             gtk_text_buffer_get_iter_at_offset(_buffer, out startIter, start);
             gtk_text_buffer_get_iter_at_offset(_buffer, out endIter, start + length);
             gtk_text_buffer_delete(_buffer, ref startIter, ref endIter);
@@ -70,7 +94,7 @@ internal partial class LinuxPlatform
 
         public void SetSelection(int start, int end)
         {
-            IntPtr startIter, endIter;
+            GtkTextIter startIter, endIter;
             gtk_text_buffer_get_iter_at_offset(_buffer, out startIter, start);
             gtk_text_buffer_get_iter_at_offset(_buffer, out endIter, end);
             gtk_text_buffer_select_range(_buffer, ref startIter, ref endIter);
@@ -78,7 +102,7 @@ internal partial class LinuxPlatform
 
         public (int Start, int End) GetSelection()
         {
-            IntPtr startIter, endIter;
+            GtkTextIter startIter, endIter;
             if (gtk_text_buffer_get_selection_bounds(_buffer, out startIter, out endIter))
             {
                 int start = gtk_text_iter_get_offset(ref startIter);
@@ -90,10 +114,10 @@ internal partial class LinuxPlatform
 
         public string GetSelectionText()
         {
-            IntPtr startIter, endIter;
+            GtkTextIter startIter, endIter;
             if (gtk_text_buffer_get_selection_bounds(_buffer, out startIter, out endIter))
             {
-                IntPtr textPtr = gtk_text_buffer_get_text(_buffer, startIter, endIter, false);
+                IntPtr textPtr = gtk_text_buffer_get_text(_buffer, ref startIter, ref endIter, false);
                 return PtrToStringUTF8(textPtr);
             }
             return string.Empty;
@@ -101,7 +125,7 @@ internal partial class LinuxPlatform
 
         public void SetCaretOffset(int offset)
         {
-            IntPtr iter;
+            GtkTextIter iter;
             gtk_text_buffer_get_iter_at_offset(_buffer, out iter, offset);
             gtk_text_buffer_place_cursor(_buffer, ref iter);
         }
@@ -109,7 +133,7 @@ internal partial class LinuxPlatform
         public int GetCaretOffset()
         {
             IntPtr mark = gtk_text_buffer_get_insert(_buffer);
-            IntPtr iter;
+            GtkTextIter iter;
             gtk_text_buffer_get_iter_at_mark(_buffer, out iter, mark);
             return gtk_text_iter_get_offset(ref iter);
         }
@@ -130,7 +154,7 @@ internal partial class LinuxPlatform
             gtk_text_tag_table_add(tagTable, tag);
 
             // Apply tag to range
-            IntPtr startIter, endIter;
+            GtkTextIter startIter, endIter;
             gtk_text_buffer_get_iter_at_offset(_buffer, out startIter, range.Start);
             gtk_text_buffer_get_iter_at_offset(_buffer, out endIter, range.Start + range.Length);
             gtk_text_buffer_apply_tag(_buffer, tag, ref startIter, ref endIter);
@@ -138,14 +162,14 @@ internal partial class LinuxPlatform
 
         public string GetLine(int lineIndex)
         {
-            IntPtr startIter, endIter;
+            GtkTextIter startIter, endIter;
             gtk_text_buffer_get_iter_at_line(_buffer, out startIter, lineIndex);
             endIter = startIter;
             if (!gtk_text_iter_ends_line(ref endIter))
             {
                 gtk_text_iter_forward_to_line_end(ref endIter);
             }
-            IntPtr textPtr = gtk_text_buffer_get_text(_buffer, startIter, endIter, false);
+            IntPtr textPtr = gtk_text_buffer_get_text(_buffer, ref startIter, ref endIter, false);
             return PtrToStringUTF8(textPtr);
         }
 
@@ -359,53 +383,53 @@ internal partial class LinuxPlatform
     [LibraryImport(GtkLib, StringMarshalling = StringMarshalling.Utf8)]
     private static partial void gtk_text_buffer_set_text(IntPtr buffer, string text, int len);
 
-    [LibraryImport(GtkLib, StringMarshalling = StringMarshalling.Utf8)]
-    private static partial IntPtr gtk_text_buffer_get_text(IntPtr buffer, IntPtr start, IntPtr end, [MarshalAs(UnmanagedType.Bool)] bool include_hidden_chars);
+    [LibraryImport(GtkLib)]
+    private static partial IntPtr gtk_text_buffer_get_text(IntPtr buffer, ref GtkTextIter start, ref GtkTextIter end, [MarshalAs(UnmanagedType.Bool)] bool include_hidden_chars);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_get_bounds(IntPtr buffer, out IntPtr start, out IntPtr end);
+    private static partial void gtk_text_buffer_get_bounds(IntPtr buffer, out GtkTextIter start, out GtkTextIter end);
 
     [LibraryImport(GtkLib, StringMarshalling = StringMarshalling.Utf8)]
     private static partial void gtk_text_buffer_insert_at_cursor(IntPtr buffer, string text, int len);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_get_iter_at_offset(IntPtr buffer, out IntPtr iter, int char_offset);
+    private static partial void gtk_text_buffer_get_iter_at_offset(IntPtr buffer, out GtkTextIter iter, int char_offset);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_get_iter_at_line(IntPtr buffer, out IntPtr iter, int line_number);
+    private static partial void gtk_text_buffer_get_iter_at_line(IntPtr buffer, out GtkTextIter iter, int line_number);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_delete(IntPtr buffer, ref IntPtr start, ref IntPtr end);
+    private static partial void gtk_text_buffer_delete(IntPtr buffer, ref GtkTextIter start, ref GtkTextIter end);
 
     [LibraryImport(GtkLib, StringMarshalling = StringMarshalling.Utf8)]
-    private static partial void gtk_text_buffer_insert(IntPtr buffer, ref IntPtr iter, string text, int len);
+    private static partial void gtk_text_buffer_insert(IntPtr buffer, ref GtkTextIter iter, string text, int len);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_select_range(IntPtr buffer, ref IntPtr ins, ref IntPtr bound);
+    private static partial void gtk_text_buffer_select_range(IntPtr buffer, ref GtkTextIter ins, ref GtkTextIter bound);
 
     [LibraryImport(GtkLib)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool gtk_text_buffer_get_selection_bounds(IntPtr buffer, out IntPtr start, out IntPtr end);
+    private static partial bool gtk_text_buffer_get_selection_bounds(IntPtr buffer, out GtkTextIter start, out GtkTextIter end);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_place_cursor(IntPtr buffer, ref IntPtr where);
+    private static partial void gtk_text_buffer_place_cursor(IntPtr buffer, ref GtkTextIter where);
 
     [LibraryImport(GtkLib)]
     private static partial IntPtr gtk_text_buffer_get_insert(IntPtr buffer);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_get_iter_at_mark(IntPtr buffer, out IntPtr iter, IntPtr mark);
+    private static partial void gtk_text_buffer_get_iter_at_mark(IntPtr buffer, out GtkTextIter iter, IntPtr mark);
 
     [LibraryImport(GtkLib)]
-    private static partial int gtk_text_iter_get_offset(ref IntPtr iter);
-
-    [LibraryImport(GtkLib)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool gtk_text_iter_ends_line(ref IntPtr iter);
+    private static partial int gtk_text_iter_get_offset(ref GtkTextIter iter);
 
     [LibraryImport(GtkLib)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool gtk_text_iter_forward_to_line_end(ref IntPtr iter);
+    private static partial bool gtk_text_iter_ends_line(ref GtkTextIter iter);
+
+    [LibraryImport(GtkLib)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool gtk_text_iter_forward_to_line_end(ref GtkTextIter iter);
 
     [LibraryImport(GtkLib)]
     private static partial int gtk_text_buffer_get_line_count(IntPtr buffer);
@@ -420,7 +444,7 @@ internal partial class LinuxPlatform
     private static partial void gtk_text_tag_table_add(IntPtr table, IntPtr tag);
 
     [LibraryImport(GtkLib)]
-    private static partial void gtk_text_buffer_apply_tag(IntPtr buffer, IntPtr tag, ref IntPtr start, ref IntPtr end);
+    private static partial void gtk_text_buffer_apply_tag(IntPtr buffer, IntPtr tag, ref GtkTextIter start, ref GtkTextIter end);
 
     [LibraryImport(GtkLib)]
     private static partial IntPtr gtk_clipboard_get(int selection);
@@ -451,49 +475,49 @@ internal partial class LinuxPlatform
     private static extern void gtk_text_buffer_set_text(IntPtr buffer, string text, int len);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_text_buffer_get_text(IntPtr buffer, IntPtr start, IntPtr end, bool include_hidden_chars);
+    private static extern IntPtr gtk_text_buffer_get_text(IntPtr buffer, ref GtkTextIter start, ref GtkTextIter end, bool include_hidden_chars);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_get_bounds(IntPtr buffer, out IntPtr start, out IntPtr end);
+    private static extern void gtk_text_buffer_get_bounds(IntPtr buffer, out GtkTextIter start, out GtkTextIter end);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_text_buffer_insert_at_cursor(IntPtr buffer, string text, int len);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_get_iter_at_offset(IntPtr buffer, out IntPtr iter, int char_offset);
+    private static extern void gtk_text_buffer_get_iter_at_offset(IntPtr buffer, out GtkTextIter iter, int char_offset);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_get_iter_at_line(IntPtr buffer, out IntPtr iter, int line_number);
+    private static extern void gtk_text_buffer_get_iter_at_line(IntPtr buffer, out GtkTextIter iter, int line_number);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_delete(IntPtr buffer, ref IntPtr start, ref IntPtr end);
+    private static extern void gtk_text_buffer_delete(IntPtr buffer, ref GtkTextIter start, ref GtkTextIter end);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_insert(IntPtr buffer, ref IntPtr iter, string text, int len);
+    private static extern void gtk_text_buffer_insert(IntPtr buffer, ref GtkTextIter iter, string text, int len);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_select_range(IntPtr buffer, ref IntPtr ins, ref IntPtr bound);
+    private static extern void gtk_text_buffer_select_range(IntPtr buffer, ref GtkTextIter ins, ref GtkTextIter bound);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool gtk_text_buffer_get_selection_bounds(IntPtr buffer, out IntPtr start, out IntPtr end);
+    private static extern bool gtk_text_buffer_get_selection_bounds(IntPtr buffer, out GtkTextIter start, out GtkTextIter end);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_place_cursor(IntPtr buffer, ref IntPtr where);
+    private static extern void gtk_text_buffer_place_cursor(IntPtr buffer, ref GtkTextIter where);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_text_buffer_get_insert(IntPtr buffer);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_get_iter_at_mark(IntPtr buffer, out IntPtr iter, IntPtr mark);
+    private static extern void gtk_text_buffer_get_iter_at_mark(IntPtr buffer, out GtkTextIter iter, IntPtr mark);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int gtk_text_iter_get_offset(ref IntPtr iter);
+    private static extern int gtk_text_iter_get_offset(ref GtkTextIter iter);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool gtk_text_iter_ends_line(ref IntPtr iter);
+    private static extern bool gtk_text_iter_ends_line(ref GtkTextIter iter);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool gtk_text_iter_forward_to_line_end(ref IntPtr iter);
+    private static extern bool gtk_text_iter_forward_to_line_end(ref GtkTextIter iter);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern int gtk_text_buffer_get_line_count(IntPtr buffer);
@@ -508,7 +532,7 @@ internal partial class LinuxPlatform
     private static extern void gtk_text_tag_table_add(IntPtr table, IntPtr tag);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_text_buffer_apply_tag(IntPtr buffer, IntPtr tag, ref IntPtr start, ref IntPtr end);
+    private static extern void gtk_text_buffer_apply_tag(IntPtr buffer, IntPtr tag, ref GtkTextIter start, ref GtkTextIter end);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_clipboard_get(int selection);
