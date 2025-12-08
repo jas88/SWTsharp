@@ -461,7 +461,7 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
         IntPtr selSetFrame = sel_registerName("setFrame:");
         CGRect frame = new CGRect(x, y, width, height);
-        objc_msgSend_stret(ref frame, _scrollView, selSetFrame, frame);
+        objc_msgSend_rect(_scrollView, selSetFrame, frame);
     }
 
     public Rectangle GetBounds()
@@ -677,6 +677,10 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern void objc_msgSend_fpret(IntPtr receiver, IntPtr selector, double arg1);
+
+    // For setFrame: which takes CGRect as input argument (not returns it)
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect arg);
 
     // Architecture-specific struct return handling:
     // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
