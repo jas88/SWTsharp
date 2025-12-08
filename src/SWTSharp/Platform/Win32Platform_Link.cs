@@ -16,6 +16,29 @@ internal partial class Win32Platform
     private const int NM_CLICK = -2;
     private const int NM_RETURN = -4;
 
+    // Common control class flag for SysLink
+    private const int ICC_LINK_CLASS = 0x00008000;
+
+    private static bool _linkControlsInitialized;
+
+    private static void EnsureLinkControlsInitialized()
+    {
+        if (_linkControlsInitialized) return;
+
+        var icc = new INITCOMMONCONTROLSEX
+        {
+            dwSize = Marshal.SizeOf<INITCOMMONCONTROLSEX>(),
+            dwICC = ICC_LINK_CLASS
+        };
+        bool result = InitCommonControlsEx(ref icc);
+        if (!result)
+        {
+            int error = Marshal.GetLastWin32Error();
+            Console.WriteLine($"[Win32] InitCommonControlsEx for ICC_LINK_CLASS failed. Error: {error}");
+        }
+        _linkControlsInitialized = true;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct NMHDR
     {
@@ -152,7 +175,26 @@ internal partial class Win32Platform
 
     public IPlatformLink CreateLinkWidget(IPlatformWidget? parent, int style)
     {
+        EnsureLinkControlsInitialized();
+
         IntPtr parentHandle = parent != null ? ExtractNativeHandle(parent) : IntPtr.Zero;
+
+        if (_enableLogging)
+        {
+            Console.WriteLine($"[Win32] Creating link widget. Parent type: {parent?.GetType().Name ?? "null"}, ParentHandle: 0x{parentHandle:X}, Style: 0x{style:X}");
+        }
+
+        // SysLink requires a valid parent (WS_CHILD style)
+        if (parentHandle == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Link widget requires a valid parent window");
+        }
+
+        // Verify the parent handle is still valid
+        if (!IsWindow(parentHandle))
+        {
+            throw new InvalidOperationException($"Link widget parent handle 0x{parentHandle:X} is not a valid window");
+        }
 
         uint windowStyle = WS_CHILD | WS_VISIBLE | LWS_TRANSPARENT;
 
@@ -178,6 +220,9 @@ internal partial class Win32Platform
             int error = Marshal.GetLastWin32Error();
             throw new InvalidOperationException($"Failed to create link control. Error: {error}");
         }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Win32] Link widget created successfully");
 
         var linkWidget = new Win32Link(handle);
         _linkWidgets[handle] = linkWidget;

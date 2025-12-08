@@ -45,7 +45,8 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
         IntPtr stringType = g_type_from_name("gchararray");
         IntPtr booleanType = g_type_from_name("gboolean");
 
-        _treeStore = gtk_tree_store_new(2, stringType, booleanType);
+        IntPtr[] types = new IntPtr[] { stringType, booleanType };
+        _treeStore = gtk_tree_store_newv(types.Length, types);
         if (_treeStore == IntPtr.Zero)
         {
             throw new InvalidOperationException("Failed to create GTK tree store");
@@ -214,7 +215,7 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
     private static extern IntPtr gtk_tree_view_new_with_model(IntPtr model);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_tree_store_new(int n_columns, params IntPtr[] types);
+    private static extern IntPtr gtk_tree_store_newv(int n_columns, IntPtr[] types);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_tree_view_column_new();

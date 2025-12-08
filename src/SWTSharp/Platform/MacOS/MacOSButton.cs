@@ -75,26 +75,24 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
     {
         if (_disposed || _nsButtonHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsButtonHandle, setTitle:, NSString stringWithString:text)
+        // Create NSString from UTF8 C string
         IntPtr textPtr = IntPtr.Zero;
         IntPtr nsString = IntPtr.Zero;
 
         try
         {
             var strClass = objc_getClass("NSString");
-            var selector = sel_registerName("stringWithString:");
-            textPtr = Marshal.StringToHGlobalAuto(text);
+            var selector = sel_registerName("stringWithUTF8String:");
+            textPtr = Marshal.StringToHGlobalAnsi(text ?? string.Empty);
             nsString = objc_msgSend(strClass, selector, textPtr);
 
             var setTitleSelector = sel_registerName("setTitle:");
             objc_msgSend(_nsButtonHandle, setTitleSelector, nsString);
 
-            // Release the NSString to prevent memory leak
-            var releaseSelector = sel_registerName("release");
-            objc_msgSend(nsString, releaseSelector);
+            // NOTE: Do NOT release nsString - stringWithUTF8String: returns an autoreleased object
 
             // Fire TextChanged event
-            TextChanged?.Invoke(this, text);
+            TextChanged?.Invoke(this, text ?? string.Empty);
         }
         finally
         {
@@ -120,27 +118,19 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
     {
         if (_disposed || _nsButtonHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsButtonHandle, setFrame:, NSMakeRect(x, y, width, height))
-        var rectClass = objc_getClass("NSValue");
-        var selector = sel_registerName("valueWithRect:");
+        // setFrame: takes CGRect directly (not wrapped in NSValue)
         var rect = new NSRect { x = x, y = y, width = width, height = height };
-        var rectValue = objc_msgSend(rectClass, selector, rect);
-
         var setFrameSelector = sel_registerName("setFrame:");
-        objc_msgSend(_nsButtonHandle, setFrameSelector, rectValue);
+        objc_msgSend_rect(_nsButtonHandle, setFrameSelector, rect);
     }
 
     public SWTSharp.Graphics.Rectangle GetBounds()
     {
         if (_disposed || _nsButtonHandle == IntPtr.Zero) return default(SWTSharp.Graphics.Rectangle);
 
-        // objc_msgSend(_nsButtonHandle, frame)
+        // frame returns CGRect directly (not wrapped in NSValue)
         var selector = sel_registerName("frame");
-        var frameValue = objc_msgSend(_nsButtonHandle, selector);
-
-        // Extract NSRect from NSValue
-        var rectSelector = sel_registerName("rectValue");
-        var rect = Marshal.PtrToStructure<NSRect>(objc_msgSend(frameValue, rectSelector));
+        objc_msgSend_stret(out NSRect rect, _nsButtonHandle, selector);
 
         return new SWTSharp.Graphics.Rectangle((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height);
     }
@@ -279,6 +269,31 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
     [DllImport("/usr/lib/libobjc.A.dylib")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, NSRect arg);
 
+    // For setFrame: which takes CGRect as input argument (not returns it)
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, NSRect arg);
+
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (NSRect is 32 bytes)
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRect objc_msgSend_nsrect_arm64(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_x64(out NSRect retval, IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out NSRect retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_nsrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_x64(out retval, receiver, selector);
+        }
+    }
+
     // P/Invoke declarations for Objective-C runtime class creation
     [DllImport("/usr/lib/libobjc.A.dylib")]
     private static extern IntPtr objc_allocateClassPair(IntPtr superclass, string name, int extraBytes);
@@ -373,29 +388,36 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
         {
             if (!_classRegistered)
             {
-                // Create "SWTButtonTarget" class from NSObject
-                var nsObjectClass = objc_getClass("NSObject");
-                _targetClass = objc_allocateClassPair(nsObjectClass, "SWTButtonTarget", 0);
+                // First check if the class already exists (from a previous test run in the same process)
+                _targetClass = objc_getClass("SWTButtonTarget");
 
                 if (_targetClass == IntPtr.Zero)
                 {
-                    throw new InvalidOperationException("Failed to allocate Objective-C class pair for SWTButtonTarget");
+                    // Create "SWTButtonTarget" class from NSObject
+                    var nsObjectClass = objc_getClass("NSObject");
+                    _targetClass = objc_allocateClassPair(nsObjectClass, "SWTButtonTarget", 0);
+
+                    if (_targetClass == IntPtr.Zero)
+                    {
+                        throw new InvalidOperationException("Failed to allocate Objective-C class pair for SWTButtonTarget");
+                    }
+
+                    // Step 2: Add "buttonClicked:" method to the class
+                    var actionSelector = sel_registerName("buttonClicked:");
+                    var callbackPtr = Marshal.GetFunctionPointerForDelegate(_staticClickCallback);
+
+                    // Type encoding: "v@:@" means void return (@=id self, :=SEL selector, @=id sender)
+                    bool methodAdded = class_addMethod(_targetClass, actionSelector, callbackPtr, "v@:@");
+
+                    if (!methodAdded)
+                    {
+                        throw new InvalidOperationException("Failed to add buttonClicked: method to SWTButtonTarget class");
+                    }
+
+                    // Step 3: Register the class with Objective-C runtime
+                    objc_registerClassPair(_targetClass);
                 }
 
-                // Step 2: Add "buttonClicked:" method to the class
-                var actionSelector = sel_registerName("buttonClicked:");
-                var callbackPtr = Marshal.GetFunctionPointerForDelegate(_staticClickCallback);
-
-                // Type encoding: "v@:@" means void return (@=id self, :=SEL selector, @=id sender)
-                bool methodAdded = class_addMethod(_targetClass, actionSelector, callbackPtr, "v@:@");
-
-                if (!methodAdded)
-                {
-                    throw new InvalidOperationException("Failed to add buttonClicked: method to SWTButtonTarget class");
-                }
-
-                // Step 3: Register the class with Objective-C runtime
-                objc_registerClassPair(_targetClass);
                 _classRegistered = true;
             }
         }

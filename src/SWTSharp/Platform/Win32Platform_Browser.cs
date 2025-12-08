@@ -57,7 +57,7 @@ internal partial class Win32Platform
             IntPtr hInstance,
             IntPtr lpParam);
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetWindowPos(
             IntPtr hWnd,
             IntPtr hWndInsertAfter,
@@ -75,6 +75,9 @@ internal partial class Win32Platform
 
         [DllImport("user32.dll")]
         private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT
@@ -417,8 +420,9 @@ internal partial class Win32Platform
             if (_disposed || _hwnd == IntPtr.Zero)
                 return default;
 
-            if (GetClientRect(_hwnd, out RECT rect))
+            if (GetWindowRect(_hwnd, out RECT rect))
             {
+                // GetWindowRect returns screen coordinates, but for size we just need width/height
                 return new Rectangle(0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top);
             }
 

@@ -392,8 +392,26 @@ internal partial class MacOSPlatform : IPlatformGraphics
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
     private static extern double objc_msgSend_fpret(IntPtr receiver, IntPtr selector);
 
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (CGRect is 32 bytes)
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_cgrect_arg_arm64(IntPtr receiver, IntPtr selector, IntPtr arg);
+
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret_rect(out CGRect retval, IntPtr receiver, IntPtr selector, IntPtr arg);
+    private static extern void objc_msgSend_stret_rect_x64(out CGRect retval, IntPtr receiver, IntPtr selector, IntPtr arg);
+
+    private static void objc_msgSend_stret_rect(out CGRect retval, IntPtr receiver, IntPtr selector, IntPtr arg)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arg_arm64(receiver, selector, arg);
+        }
+        else
+        {
+            objc_msgSend_stret_rect_x64(out retval, receiver, selector, arg);
+        }
+    }
 
     private double GetDoubleValue(IntPtr obj, IntPtr selector)
     {

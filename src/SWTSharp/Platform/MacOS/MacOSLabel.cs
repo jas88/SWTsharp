@@ -32,10 +32,10 @@ internal class MacOSLabel : MacOSWidget, IPlatformTextWidget
     {
         if (_disposed || _nsLabelHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsLabelHandle, setStringValue:, NSString stringWithString:text)
+        // Create NSString from UTF8 C string
         var strClass = objc_getClass("NSString");
-        var selector = sel_registerName("stringWithString:");
-        var textPtr = Marshal.StringToHGlobalAuto(text);
+        var selector = sel_registerName("stringWithUTF8String:");
+        var textPtr = Marshal.StringToHGlobalAnsi(text ?? string.Empty);
         try
         {
             var nsString = objc_msgSend(strClass, selector, textPtr);
@@ -65,27 +65,19 @@ internal class MacOSLabel : MacOSWidget, IPlatformTextWidget
     {
         if (_disposed || _nsLabelHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsLabelHandle, setFrame:, NSMakeRect(x, y, width, height))
-        var rectClass = objc_getClass("NSValue");
-        var selector = sel_registerName("valueWithRect:");
+        // setFrame: takes CGRect directly (not wrapped in NSValue)
         var rect = new NSRect { x = x, y = y, width = width, height = height };
-        var rectValue = objc_msgSend(rectClass, selector, rect);
-
         var setFrameSelector = sel_registerName("setFrame:");
-        objc_msgSend(_nsLabelHandle, setFrameSelector, rectValue);
+        objc_msgSend_rect(_nsLabelHandle, setFrameSelector, rect);
     }
 
     public SWTSharp.Graphics.Rectangle GetBounds()
     {
         if (_disposed || _nsLabelHandle == IntPtr.Zero) return default(SWTSharp.Graphics.Rectangle);
 
-        // objc_msgSend(_nsLabelHandle, frame)
+        // frame returns CGRect directly (not wrapped in NSValue)
         var selector = sel_registerName("frame");
-        var frameValue = objc_msgSend(_nsLabelHandle, selector);
-
-        // Extract NSRect from NSValue
-        var rectSelector = sel_registerName("rectValue");
-        var rect = Marshal.PtrToStructure<NSRect>(objc_msgSend(frameValue, rectSelector));
+        objc_msgSend_stret(out NSRect rect, _nsLabelHandle, selector);
 
         return new SWTSharp.Graphics.Rectangle((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height);
     }
@@ -215,8 +207,30 @@ internal class MacOSLabel : MacOSWidget, IPlatformTextWidget
     [DllImport("/usr/lib/libobjc.A.dylib")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, bool arg);
 
-    [DllImport("/usr/lib/libobjc.A.dylib")]
-    private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, NSRect arg);
+    // For setFrame: which takes CGRect as input argument (not returns it)
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, NSRect arg);
+
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (NSRect is 32 bytes)
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRect objc_msgSend_nsrect_arm64(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_x64(out NSRect retval, IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out NSRect retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_nsrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_x64(out retval, receiver, selector);
+        }
+    }
 
     private static string NSStringToString(IntPtr nsString)
     {

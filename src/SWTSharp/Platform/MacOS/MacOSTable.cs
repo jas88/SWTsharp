@@ -461,7 +461,7 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
         IntPtr selSetFrame = sel_registerName("setFrame:");
         CGRect frame = new CGRect(x, y, width, height);
-        objc_msgSend_stret(ref frame, _scrollView, selSetFrame, frame);
+        objc_msgSend_rect(_scrollView, selSetFrame, frame);
     }
 
     public Rectangle GetBounds()
@@ -678,11 +678,48 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern void objc_msgSend_fpret(IntPtr receiver, IntPtr selector, double arg1);
 
-    [DllImport("/usr/lib/libobjc.dylib")]
-    private static extern void objc_msgSend_stret(ref CGRect retval, IntPtr receiver, IntPtr selector);
+    // For setFrame: which takes CGRect as input argument (not returns it)
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect arg);
 
-    [DllImport("/usr/lib/libobjc.dylib")]
-    private static extern void objc_msgSend_stret(ref CGRect retval, IntPtr receiver, IntPtr selector, CGRect arg1);
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (CGRect is 32 bytes)
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_cgrect_arm64(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_x64(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_cgrect_arg_arm64(IntPtr receiver, IntPtr selector, CGRect arg1);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_arg_x64(out CGRect retval, IntPtr receiver, IntPtr selector, CGRect arg1);
+
+    private static void objc_msgSend_stret(ref CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_x64(out retval, receiver, selector);
+        }
+    }
+
+    private static void objc_msgSend_stret(ref CGRect retval, IntPtr receiver, IntPtr selector, CGRect arg1)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arg_arm64(receiver, selector, arg1);
+        }
+        else
+        {
+            objc_msgSend_stret_arg_x64(out retval, receiver, selector, arg1);
+        }
+    }
 
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);

@@ -52,8 +52,10 @@ public class Table : Composite
             if (_headerVisible != value)
             {
                 _headerVisible = value;
-                // TODO: Implement platform widget interface for SetTableHeaderVisible
-                // Platform.PlatformFactory.Instance.SetTableHeaderVisible(Handle, value);
+                if (PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    platformTable.SetHeaderVisible(value);
+                }
             }
         }
     }
@@ -74,8 +76,10 @@ public class Table : Composite
             if (_linesVisible != value)
             {
                 _linesVisible = value;
-                // TODO: Implement platform widget interface for SetTableLinesVisible
-                // Platform.PlatformFactory.Instance.SetTableLinesVisible(Handle, value);
+                if (PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    platformTable.SetLinesVisible(value);
+                }
             }
         }
     }
@@ -142,13 +146,14 @@ public class Table : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // TODO: Implement platform widget interface for CreateTable
-        // TODO: Create IPlatformTable widget here
-        // PlatformWidget = Platform.PlatformFactory.Instance.CreateTableWidget(Parent?.PlatformWidget, Style);
+        PlatformWidget = Platform.PlatformFactory.Instance.CreateTableWidget(Parent?.PlatformWidget, Style);
 
         // Set initial properties
-        // TODO: Implement platform widget interface for SetTableHeaderVisible
-        // TODO: Implement platform widget interface for SetTableLinesVisible
+        if (PlatformWidget is Platform.IPlatformTable platformTable)
+        {
+            platformTable.SetHeaderVisible(_headerVisible);
+            platformTable.SetLinesVisible(_linesVisible);
+        }
     }
 
     /// <summary>
@@ -343,8 +348,10 @@ public class Table : Composite
             _items.Clear();
             _selectedIndices.Clear();
         }
-        // TODO: Implement platform widget interface for ClearTableItems
-        // Platform.PlatformFactory.Instance.ClearTableItems(Handle);
+        if (PlatformWidget is Platform.IPlatformTable platformTable)
+        {
+            platformTable.RemoveAllItems();
+        }
     }
 
     /// <summary>
@@ -545,8 +552,10 @@ public class Table : Composite
 
     private void UpdateSelection()
     {
-        // TODO: Implement platform widget interface for SetTableSelection
-        // Platform.PlatformFactory.Instance.SetTableSelection(Handle, _selectedIndices.ToArray());
+        if (PlatformWidget is Platform.IPlatformTable platformTable)
+        {
+            platformTable.SetSelection(_selectedIndices.ToArray());
+        }
         OnSelectionChanged(EventArgs.Empty);
     }
 

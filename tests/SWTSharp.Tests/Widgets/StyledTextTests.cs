@@ -577,11 +577,12 @@ public class StyledTextTests : WidgetTestBase
             using var shell = CreateTestShell();
             var styledText = new StyledText(shell, SWT.MULTI);
 
-            bool eventFired = false;
-            styledText.SelectionChanged += (sender, e) => eventFired = true;
+            var eventCount = 0;
+            styledText.SelectionChanged += (sender, e) => eventCount++;
 
             // Event subscription should work without throwing
             Assert.NotNull(styledText);
+            _ = eventCount; // Suppress unused variable warning
 
             styledText.Dispose();
         });

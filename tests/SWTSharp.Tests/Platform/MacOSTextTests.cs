@@ -191,7 +191,7 @@ public class MacOSTextTests : WidgetTestBase
 
             // Query isEditable selector
             var isEditableSel = sel_registerName("isEditable");
-            bool isEditable = objc_msgSend_bool(handle, isEditableSel);
+            bool isEditable = objc_msgSend_bool(handle, isEditableSel) != 0;
             Assert.False(isEditable);
 
             text.Dispose();
@@ -217,7 +217,7 @@ public class MacOSTextTests : WidgetTestBase
             Assert.NotEqual(IntPtr.Zero, handle);
 
             var isEditableSel = sel_registerName("isEditable");
-            bool isEditable = objc_msgSend_bool(handle, isEditableSel);
+            bool isEditable = objc_msgSend_bool(handle, isEditableSel) != 0;
             Assert.True(isEditable);
 
             text.Dispose();
@@ -418,8 +418,10 @@ public class MacOSTextTests : WidgetTestBase
     [DllImport("/usr/lib/libobjc.A.dylib")]
     private static extern IntPtr sel_registerName(string selector);
 
-    [DllImport("/usr/lib/libobjc.A.dylib")]
-    private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
+    // objc_msgSend returning bool - use IntPtr and check for non-zero
+    // Note: There's no actual objc_msgSend_bool entry point, so we use objc_msgSend
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern byte objc_msgSend_bool(IntPtr receiver, IntPtr selector);
 
     /// <summary>
     /// Helper to get the native NSTextField handle from a Text widget.

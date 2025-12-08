@@ -18,6 +18,8 @@
 
     <!-- Disable specific xUnit analyzer rule that requires MarshalByRefObject -->
     <NoWarn>xUnit3000</NoWarn>
+    <!-- Application manifest for Windows Common Controls v6 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

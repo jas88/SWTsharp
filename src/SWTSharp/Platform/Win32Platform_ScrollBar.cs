@@ -285,10 +285,10 @@ internal partial class Win32Platform
     private Dictionary<IntPtr, Win32ScrollBar> _scrollBarWidgets = new Dictionary<IntPtr, Win32ScrollBar>();
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32)]
+    [LibraryImport(User32, EntryPoint = "SendMessageW")]
     private static partial IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref SCROLLINFO lParam);
 #else
-    [DllImport(User32)]
+    [DllImport(User32, EntryPoint = "SendMessageW")]
     private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref SCROLLINFO lParam);
 #endif
 }

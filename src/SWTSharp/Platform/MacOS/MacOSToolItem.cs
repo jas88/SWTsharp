@@ -78,9 +78,7 @@ internal class MacOSToolItem : MacOSWidget, IPlatformToolItem
         IntPtr selInit = sel_registerName("initWithItemIdentifier:");
         item = objc_msgSend(item, selInit, nsIdentifier);
 
-        // Release identifier NSString
-        IntPtr selRelease = sel_registerName("release");
-        objc_msgSend_void(nsIdentifier, selRelease);
+        // NOTE: Do NOT release nsIdentifier - stringWithUTF8String: returns an autoreleased object
 
         return item;
     }
@@ -116,9 +114,7 @@ internal class MacOSToolItem : MacOSWidget, IPlatformToolItem
             IntPtr selSetLabel = sel_registerName("setLabel:");
             objc_msgSend_void(_nsToolbarItem, selSetLabel, nsLabel);
 
-            // Release NSString
-            IntPtr selRelease = sel_registerName("release");
-            objc_msgSend_void(nsLabel, selRelease);
+            // NOTE: Do NOT release nsLabel - stringWithUTF8String: returns an autoreleased object
         }
         catch (Exception ex)
         {

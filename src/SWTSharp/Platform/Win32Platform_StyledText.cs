@@ -200,6 +200,11 @@ internal partial class Win32Platform
             buffer[0] = (char)buffer.Length; // First word is buffer size
 
             int length = (int)Win32Platform.SendMessage(_handle, EM_GETLINE, new IntPtr(lineIndex), buffer);
+            // EM_GETLINE includes trailing \r\n or \r, trim it to match cross-platform behavior
+            while (length > 0 && (buffer[length - 1] == '\r' || buffer[length - 1] == '\n'))
+            {
+                length--;
+            }
             return new string(buffer, 0, length);
         }
 

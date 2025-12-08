@@ -256,11 +256,12 @@ public class TrackerTests : TestBase
         {
             using var tracker = new Tracker(SWT.NONE);
 
-            bool eventFired = false;
-            tracker.MouseMove += (sender, e) => eventFired = true;
+            var eventCount = 0;
+            tracker.MouseMove += (sender, e) => eventCount++;
 
             // Event subscription should work without throwing
             Assert.NotNull(tracker);
+            _ = eventCount; // Suppress unused variable warning
         });
     }
 
@@ -271,11 +272,12 @@ public class TrackerTests : TestBase
         {
             using var tracker = new Tracker(SWT.RESIZE);
 
-            bool eventFired = false;
-            tracker.Resize += (sender, e) => eventFired = true;
+            var eventCount = 0;
+            tracker.Resize += (sender, e) => eventCount++;
 
             // Event subscription should work without throwing
             Assert.NotNull(tracker);
+            _ = eventCount; // Suppress unused variable warning
         });
     }
 

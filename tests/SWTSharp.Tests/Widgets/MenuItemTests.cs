@@ -14,219 +14,264 @@ public class MenuItemTests : WidgetTestBase
     [Fact]
     public void MenuItem_Create_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        Assert.NotNull(menuItem);
-        AssertNotDisposed(menuItem);
+            Assert.NotNull(menuItem);
+            AssertNotDisposed(menuItem);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Create_WithStyles_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-
-        var styles = new[] { SWT.PUSH, SWT.CHECK, SWT.RADIO, SWT.SEPARATOR, SWT.CASCADE };
-        foreach (var style in styles)
+        RunOnUIThread(() =>
         {
-            var item = new MenuItem(menu, style);
-            Assert.NotNull(item);
-            item.Dispose();
-        }
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
 
-        menu.Dispose();
+            var styles = new[] { SWT.PUSH, SWT.CHECK, SWT.RADIO, SWT.SEPARATOR, SWT.CASCADE };
+            foreach (var style in styles)
+            {
+                var item = new MenuItem(menu, style);
+                Assert.NotNull(item);
+                item.Dispose();
+            }
+
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Text_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        menuItem.Text = "File";
-        Assert.Equal("File", menuItem.Text);
+            menuItem.Text = "File";
+            Assert.Equal("File", menuItem.Text);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Text_WithEmptyString_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        menuItem.Text = string.Empty;
-        Assert.Equal(string.Empty, menuItem.Text);
+            menuItem.Text = string.Empty;
+            Assert.Equal(string.Empty, menuItem.Text);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Text_WithNull_ShouldSetEmptyString()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        menuItem.Text = null!;
-        Assert.Equal(string.Empty, menuItem.Text);
+            menuItem.Text = null!;
+            Assert.Equal(string.Empty, menuItem.Text);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Selection_Check_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.CHECK);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.CHECK);
 
-        // MenuItem has SetSelection method, not a property
-        menuItem.SetSelection(false);
-        menuItem.SetSelection(true);
+            // MenuItem has SetSelection method, not a property
+            menuItem.SetSelection(false);
+            menuItem.SetSelection(true);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Selection_Radio_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.RADIO);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.RADIO);
 
-        // MenuItem has SetSelection method, not a property
-        menuItem.SetSelection(false);
-        menuItem.SetSelection(true);
+            // MenuItem has SetSelection method, not a property
+            menuItem.SetSelection(false);
+            menuItem.SetSelection(true);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Enabled_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        menuItem.Enabled = false;
-        Assert.False(menuItem.Enabled);
+            menuItem.Enabled = false;
+            Assert.False(menuItem.Enabled);
 
-        menuItem.Enabled = true;
-        Assert.True(menuItem.Enabled);
+            menuItem.Enabled = true;
+            Assert.True(menuItem.Enabled);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Menu_Cascade_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var menuBar = new Menu(shell, SWT.BAR);
-        var cascadeItem = new MenuItem(menuBar, SWT.CASCADE);
-        var subMenu = new Menu(shell, SWT.DROP_DOWN);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menuBar = new Menu(shell, SWT.BAR);
+            var cascadeItem = new MenuItem(menuBar, SWT.CASCADE);
+            var subMenu = new Menu(shell, SWT.DROP_DOWN);
 
-        cascadeItem.Menu = subMenu;
+            cascadeItem.Menu = subMenu;
 
-        Assert.Same(subMenu, cascadeItem.Menu);
+            Assert.Same(subMenu, cascadeItem.Menu);
 
-        cascadeItem.Dispose();
-        menuBar.Dispose();
-        subMenu.Dispose();
+            cascadeItem.Dispose();
+            menuBar.Dispose();
+            subMenu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Dispose_ShouldSetIsDisposed()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        AssertNotDisposed(menuItem);
-        menuItem.Dispose();
-        AssertDisposed(menuItem);
+            AssertNotDisposed(menuItem);
+            menuItem.Dispose();
+            AssertDisposed(menuItem);
 
-        menu.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_SetText_AfterDispose_ShouldThrow()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
-        menuItem.Dispose();
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
+            menuItem.Dispose();
 
-        Assert.Throws<SWTDisposedException>(() => menuItem.Text = "Test");
+            Assert.Throws<SWTDisposedException>(() => menuItem.Text = "Test");
 
-        menu.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Data_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        var testData = new { Name = "Test", Value = 42 };
-        menuItem.Data = testData;
+            var testData = new { Name = "Test", Value = 42 };
+            menuItem.Data = testData;
 
-        Assert.Same(testData, menuItem.Data);
+            Assert.Same(testData, menuItem.Data);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_InitiallyEnabled()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        Assert.True(menuItem.Enabled);
+            Assert.True(menuItem.Enabled);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_InitialText_ShouldBeEmpty()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        Assert.Equal(string.Empty, menuItem.Text);
+            Assert.Equal(string.Empty, menuItem.Text);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 
     [Fact]
     public void MenuItem_Display_ShouldMatchMenu()
     {
-        using var shell = CreateTestShell();
-        var menu = new Menu(shell, SWT.BAR);
-        var menuItem = new MenuItem(menu, SWT.PUSH);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var menu = new Menu(shell, SWT.BAR);
+            var menuItem = new MenuItem(menu, SWT.PUSH);
 
-        Assert.Same(shell.Display, menuItem.Display);
+            Assert.Same(shell.Display, menuItem.Display);
 
-        menuItem.Dispose();
-        menu.Dispose();
+            menuItem.Dispose();
+            menu.Dispose();
+        });
     }
 }
