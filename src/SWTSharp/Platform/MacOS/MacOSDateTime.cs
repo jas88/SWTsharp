@@ -210,9 +210,9 @@ internal class MacOSDateTime : IPlatformDateTime
     {
         if (_disposed || _datePicker == IntPtr.Zero) return;
 
-        // Create NSRect
+        // Create NSRect and call setFrame: (takes struct as argument, not returns it)
         CGRect frame = new CGRect { origin = new CGPoint { x = x, y = y }, size = new CGSize { width = width, height = height } };
-        objc_msgSend_stret(out frame, _datePicker, sel_registerName("setFrame:"), frame);
+        objc_msgSend_rect(_datePicker, sel_registerName("setFrame:"), frame);
     }
 
     public Rectangle GetBounds()
@@ -328,6 +328,10 @@ internal class MacOSDateTime : IPlatformDateTime
 
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, double arg1, double arg2, double arg3, double arg4);
+
+    // For setFrame: which takes CGRect as input argument (not returns it)
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect arg);
 
     // Architecture-specific struct return handling:
     // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
