@@ -442,7 +442,7 @@ internal partial class Win32Platform : IPlatform
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
+    [LibraryImport(User32, EntryPoint = "GetMessageW", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 #else
@@ -451,7 +451,7 @@ internal partial class Win32Platform : IPlatform
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32, SetLastError = true)]
+    [LibraryImport(User32, EntryPoint = "PeekMessageW", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool PeekMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax, uint wRemoveMsg);
 #else
@@ -469,7 +469,7 @@ internal partial class Win32Platform : IPlatform
 #endif
 
 #if NET8_0_OR_GREATER
-    [LibraryImport(User32)]
+    [LibraryImport(User32, EntryPoint = "DispatchMessageW")]
     private static partial IntPtr DispatchMessage(ref MSG lpMsg);
 #else
     [DllImport(User32)]
