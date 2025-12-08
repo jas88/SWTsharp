@@ -75,15 +75,15 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
     {
         if (_disposed || _nsButtonHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsButtonHandle, setTitle:, NSString stringWithString:text)
+        // Create NSString from UTF8 C string
         IntPtr textPtr = IntPtr.Zero;
         IntPtr nsString = IntPtr.Zero;
 
         try
         {
             var strClass = objc_getClass("NSString");
-            var selector = sel_registerName("stringWithString:");
-            textPtr = Marshal.StringToHGlobalAuto(text);
+            var selector = sel_registerName("stringWithUTF8String:");
+            textPtr = Marshal.StringToHGlobalAnsi(text ?? string.Empty);
             nsString = objc_msgSend(strClass, selector, textPtr);
 
             var setTitleSelector = sel_registerName("setTitle:");
@@ -94,7 +94,7 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
             objc_msgSend(nsString, releaseSelector);
 
             // Fire TextChanged event
-            TextChanged?.Invoke(this, text);
+            TextChanged?.Invoke(this, text ?? string.Empty);
         }
         finally
         {

@@ -11,6 +11,7 @@ namespace SWTSharp.Platform.MacOS;
 internal class MacOSWindow : MacOSWidget, IPlatformWindow
 {
     private IntPtr _nsWindowHandle;
+    private IntPtr _contentView;
     private readonly List<IPlatformWidget> _platformChildren = new();
     private bool _disposed;
 
@@ -28,6 +29,10 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     {
         // Create NSWindow using objc_msgSend
         _nsWindowHandle = CreateNSWindow(style, title);
+
+        // Cache the contentView for child widgets to use
+        var contentViewSelector = sel_registerName("contentView");
+        _contentView = objc_msgSend(_nsWindowHandle, contentViewSelector);
     }
 
     public void SetBounds(int x, int y, int width, int height)
@@ -133,10 +138,10 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     {
         if (_disposed || _nsWindowHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsWindowHandle, setTitle:, NSString stringWithString:title)
+        // Create NSString from UTF8 C string
         var strClass = objc_getClass("NSString");
-        var selector = sel_registerName("stringWithString:");
-        var textPtr = Marshal.StringToHGlobalAuto(title);
+        var selector = sel_registerName("stringWithUTF8String:");
+        var textPtr = Marshal.StringToHGlobalAnsi(title ?? string.Empty);
         try
         {
             var nsString = objc_msgSend(strClass, selector, textPtr);
@@ -278,6 +283,16 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
 
     public override IntPtr GetNativeHandle()
     {
+        // Return contentView so child widgets can call addSubview: on it
+        // (NSWindow doesn't respond to addSubview:, only its contentView does)
+        return _contentView;
+    }
+
+    /// <summary>
+    /// Gets the actual NSWindow handle for window-specific operations.
+    /// </summary>
+    public IntPtr GetWindowHandle()
+    {
         return _nsWindowHandle;
     }
 
@@ -301,8 +316,8 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
         if (!string.IsNullOrEmpty(title))
         {
             var strClass = objc_getClass("NSString");
-            var stringSelector = sel_registerName("stringWithString:");
-            var textPtr = Marshal.StringToHGlobalAuto(title);
+            var stringSelector = sel_registerName("stringWithUTF8String:");
+            var textPtr = Marshal.StringToHGlobalAnsi(title);
             try
             {
                 var nsString = objc_msgSend(strClass, stringSelector, textPtr);
