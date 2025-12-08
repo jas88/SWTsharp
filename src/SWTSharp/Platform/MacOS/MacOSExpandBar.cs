@@ -345,10 +345,10 @@ internal class MacOSExpandBar : MacOSWidget, IPlatformExpandBar
         }
     }
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string className);
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [DllImport(ObjCLibrary, EntryPoint = "sel_registerName")]
     private static extern IntPtr sel_registerName(string selector);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
@@ -599,10 +599,10 @@ internal class MacOSExpandItem : MacOSWidget, IPlatformExpandItem
         }
     }
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string className);
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [DllImport(ObjCLibrary, EntryPoint = "sel_registerName")]
     private static extern IntPtr sel_registerName(string selector);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]

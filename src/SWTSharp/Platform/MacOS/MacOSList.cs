@@ -432,10 +432,10 @@ internal class MacOSList : MacOSWidget, IPlatformList
         }
     }
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string className);
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [DllImport(ObjCLibrary, EntryPoint = "sel_registerName")]
     private static extern IntPtr sel_registerName(string selector);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
