@@ -36,6 +36,9 @@ internal class MacOSCoolBar : MacOSWidget, IPlatformCoolBar
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, long arg1);
 
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_void_ptr_long(IntPtr receiver, IntPtr selector, IntPtr arg1, long arg2);
+
     public MacOSCoolBar(IntPtr parent, int style)
     {
         // Create NSStackView (available since macOS 10.9)
@@ -136,10 +139,9 @@ internal class MacOSCoolBar : MacOSWidget, IPlatformCoolBar
         }
         else
         {
-            // Insert at index
+            // Insert at index - must pass both view and index in single message
             IntPtr selInsertArrangedSubview = sel_registerName("insertArrangedSubview:atIndex:");
-            objc_msgSend_void(_nsStackView, selInsertArrangedSubview, view);
-            objc_msgSend_void(_nsStackView, sel_registerName("atIndex:"), (long)index);
+            objc_msgSend_void_ptr_long(_nsStackView, selInsertArrangedSubview, view, (long)index);
         }
     }
 
