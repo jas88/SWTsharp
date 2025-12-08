@@ -436,12 +436,8 @@ public class Browser : Composite
     public Graphics.Point GetSize()
     {
         CheckWidget();
-        if (PlatformWidget != null)
-        {
-            var bounds = PlatformWidget.GetBounds();
-            return new Graphics.Point(bounds.Width, bounds.Height);
-        }
-        return new Graphics.Point(0, 0);
+        var bounds = GetBounds();
+        return new Graphics.Point(bounds.Width, bounds.Height);
     }
 
     // Event handlers that forward platform events to public events

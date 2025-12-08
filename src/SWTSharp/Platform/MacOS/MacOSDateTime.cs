@@ -55,22 +55,22 @@ internal class MacOSDateTime : IPlatformDateTime
         {
             // NSDatePickerStyleClockAndCalendar = 1
             datePickerStyle = new IntPtr(1);
-            // NSDatePickerElementFlagYearMonthDay = 0x0E
-            datePickerElements = new IntPtr(0x0E);
+            // NSYearMonthDayDatePickerElementFlag = 0xE0
+            datePickerElements = new IntPtr(0xE0);
         }
         else if ((style & SWT.TIME) != 0)
         {
             // NSDatePickerStyleTextFieldAndStepper = 0
             datePickerStyle = IntPtr.Zero;
-            // NSDatePickerElementFlagHourMinuteSecond = 0x70
-            datePickerElements = new IntPtr(0x70);
+            // NSHourMinuteSecondDatePickerElementFlag = 0x0E
+            datePickerElements = new IntPtr(0x0E);
         }
         else // DATE
         {
             // NSDatePickerStyleTextFieldAndStepper = 0
             datePickerStyle = IntPtr.Zero;
-            // NSDatePickerElementFlagYearMonthDay = 0x0E
-            datePickerElements = new IntPtr(0x0E);
+            // NSYearMonthDayDatePickerElementFlag = 0xE0
+            datePickerElements = new IntPtr(0xE0);
         }
 
         objc_msgSend(_datePicker, sel_registerName("setDatePickerStyle:"), datePickerStyle);
@@ -116,8 +116,11 @@ internal class MacOSDateTime : IPlatformDateTime
             // Create NSDate from components
             IntPtr date = objc_msgSend(calendar, sel_registerName("dateFromComponents:"), components);
 
-            // Set date on picker
-            objc_msgSend(_datePicker, sel_registerName("setDateValue:"), date);
+            // Set date on picker (if date was created successfully)
+            if (date != IntPtr.Zero)
+            {
+                objc_msgSend(_datePicker, sel_registerName("setDateValue:"), date);
+            }
 
             objc_msgSend(components, sel_registerName("release"));
         }
@@ -132,18 +135,26 @@ internal class MacOSDateTime : IPlatformDateTime
             // Get current date
             IntPtr date = objc_msgSend(_datePicker, sel_registerName("dateValue"));
 
+            if (date == IntPtr.Zero)
+                return (_year, _month, _day);
+
             // Get calendar
             IntPtr calendarClass = objc_getClass("NSCalendar");
             IntPtr calendar = objc_msgSend(calendarClass, sel_registerName("currentCalendar"));
 
-            // Get components
-            // NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay = 0x0E
+            // Request only the date components needed
+            // NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay = (1<<2)|(1<<3)|(1<<4) = 4|8|16 = 28 = 0x1C
             IntPtr components = objc_msgSend(calendar, sel_registerName("components:fromDate:"),
-                new IntPtr(0x0E), date);
+                (IntPtr)0x1C, date);
 
-            _year = (int)objc_msgSend(components, sel_registerName("year"));
-            _month = (int)objc_msgSend(components, sel_registerName("month")) - 1; // Convert to 0-based
-            _day = (int)objc_msgSend(components, sel_registerName("day"));
+            long year = objc_msgSend(components, sel_registerName("year")).ToInt64();
+            long month = objc_msgSend(components, sel_registerName("month")).ToInt64();
+            long day = objc_msgSend(components, sel_registerName("day")).ToInt64();
+
+            // Update cached values (NSDateComponents shouldn't return -1 for requested components)
+            _year = (int)year;
+            _month = (int)month - 1; // Convert to 0-based
+            _day = (int)day;
         }
 
         return (_year, _month, _day);
@@ -170,18 +181,26 @@ internal class MacOSDateTime : IPlatformDateTime
             // Get current date
             IntPtr date = objc_msgSend(_datePicker, sel_registerName("dateValue"));
 
+            if (date == IntPtr.Zero)
+                return (_hours, _minutes, _seconds);
+
             // Get calendar
             IntPtr calendarClass = objc_getClass("NSCalendar");
             IntPtr calendar = objc_msgSend(calendarClass, sel_registerName("currentCalendar"));
 
-            // Get time components
-            // NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond = 0x70
+            // Request only the time components needed
+            // NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond = (1<<5)|(1<<6)|(1<<7) = 32|64|128 = 224 = 0xE0
             IntPtr components = objc_msgSend(calendar, sel_registerName("components:fromDate:"),
-                new IntPtr(0x70), date);
+                (IntPtr)0xE0, date);
 
-            _hours = (int)objc_msgSend(components, sel_registerName("hour"));
-            _minutes = (int)objc_msgSend(components, sel_registerName("minute"));
-            _seconds = (int)objc_msgSend(components, sel_registerName("second"));
+            long hours = objc_msgSend(components, sel_registerName("hour")).ToInt64();
+            long minutes = objc_msgSend(components, sel_registerName("minute")).ToInt64();
+            long seconds = objc_msgSend(components, sel_registerName("second")).ToInt64();
+
+            // Update cached values (NSDateComponents shouldn't return -1 for requested components)
+            _hours = (int)hours;
+            _minutes = (int)minutes;
+            _seconds = (int)seconds;
         }
 
         return (_hours, _minutes, _seconds);

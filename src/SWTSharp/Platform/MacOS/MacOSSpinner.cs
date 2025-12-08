@@ -64,9 +64,8 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
         {
             if (_disposed || _nsStepperHandle == IntPtr.Zero) return 0;
 
-            IntPtr selector = sel_registerName("doubleValue");
-            double value = objc_msgSend_double_ret(_nsStepperHandle, selector);
-            return (int)value;
+            // Return the clamped internal value, not the raw stepper value
+            return _value;
         }
         set
         {
@@ -102,10 +101,25 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
 
             _minimum = value;
             if (_maximum < _minimum) _maximum = _minimum;
-            if (_value < _minimum) _value = _minimum;
+
+            // Clamp current value to new minimum
+            bool valueClamped = false;
+            if (_value < _minimum)
+            {
+                _value = _minimum;
+                valueClamped = true;
+            }
 
             IntPtr selector = sel_registerName("setMinValue:");
             objc_msgSend_double(_nsStepperHandle, selector, (double)_minimum);
+
+            // Update stepper value if it was clamped
+            if (valueClamped)
+            {
+                IntPtr setValueSelector = sel_registerName("setDoubleValue:");
+                objc_msgSend_double(_nsStepperHandle, setValueSelector, (double)_value);
+                UpdateTextField();
+            }
         }
     }
 
@@ -122,10 +136,25 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
 
             _maximum = value;
             if (_minimum > _maximum) _minimum = _maximum;
-            if (_value > _maximum) _value = _maximum;
+
+            // Clamp current value to new maximum
+            bool valueClamped = false;
+            if (_value > _maximum)
+            {
+                _value = _maximum;
+                valueClamped = true;
+            }
 
             IntPtr selector = sel_registerName("setMaxValue:");
             objc_msgSend_double(_nsStepperHandle, selector, (double)_maximum);
+
+            // Update stepper value if it was clamped
+            if (valueClamped)
+            {
+                IntPtr setValueSelector = sel_registerName("setDoubleValue:");
+                objc_msgSend_double(_nsStepperHandle, setValueSelector, (double)_value);
+                UpdateTextField();
+            }
         }
     }
 
