@@ -32,107 +32,128 @@ public class TreeTests : WidgetTestBase
     [Fact]
     public void Tree_AddRootItem_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
-        var item = new TreeItem(tree, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
+            var item = new TreeItem(tree, SWT.NONE);
 
-        Assert.NotNull(item);
-        Assert.Equal(1, tree.ItemCount);
+            Assert.NotNull(item);
+            Assert.Equal(1, tree.ItemCount);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
     public void Tree_AddMultipleRootItems_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
 
-        var item1 = new TreeItem(tree, SWT.NONE);
-        var item2 = new TreeItem(tree, SWT.NONE);
-        var item3 = new TreeItem(tree, SWT.NONE);
+            var item1 = new TreeItem(tree, SWT.NONE);
+            var item2 = new TreeItem(tree, SWT.NONE);
+            var item3 = new TreeItem(tree, SWT.NONE);
 
-        Assert.Equal(3, tree.ItemCount);
+            Assert.Equal(3, tree.ItemCount);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
     public void Tree_AddChildItems_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
 
-        var parent = new TreeItem(tree, SWT.NONE);
-        var child1 = new TreeItem(parent, SWT.NONE);
-        var child2 = new TreeItem(parent, SWT.NONE);
+            var parent = new TreeItem(tree, SWT.NONE);
+            var child1 = new TreeItem(parent, SWT.NONE);
+            var child2 = new TreeItem(parent, SWT.NONE);
 
-        Assert.Equal(2, parent.ItemCount);
+            Assert.Equal(2, parent.ItemCount);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
     public void Tree_GetItem_ShouldReturnCorrectItem()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
 
-        var item1 = new TreeItem(tree, SWT.NONE);
-        var item2 = new TreeItem(tree, SWT.NONE);
+            var item1 = new TreeItem(tree, SWT.NONE);
+            var item2 = new TreeItem(tree, SWT.NONE);
 
-        var retrieved = tree.GetItem(1);
-        Assert.Same(item2, retrieved);
+            var retrieved = tree.GetItem(1);
+            Assert.Same(item2, retrieved);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
     public void Tree_SelectionIndex_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.SINGLE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.SINGLE);
 
-        new TreeItem(tree, SWT.NONE);
-        var item2 = new TreeItem(tree, SWT.NONE);
+            new TreeItem(tree, SWT.NONE);
+            var item2 = new TreeItem(tree, SWT.NONE);
 
-        tree.SetSelection(new[] { item2 });
-        Assert.Single(tree.Selection);
-        Assert.Same(item2, tree.Selection[0]);
+            tree.SetSelection(new[] { item2 });
+            Assert.Single(tree.Selection);
+            Assert.Same(item2, tree.Selection[0]);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
     public void Tree_Selection_ShouldReturnSelectedItem()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.SINGLE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.SINGLE);
 
-        var item1 = new TreeItem(tree, SWT.NONE);
-        var item2 = new TreeItem(tree, SWT.NONE);
+            var item1 = new TreeItem(tree, SWT.NONE);
+            var item2 = new TreeItem(tree, SWT.NONE);
 
-        tree.SetSelection(new[] { item2 });
-        Assert.Same(item2, tree.Selection[0]);
+            tree.SetSelection(new[] { item2 });
+            Assert.Same(item2, tree.Selection[0]);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
     public void Tree_Items_ShouldReturnRootItems()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
 
-        var item1 = new TreeItem(tree, SWT.NONE);
-        var item2 = new TreeItem(tree, SWT.NONE);
+            var item1 = new TreeItem(tree, SWT.NONE);
+            var item2 = new TreeItem(tree, SWT.NONE);
 
-        var items = tree.Items;
-        Assert.Equal(2, items.Length);
-        Assert.Contains(item1, items);
-        Assert.Contains(item2, items);
+            var items = tree.Items;
+            Assert.Equal(2, items.Length);
+            Assert.Contains(item1, items);
+            Assert.Contains(item2, items);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
@@ -150,14 +171,17 @@ public class TreeTests : WidgetTestBase
     [Fact]
     public void Tree_Dispose_ShouldDisposeItems()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
-        var item = new TreeItem(tree, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
+            var item = new TreeItem(tree, SWT.NONE);
 
-        tree.Dispose();
+            tree.Dispose();
 
-        Assert.True(tree.IsDisposed);
-        Assert.True(item.IsDisposed);
+            Assert.True(tree.IsDisposed);
+            Assert.True(item.IsDisposed);
+        });
     }
 
     [Fact]
@@ -191,28 +215,34 @@ public class TreeTests : WidgetTestBase
     [Fact]
     public void Tree_InitialItemCount_ShouldBeZero()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
 
-        Assert.Equal(0, tree.ItemCount);
+            Assert.Equal(0, tree.ItemCount);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 
     [Fact]
     public void Tree_NestedHierarchy_ShouldWork()
     {
-        using var shell = CreateTestShell();
-        var tree = new Tree(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var tree = new Tree(shell, SWT.NONE);
 
-        var root = new TreeItem(tree, SWT.NONE);
-        var child = new TreeItem(root, SWT.NONE);
-        var grandchild = new TreeItem(child, SWT.NONE);
+            var root = new TreeItem(tree, SWT.NONE);
+            var child = new TreeItem(root, SWT.NONE);
+            var grandchild = new TreeItem(child, SWT.NONE);
 
-        Assert.Equal(1, tree.ItemCount);
-        Assert.Equal(1, root.ItemCount);
-        Assert.Equal(1, child.ItemCount);
+            Assert.Equal(1, tree.ItemCount);
+            Assert.Equal(1, root.ItemCount);
+            Assert.Equal(1, child.ItemCount);
 
-        tree.Dispose();
+            tree.Dispose();
+        });
     }
 }
