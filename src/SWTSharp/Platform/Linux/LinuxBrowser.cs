@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using SWTSharp.Graphics;
 
@@ -17,6 +18,16 @@ internal class LinuxBrowser : IPlatformBrowser
     private string _currentTitle = string.Empty;
     private bool _isLoading;
     private Rectangle _requestedBounds;
+
+    // Static mapping of webview handles to instances for callback routing
+    private static readonly ConcurrentDictionary<IntPtr, LinuxBrowser> _browserInstances = new();
+
+    // GSignal callback delegate for load-changed
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void LoadChangedCallback(IntPtr webView, int loadEvent, IntPtr userData);
+
+    // Keep delegate alive to prevent GC
+    private static readonly LoadChangedCallback _loadChangedCallback = OnLoadChanged;
 
 #if NET5_0_OR_GREATER
     // WebKit library handle for dynamic loading (.NET 5+)
@@ -166,9 +177,87 @@ internal class LinuxBrowser : IPlatformBrowser
         gtk_widget_show(_webView);
         gtk_widget_show(_scrolledWindow);
 
-        // Note: Event signal connections removed per instructions
-        // Events like load-changed, load-failed, etc. would be connected here
-        // using g_signal_connect_data if needed in the future
+        // Register instance for callback routing
+        _browserInstances[_webView] = this;
+
+        // Connect to load-changed signal for navigation events
+        g_signal_connect_data(
+            _webView,
+            "load-changed",
+            Marshal.GetFunctionPointerForDelegate(_loadChangedCallback),
+            IntPtr.Zero,
+            IntPtr.Zero,
+            0);
+    }
+
+    /// <summary>
+    /// WebKit load event enumeration.
+    /// </summary>
+    private enum WebKitLoadEvent
+    {
+        Started = 0,
+        Redirected = 1,
+        Committed = 2,
+        Finished = 3
+    }
+
+    /// <summary>
+    /// Static callback for WebKit load-changed signal.
+    /// </summary>
+    private static void OnLoadChanged(IntPtr webView, int loadEvent, IntPtr userData)
+    {
+        if (!_browserInstances.TryGetValue(webView, out var browser) || browser._disposed)
+            return;
+
+        browser.HandleLoadChanged((WebKitLoadEvent)loadEvent);
+    }
+
+    /// <summary>
+    /// Instance method to handle load state changes.
+    /// </summary>
+    private void HandleLoadChanged(WebKitLoadEvent loadEvent)
+    {
+        switch (loadEvent)
+        {
+            case WebKitLoadEvent.Started:
+                _isLoading = true;
+                Navigating?.Invoke(this, new BrowserNavigatingEventArgs { Url = _currentUrl });
+                break;
+
+            case WebKitLoadEvent.Committed:
+                // Navigation committed - update URL from WebKit
+                UpdateCurrentUrlFromWebKit();
+                Navigated?.Invoke(this, new BrowserNavigatedEventArgs { Url = _currentUrl });
+                break;
+
+            case WebKitLoadEvent.Finished:
+                _isLoading = false;
+                UpdateCurrentUrlFromWebKit();
+                DocumentComplete?.Invoke(this, new BrowserDocumentCompleteEventArgs { Url = _currentUrl });
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Updates _currentUrl from WebKit's actual URI.
+    /// </summary>
+    private void UpdateCurrentUrlFromWebKit()
+    {
+        if (_disposed || _webView == IntPtr.Zero)
+            return;
+
+#if NET5_0_OR_GREATER
+        if (!_webkitAvailable || _webkit_web_view_get_uri == null)
+            return;
+
+        IntPtr urlPtr = _webkit_web_view_get_uri(_webView);
+#else
+        IntPtr urlPtr = webkit_web_view_get_uri(_webView);
+#endif
+        if (urlPtr != IntPtr.Zero)
+        {
+            _currentUrl = PtrToStringUTF8(urlPtr);
+        }
     }
 
     public bool Navigate(string url)
@@ -489,6 +578,12 @@ internal class LinuxBrowser : IPlatformBrowser
     {
         if (!_disposed)
         {
+            // Remove from instance mapping
+            if (_webView != IntPtr.Zero)
+            {
+                _browserInstances.TryRemove(_webView, out _);
+            }
+
             if (_scrolledWindow != IntPtr.Zero)
             {
                 gtk_widget_destroy(_scrolledWindow);
@@ -606,6 +701,16 @@ internal class LinuxBrowser : IPlatformBrowser
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    // GObject signal connection
+    [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    private static extern ulong g_signal_connect_data(
+        IntPtr instance,
+        string detailed_signal,
+        IntPtr c_handler,
+        IntPtr data,
+        IntPtr destroy_data,
+        int connect_flags);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct GtkAllocation
