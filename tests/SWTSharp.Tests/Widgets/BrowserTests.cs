@@ -146,13 +146,16 @@ public class BrowserTests : WidgetTestBase
     [Fact]
     public void Browser_Navigate_WaitForComplete_ShouldReturnActualUrl()
     {
+        Shell? shell = null;
+        Browser? browser = null;
+        string? navigatedUrl = null;
+        bool navigationComplete = false;
+
+        // Setup: create shell and browser, attach event handler, navigate
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            using var browser = new Browser(shell, SWT.NONE);
-
-            string? navigatedUrl = null;
-            bool navigationComplete = false;
+            shell = CreateTestShell();
+            browser = new Browser(shell, SWT.NONE);
 
             browser.Navigated += (sender, e) =>
             {
@@ -162,24 +165,32 @@ public class BrowserTests : WidgetTestBase
 
             // Navigate to a URL - browser may normalize it (e.g., add trailing slash)
             browser.SetUrl("https://www.example.com");
+        });
 
-            // Pump events while waiting for navigation (don't block UI thread)
-            var timeout = System.DateTime.UtcNow.AddSeconds(5);
-            var display = shell.Display;
-            while (!navigationComplete && System.DateTime.UtcNow < timeout)
-            {
-                display?.ReadAndDispatch();
-            }
+        // Wait for navigation by repeatedly calling RunOnUIThread to pump events
+        // This works on macOS where ReadAndDispatch inside RunOnUIThread blocks
+        var timeout = System.DateTime.UtcNow.AddSeconds(5);
+        while (!navigationComplete && System.DateTime.UtcNow < timeout)
+        {
+            RunOnUIThread(() => { }); // Pump events
+            System.Threading.Thread.Sleep(10); // Small delay to avoid spinning
+        }
 
+        // Verify and cleanup
+        RunOnUIThread(() =>
+        {
             if (navigationComplete)
             {
                 // After navigation completes, GetUrl returns the actual URL from browser
-                var actualUrl = browser.GetUrl();
+                var actualUrl = browser?.GetUrl();
                 Assert.NotNull(actualUrl);
                 Assert.StartsWith("https://www.example.com", actualUrl);
             }
             // else: navigation didn't complete (no network/headless) - test passes anyway
             _ = navigatedUrl; // Suppress unused variable warning
+
+            browser?.Dispose();
+            shell?.Dispose();
         });
     }
 
