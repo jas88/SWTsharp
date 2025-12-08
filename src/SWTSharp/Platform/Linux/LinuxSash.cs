@@ -76,6 +76,7 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
         int width = _isVertical ? 100 : 5;
         int height = _isVertical ? 5 : 100;
         gtk_widget_set_size_request(_sashHandle, width, height);
+        _requestedBounds = new Rectangle(0, 0, width, height);
 
         // Set cursor to indicate draggable area
         SetCursor();

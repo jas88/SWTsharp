@@ -122,7 +122,7 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: csharp
-          queries: security-extended,security-and-quality
+          config-file: .github/codeql/codeql-config.yml
 
       - name: Setup Xvfb and GTK/WebKit (Virtual Display for GUI Tests)
         run: |

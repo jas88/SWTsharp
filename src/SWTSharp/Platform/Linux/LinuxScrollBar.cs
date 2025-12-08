@@ -12,7 +12,7 @@ internal class LinuxScrollBar : LinuxWidget, IPlatformScrollBar
     private const string GtkLib = "libgtk-3.so.0";
 
     private IntPtr _scrollBar;
-    private IntPtr _adjustment;
+    private readonly IntPtr _adjustment;
     private bool _disposed;
     private int _minimum;
     private int _maximum = 100;
@@ -142,6 +142,9 @@ internal class LinuxScrollBar : LinuxWidget, IPlatformScrollBar
     private void UpdateAdjustment()
     {
         if (_adjustment == IntPtr.Zero) return;
+
+        // Clamp value to current range before passing to GTK
+        _value = Math.Max(_minimum, Math.Min(_maximum, _value));
 
         gtk_adjustment_configure(
             _adjustment,

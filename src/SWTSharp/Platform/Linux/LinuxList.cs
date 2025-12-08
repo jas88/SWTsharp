@@ -123,25 +123,19 @@ internal class LinuxList : LinuxWidget, IPlatformList
 
     private void OnRowSelectedCallback(IntPtr listBox, IntPtr row, IntPtr data)
     {
-        if (_listInstances.TryGetValue(listBox, out var list) && list == this)
+        if (_listInstances.TryGetValue(listBox, out var list) && list == this && !_disposed)
         {
-            if (!_disposed)
-            {
-                int index = row != IntPtr.Zero ? gtk_list_box_row_get_index(row) : -1;
-                SelectionChanged?.Invoke(this, index);
-            }
+            int index = row != IntPtr.Zero ? gtk_list_box_row_get_index(row) : -1;
+            SelectionChanged?.Invoke(this, index);
         }
     }
 
     private void OnRowActivatedCallback(IntPtr listBox, IntPtr row, IntPtr data)
     {
-        if (_listInstances.TryGetValue(listBox, out var list) && list == this)
+        if (_listInstances.TryGetValue(listBox, out var list) && list == this && !_disposed && row != IntPtr.Zero)
         {
-            if (!_disposed && row != IntPtr.Zero)
-            {
-                int index = gtk_list_box_row_get_index(row);
-                ItemDoubleClick?.Invoke(this, index);
-            }
+            int index = gtk_list_box_row_get_index(row);
+            ItemDoubleClick?.Invoke(this, index);
         }
     }
 

@@ -135,7 +135,7 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
             if (value > 0 && _increment != value)
             {
                 _increment = value;
-                gtk_range_set_increments(_scale, _increment, _increment * 10);
+                gtk_range_set_increments(_scale, _increment, (double)_increment * 10);
                 UpdateTickMarks();
             }
         }

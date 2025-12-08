@@ -149,25 +149,29 @@ public class BrowserTests : WidgetTestBase
         RunOnUIThread(() =>
         {
             using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
+            using var browser = new Browser(shell, SWT.NONE);
 
             string? navigatedUrl = null;
-            var navigated = new System.Threading.ManualResetEventSlim(false);
+            bool navigationComplete = false;
 
             browser.Navigated += (sender, e) =>
             {
                 navigatedUrl = e.Url;
-                navigated.Set();
+                navigationComplete = true;
             };
 
             // Navigate to a URL - browser may normalize it (e.g., add trailing slash)
             browser.SetUrl("https://www.example.com");
 
-            // Wait for navigation with timeout
-            // Note: In headless CI without network, this may not fire
-            bool completed = navigated.Wait(System.TimeSpan.FromSeconds(5));
+            // Pump events while waiting for navigation (don't block UI thread)
+            var timeout = System.DateTime.UtcNow.AddSeconds(5);
+            var display = shell.Display;
+            while (!navigationComplete && System.DateTime.UtcNow < timeout)
+            {
+                display?.ReadAndDispatch();
+            }
 
-            if (completed)
+            if (navigationComplete)
             {
                 // After navigation completes, GetUrl returns the actual URL from browser
                 var actualUrl = browser.GetUrl();
@@ -175,8 +179,7 @@ public class BrowserTests : WidgetTestBase
                 Assert.StartsWith("https://www.example.com", actualUrl);
             }
             // else: navigation didn't complete (no network/headless) - test passes anyway
-
-            browser.Dispose();
+            _ = navigatedUrl; // Suppress unused variable warning
         });
     }
 

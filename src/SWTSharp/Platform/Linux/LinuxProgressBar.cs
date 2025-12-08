@@ -67,7 +67,8 @@ internal class LinuxProgressBar : LinuxWidget, IPlatformProgressBar
             if (_minimum != value)
             {
                 _minimum = value;
-                // Recalculate fraction with new range
+                // Clamp value to new range before recalculating fraction
+                _value = Math.Max(_minimum, Math.Min(_maximum, _value));
                 if (_maximum > _minimum)
                 {
                     double fraction = (double)(_value - _minimum) / (_maximum - _minimum);
@@ -86,7 +87,8 @@ internal class LinuxProgressBar : LinuxWidget, IPlatformProgressBar
             if (_maximum != value)
             {
                 _maximum = value;
-                // Recalculate fraction with new range
+                // Clamp value to new range before recalculating fraction
+                _value = Math.Max(_minimum, Math.Min(_maximum, _value));
                 if (_maximum > _minimum)
                 {
                     double fraction = (double)(_value - _minimum) / (_maximum - _minimum);
