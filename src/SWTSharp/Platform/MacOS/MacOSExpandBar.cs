@@ -485,7 +485,8 @@ internal class MacOSExpandItem : MacOSWidget, IPlatformExpandItem
             IntPtr nsString = CreateNSString(displayText);
             IntPtr setTitleSelector = sel_registerName("setTitle:");
             objc_msgSend(_headerView, setTitleSelector, nsString);
-            // NOTE: Do NOT release nsString - stringWithUTF8String: returns an autoreleased object
+            // Release is required - CreateNSString uses alloc+initWithUTF8String: (retained)
+            objc_msgSend(nsString, sel_registerName("release"));
         }
     }
 
