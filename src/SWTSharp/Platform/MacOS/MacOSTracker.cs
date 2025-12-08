@@ -350,7 +350,8 @@ internal class MacOSTracker : IPlatformTracker
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, NSRect rect);
 
-    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern NSRect objc_msgSend_stret_NSRect(IntPtr receiver, IntPtr selector);
 
     [StructLayout(LayoutKind.Sequential)]

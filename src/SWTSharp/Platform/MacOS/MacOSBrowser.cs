@@ -560,7 +560,8 @@ internal class MacOSBrowser : MacOSWidget, IPlatformBrowser
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, NSRect arg);
 
-    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern NSRect objc_msgSend_stret_rect(IntPtr receiver, IntPtr selector);
 
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]

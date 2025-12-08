@@ -392,8 +392,14 @@ internal partial class MacOSPlatform : IPlatformGraphics
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
     private static extern double objc_msgSend_fpret(IntPtr receiver, IntPtr selector);
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret_rect(out CGRect retval, IntPtr receiver, IntPtr selector, IntPtr arg);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_stret_rect_return(IntPtr receiver, IntPtr selector, IntPtr arg);
+
+    private static void objc_msgSend_stret_rect(out CGRect retval, IntPtr receiver, IntPtr selector, IntPtr arg)
+    {
+        retval = objc_msgSend_stret_rect_return(receiver, selector, arg);
+    }
 
     private double GetDoubleValue(IntPtr obj, IntPtr selector)
     {

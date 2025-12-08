@@ -401,11 +401,22 @@ internal class MacOSText : MacOSWidget, IPlatformTextInput
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_range(IntPtr receiver, IntPtr selector, NSRange arg);
 
-    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern NSRange objc_msgSend_stret(IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRange objc_msgSend_stret_nsrange(IntPtr receiver, IntPtr selector);
 
-    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern NSRect objc_msgSend_stret_rect(IntPtr receiver, IntPtr selector);
+    private static NSRange objc_msgSend_stret(IntPtr receiver, IntPtr selector)
+    {
+        return objc_msgSend_stret_nsrange(receiver, selector);
+    }
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRect objc_msgSend_stret_nsrect(IntPtr receiver, IntPtr selector);
+
+    private static NSRect objc_msgSend_stret_rect(IntPtr receiver, IntPtr selector)
+    {
+        return objc_msgSend_stret_nsrect(receiver, selector);
+    }
 
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend_color(IntPtr receiver, IntPtr selector,

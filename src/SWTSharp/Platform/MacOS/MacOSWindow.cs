@@ -381,8 +381,14 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect_bool(IntPtr receiver, IntPtr selector, NSRect rect, bool display);
 
-    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out NSRect retval, IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRect objc_msgSend_stret_nsrect(IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out NSRect retval, IntPtr receiver, IntPtr selector)
+    {
+        retval = objc_msgSend_stret_nsrect(receiver, selector);
+    }
 
     private static string NSStringToString(IntPtr nsString)
     {

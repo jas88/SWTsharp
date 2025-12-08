@@ -201,8 +201,14 @@ internal partial class MacOSPlatform : IPlatform
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static partial void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
 
-    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static partial void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial CGRect objc_msgSend_stret_cgrect(IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        retval = objc_msgSend_stret_cgrect(receiver, selector);
+    }
 
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static partial void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
@@ -247,8 +253,14 @@ internal partial class MacOSPlatform : IPlatform
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_stret_cgrect(IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        retval = objc_msgSend_stret_cgrect(receiver, selector);
+    }
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
@@ -1389,11 +1401,23 @@ internal partial class MacOSPlatform : IPlatform
     }
 
 #if NET7_0_OR_GREATER
-    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static partial void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial NSRange objc_msgSend_stret_nsrange(IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector)
+    {
+        retval = objc_msgSend_stret_nsrange(receiver, selector);
+    }
 #else
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern NSRange objc_msgSend_stret_nsrange(IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector)
+    {
+        retval = objc_msgSend_stret_nsrange(receiver, selector);
+    }
 #endif
 
     public void SetTextLimit(IntPtr handle, int limit)

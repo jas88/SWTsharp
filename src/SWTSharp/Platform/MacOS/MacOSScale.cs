@@ -382,8 +382,14 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_stret_cgrect(IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        retval = objc_msgSend_stret_cgrect(receiver, selector);
+    }
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
     private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);

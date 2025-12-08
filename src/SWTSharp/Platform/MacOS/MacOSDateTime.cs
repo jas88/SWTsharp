@@ -310,11 +310,22 @@ internal class MacOSDateTime : IPlatformDateTime
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, double arg1, double arg2, double arg3, double arg4);
 
-    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_stret_cgrect(IntPtr receiver, IntPtr selector);
 
-    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector, CGRect arg1);
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_stret_cgrect_arg(IntPtr receiver, IntPtr selector, CGRect arg1);
+
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        retval = objc_msgSend_stret_cgrect(receiver, selector);
+    }
+
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector, CGRect arg1)
+    {
+        retval = objc_msgSend_stret_cgrect_arg(receiver, selector, arg1);
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct CGPoint
