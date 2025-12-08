@@ -314,28 +314,28 @@ internal class MacOSSlider : MacOSWidget, IPlatformSlider
         }
     }
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_getClass(string className);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr sel_registerName(string selector);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, bool arg);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
