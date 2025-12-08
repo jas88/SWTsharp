@@ -32,10 +32,10 @@ internal class MacOSLabel : MacOSWidget, IPlatformTextWidget
     {
         if (_disposed || _nsLabelHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsLabelHandle, setStringValue:, NSString stringWithString:text)
+        // Create NSString from UTF8 C string
         var strClass = objc_getClass("NSString");
-        var selector = sel_registerName("stringWithString:");
-        var textPtr = Marshal.StringToHGlobalAuto(text);
+        var selector = sel_registerName("stringWithUTF8String:");
+        var textPtr = Marshal.StringToHGlobalAnsi(text ?? string.Empty);
         try
         {
             var nsString = objc_msgSend(strClass, selector, textPtr);

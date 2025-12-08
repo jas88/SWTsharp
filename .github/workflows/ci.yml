@@ -81,7 +81,6 @@ jobs:
 
       - name: Run all tests (including GUI tests)
         timeout-minutes: 5  # Prevent infinite hanging on macOS
-        continue-on-error: true  # Allow workflow to continue for artifact collection
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
         run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
