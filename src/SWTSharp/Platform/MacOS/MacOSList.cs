@@ -332,9 +332,7 @@ internal class MacOSList : MacOSWidget, IPlatformList
         IntPtr addColumnSelector = sel_registerName("addTableColumn:");
         objc_msgSend(_nsTableViewHandle, addColumnSelector, column);
 
-        // Release identifier
-        IntPtr releaseSelector = sel_registerName("release");
-        objc_msgSend(identifier, releaseSelector);
+        // NOTE: Do NOT release identifier - stringWithUTF8String: returns an autoreleased object
     }
 
     private void ReloadData()

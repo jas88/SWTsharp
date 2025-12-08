@@ -75,9 +75,7 @@ internal class MacOSToolBar : MacOSWidget, IPlatformToolBar
         IntPtr selInit = sel_registerName("initWithIdentifier:");
         toolbar = objc_msgSend(toolbar, selInit, identifier);
 
-        // Release identifier NSString
-        IntPtr selRelease = sel_registerName("release");
-        objc_msgSend_void(identifier, selRelease);
+        // NOTE: Do NOT release identifier - stringWithUTF8String: returns an autoreleased object
 
         if (toolbar == IntPtr.Zero)
             return IntPtr.Zero;
@@ -143,15 +141,8 @@ internal class MacOSToolBar : MacOSWidget, IPlatformToolBar
             IntPtr sel = sel_registerName("insertItemWithItemIdentifier:atIndex:");
             IntPtr nsIdentifier = CreateNSString(identifier);
 
-            try
-            {
-                objc_msgSend_void(_nsToolbar, sel, nsIdentifier, (long)(_items.Count - 1));
-            }
-            finally
-            {
-                IntPtr selRelease = sel_registerName("release");
-                objc_msgSend_void(nsIdentifier, selRelease);
-            }
+            // NOTE: Do NOT release nsIdentifier - stringWithUTF8String: returns an autoreleased object
+            objc_msgSend_void(_nsToolbar, sel, nsIdentifier, (long)(_items.Count - 1));
         }
         catch (Exception ex)
         {

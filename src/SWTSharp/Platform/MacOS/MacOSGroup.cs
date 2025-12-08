@@ -146,9 +146,7 @@ internal class MacOSGroup : MacOSWidget, IPlatformComposite, IPlatformTextWidget
         IntPtr selector = sel_registerName("setTitle:");
         objc_msgSend(_nsBoxHandle, selector, nsString);
 
-        // Release NSString
-        IntPtr releaseSelector = sel_registerName("release");
-        objc_msgSend(nsString, releaseSelector);
+        // NOTE: Do NOT release nsString - stringWithUTF8String: returns an autoreleased object
 
         TextChanged?.Invoke(this, _text);
     }
@@ -305,8 +303,7 @@ internal class MacOSGroup : MacOSWidget, IPlatformComposite, IPlatformTextWidget
             IntPtr setTitleSelector = sel_registerName("setTitle:");
             objc_msgSend(box, setTitleSelector, nsString);
 
-            IntPtr releaseSelector = sel_registerName("release");
-            objc_msgSend(nsString, releaseSelector);
+            // NOTE: Do NOT release nsString - stringWithUTF8String: returns an autoreleased object
         }
 
         // Set a default frame

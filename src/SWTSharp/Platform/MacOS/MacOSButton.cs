@@ -89,9 +89,7 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
             var setTitleSelector = sel_registerName("setTitle:");
             objc_msgSend(_nsButtonHandle, setTitleSelector, nsString);
 
-            // Release the NSString to prevent memory leak
-            var releaseSelector = sel_registerName("release");
-            objc_msgSend(nsString, releaseSelector);
+            // NOTE: Do NOT release nsString - stringWithUTF8String: returns an autoreleased object
 
             // Fire TextChanged event
             TextChanged?.Invoke(this, text ?? string.Empty);
