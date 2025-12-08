@@ -75,7 +75,9 @@ internal partial class MacOSPlatform : IPlatform
         IntPtr windowHandle = IntPtr.Zero;
         if (parent is MacOSWindow macOSWindow)
         {
-            windowHandle = macOSWindow.GetNativeHandle();
+            // Use GetWindowHandle() not GetNativeHandle() because setToolbar:
+            // must be called on NSWindow, not on its contentView
+            windowHandle = macOSWindow.GetWindowHandle();
         }
 
         if (windowHandle == IntPtr.Zero)

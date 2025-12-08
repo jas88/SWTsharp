@@ -213,7 +213,9 @@ internal class MacOSToolBar : MacOSWidget, IPlatformToolBar
 
         if (window is MacOSWindow macOSWindow)
         {
-            AttachToWindow(macOSWindow.GetNativeHandle());
+            // Use GetWindowHandle() not GetNativeHandle() because setToolbar:
+            // must be called on NSWindow, not on its contentView
+            AttachToWindow(macOSWindow.GetWindowHandle());
         }
     }
 

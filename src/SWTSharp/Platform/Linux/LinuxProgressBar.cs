@@ -74,6 +74,11 @@ internal class LinuxProgressBar : LinuxWidget, IPlatformProgressBar
                     double fraction = (double)(_value - _minimum) / (_maximum - _minimum);
                     gtk_progress_bar_set_fraction(_progressBar, fraction);
                 }
+                else
+                {
+                    // Collapsed range - set fraction to 0
+                    gtk_progress_bar_set_fraction(_progressBar, 0.0);
+                }
             }
         }
     }
@@ -93,6 +98,11 @@ internal class LinuxProgressBar : LinuxWidget, IPlatformProgressBar
                 {
                     double fraction = (double)(_value - _minimum) / (_maximum - _minimum);
                     gtk_progress_bar_set_fraction(_progressBar, fraction);
+                }
+                else
+                {
+                    // Collapsed range - set fraction to 0
+                    gtk_progress_bar_set_fraction(_progressBar, 0.0);
                 }
             }
         }
