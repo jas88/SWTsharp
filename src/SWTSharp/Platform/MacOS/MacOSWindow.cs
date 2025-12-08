@@ -39,15 +39,10 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     {
         if (_disposed || _nsWindowHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsWindowHandle, setFrame:, NSMakeRect(x, y, width, height), display:YES)
-        var rectClass = objc_getClass("NSValue");
-        var selector = sel_registerName("valueWithRect:");
+        // NSWindow setFrame:display: takes NSRect struct directly
         var rect = new NSRect { x = x, y = y, width = width, height = height };
-        var rectValue = objc_msgSend(rectClass, selector, rect);
-
         var setFrameSelector = sel_registerName("setFrame:display:");
-        // setFrame:display: takes NSRect* and BOOL parameters
-        objc_msgSend(_nsWindowHandle, setFrameSelector, rectValue, true, 0); // backing parameter defaults to 0
+        objc_msgSend_rect_bool(_nsWindowHandle, setFrameSelector, rect, true);
 
         // Fire LayoutRequested event when bounds change
         LayoutRequested?.Invoke(this, EventArgs.Empty);
@@ -57,13 +52,9 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     {
         if (_disposed || _nsWindowHandle == IntPtr.Zero) return default(SWTSharp.Graphics.Rectangle);
 
-        // objc_msgSend(_nsWindowHandle, frame)
+        // NSWindow frame returns NSRect struct directly
         var selector = sel_registerName("frame");
-        var frameValue = objc_msgSend(_nsWindowHandle, selector);
-
-        // Extract NSRect from NSValue
-        var rectSelector = sel_registerName("rectValue");
-        var rect = Marshal.PtrToStructure<NSRect>(objc_msgSend(frameValue, rectSelector));
+        objc_msgSend_stret(out NSRect rect, _nsWindowHandle, selector);
 
         return new SWTSharp.Graphics.Rectangle((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height);
     }
@@ -386,6 +377,12 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
 
     [DllImport("/usr/lib/libobjc.A.dylib")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg, bool display, int backing);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect_bool(IntPtr receiver, IntPtr selector, NSRect rect, bool display);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret(out NSRect retval, IntPtr receiver, IntPtr selector);
 
     private static string NSStringToString(IntPtr nsString)
     {
