@@ -100,7 +100,7 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
 
     public MacOSCombo(IntPtr parentHandle, int style)
     {
-        _nsComboBox = CreateNSComboBox();
+        _nsComboBox = CreateNSComboBox(style);
 
         if (_nsComboBox == IntPtr.Zero)
             throw new InvalidOperationException("Failed to create NSComboBox");
@@ -116,7 +116,7 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
         SetBounds(0, 0, 150, 26);
     }
 
-    private IntPtr CreateNSComboBox()
+    private IntPtr CreateNSComboBox(int style)
     {
         // NSComboBox* combo = [[NSComboBox alloc] init];
         var comboClass = objc_getClass("NSComboBox");
@@ -129,9 +129,10 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
         if (combo == IntPtr.Zero)
             return IntPtr.Zero;
 
-        // Configure combo box
+        // Configure combo box - respect READ_ONLY style
         var selSetEditable = sel_registerName("setEditable:");
-        objc_msgSend_void(combo, selSetEditable, true);
+        bool isEditable = (style & SWT.READ_ONLY) == 0;
+        objc_msgSend_void(combo, selSetEditable, isEditable);
 
         var selSetUsesDataSource = sel_registerName("setUsesDataSource:");
         objc_msgSend_void(combo, selSetUsesDataSource, false);
