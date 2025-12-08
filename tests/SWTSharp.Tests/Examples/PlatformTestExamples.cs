@@ -20,15 +20,17 @@ public class PlatformTestExamples : TestBase
     {
         // This test runs on all platforms
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "Test Shell";
             shell.SetSize(300, 200);
+            shellText = shell.Text;
         });
 
         AssertNotDisposed(shell);
-        Assert.Equal("Test Shell", shell.Text);
+        Assert.Equal("Test Shell", shellText);
     }
 
     [Theory]
@@ -40,15 +42,17 @@ public class PlatformTestExamples : TestBase
         // Theory tests work across platforms
         var shell = CreateTestShell();
         Button? button = null;
+        string? buttonText = null;
 
         RunOnUIThread(() =>
         {
             button = new Button(shell, style);
             button.Text = text;
+            buttonText = button.Text;
         });
 
         Assert.NotNull(button);
-        Assert.Equal(text, button.Text);
+        Assert.Equal(text, buttonText);
     }
 
     #endregion
@@ -61,13 +65,15 @@ public class PlatformTestExamples : TestBase
         // This test only runs on Windows
         // Automatically skipped on Linux and macOS
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "Windows Test";
+            shellText = shell.Text;
         });
 
-        Assert.Equal("Windows Test", shell.Text);
+        Assert.Equal("Windows Test", shellText);
     }
 
     [LinuxFact]
@@ -76,13 +82,15 @@ public class PlatformTestExamples : TestBase
         // This test only runs on Linux
         // Automatically skipped on Windows and macOS
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "Linux Test";
+            shellText = shell.Text;
         });
 
-        Assert.Equal("Linux Test", shell.Text);
+        Assert.Equal("Linux Test", shellText);
     }
 
     [MacOSFact]
@@ -91,13 +99,15 @@ public class PlatformTestExamples : TestBase
         // This test only runs on macOS
         // Automatically skipped on Windows and Linux
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "macOS Test";
+            shellText = shell.Text;
         });
 
-        Assert.Equal("macOS Test", shell.Text);
+        Assert.Equal("macOS Test", shellText);
     }
 
     #endregion
