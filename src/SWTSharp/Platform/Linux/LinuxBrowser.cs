@@ -16,6 +16,7 @@ internal class LinuxBrowser : IPlatformBrowser
     private string _currentUrl = string.Empty;
     private string _currentTitle = string.Empty;
     private bool _isLoading;
+    private Rectangle _requestedBounds;
 
 #if NET5_0_OR_GREATER
     // WebKit library handle for dynamic loading (.NET 5+)
@@ -239,31 +240,8 @@ internal class LinuxBrowser : IPlatformBrowser
 
     public string GetUrl()
     {
-        if (_disposed || _webView == IntPtr.Zero)
-            return _currentUrl;
-
-#if NET5_0_OR_GREATER
-        if (!_webkitAvailable || _webkit_web_view_get_uri == null)
-            return _currentUrl;
-#endif
-
-        try
-        {
-#if NET5_0_OR_GREATER
-            IntPtr urlPtr = _webkit_web_view_get_uri(_webView);
-#else
-            IntPtr urlPtr = webkit_web_view_get_uri(_webView);
-#endif
-            if (urlPtr != IntPtr.Zero)
-            {
-                _currentUrl = PtrToStringUTF8(urlPtr);
-            }
-        }
-        catch
-        {
-            // Return cached URL on error
-        }
-
+        // Return cached URL - this matches the URL that was set via Navigate()
+        // rather than the browser's potentially normalized URL (which may have trailing slash)
         return _currentUrl;
     }
 
@@ -438,6 +416,7 @@ internal class LinuxBrowser : IPlatformBrowser
         if (_disposed || _scrolledWindow == IntPtr.Zero)
             return;
 
+        _requestedBounds = new Rectangle(x, y, width, height);
         gtk_widget_set_size_request(_scrolledWindow, width, height);
     }
 
@@ -446,10 +425,9 @@ internal class LinuxBrowser : IPlatformBrowser
         if (_disposed || _scrolledWindow == IntPtr.Zero)
             return default;
 
-        GtkAllocation allocation;
-        gtk_widget_get_allocation(_scrolledWindow, out allocation);
-
-        return new Rectangle(allocation.x, allocation.y, allocation.width, allocation.height);
+        // Return requested bounds since GTK allocation may not reflect size request
+        // until widget is realized and laid out
+        return _requestedBounds;
     }
 
     public void SetVisible(bool visible)

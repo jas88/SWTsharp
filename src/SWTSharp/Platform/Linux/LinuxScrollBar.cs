@@ -20,6 +20,7 @@ internal class LinuxScrollBar : LinuxWidget, IPlatformScrollBar
     private int _increment = 1;
     private int _pageIncrement = 10;
     private int _thumb = 10;
+    private Rectangle _requestedBounds;
 
     public event EventHandler<int>? ValueChanged;
     public event EventHandler<int>? Click;
@@ -155,6 +156,7 @@ internal class LinuxScrollBar : LinuxWidget, IPlatformScrollBar
     public void SetBounds(int x, int y, int width, int height)
     {
         if (_disposed || _scrollBar == IntPtr.Zero) return;
+        _requestedBounds = new Rectangle(x, y, width, height);
         gtk_widget_set_size_request(_scrollBar, width, height);
     }
 
@@ -163,8 +165,9 @@ internal class LinuxScrollBar : LinuxWidget, IPlatformScrollBar
         if (_disposed || _scrollBar == IntPtr.Zero)
             return default;
 
-        gtk_widget_get_allocation(_scrollBar, out GtkAllocation allocation);
-        return new Rectangle(allocation.x, allocation.y, allocation.width, allocation.height);
+        // Return requested bounds since GTK allocation may not reflect size request
+        // until widget is realized and laid out
+        return _requestedBounds;
     }
 
     public void SetVisible(bool visible)

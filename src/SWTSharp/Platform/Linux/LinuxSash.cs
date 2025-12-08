@@ -22,6 +22,7 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
     private bool _isDragging;
     private int _dragStartX;
     private int _dragStartY;
+    private Rectangle _requestedBounds;
 
     // Static mapping of sash handles to instances for callback routing
     private static readonly ConcurrentDictionary<IntPtr, LinuxSash> _sashInstances = new();
@@ -113,6 +114,7 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
     {
         if (_disposed || _sashHandle == IntPtr.Zero) return;
 
+        _requestedBounds = new Rectangle(x, y, width, height);
         gtk_widget_set_size_request(_sashHandle, width, height);
         // Position is typically controlled by parent layout in GTK
     }
@@ -121,9 +123,9 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
     {
         if (_disposed || _sashHandle == IntPtr.Zero) return default;
 
-        GtkAllocation allocation;
-        gtk_widget_get_allocation(_sashHandle, out allocation);
-        return new Rectangle(allocation.x, allocation.y, allocation.width, allocation.height);
+        // Return requested bounds since GTK allocation may not reflect size request
+        // until widget is realized and laid out
+        return _requestedBounds;
     }
 
     public void SetVisible(bool visible)
