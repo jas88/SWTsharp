@@ -16,6 +16,7 @@ internal class Win32DateTime : IPlatformDateTime
     private bool _disposed;
     private int _year, _month, _day;
     private int _hours, _minutes, _seconds;
+    private static bool _commonControlsInitialized = false;
 
     // Event handling
     public event EventHandler? SelectionChanged;
@@ -54,8 +55,12 @@ internal class Win32DateTime : IPlatformDateTime
     private const int GDT_VALID = 0;
     private const int GDT_NONE = 1;
 
+    // Common control classes for InitCommonControlsEx
+    private const int ICC_DATE_CLASSES = 0x00000100;   // Date and time picker control
+
     public Win32DateTime(IntPtr parentHandle, int style)
     {
+        EnsureCommonControlsInitialized();
         _hwnd = CreateDateTimeControl(parentHandle, style);
 
         if (_hwnd == IntPtr.Zero)
@@ -242,6 +247,23 @@ internal class Win32DateTime : IPlatformDateTime
         }
     }
 
+    private static void EnsureCommonControlsInitialized()
+    {
+        if (!_commonControlsInitialized)
+        {
+            var icex = new INITCOMMONCONTROLSEX
+            {
+                dwSize = Marshal.SizeOf<INITCOMMONCONTROLSEX>(),
+                dwICC = ICC_DATE_CLASSES
+            };
+            if (!InitCommonControlsEx(ref icex))
+            {
+                throw new InvalidOperationException("Failed to initialize common controls for DateTime widget");
+            }
+            _commonControlsInitialized = true;
+        }
+    }
+
     private IntPtr CreateDateTimeControl(IntPtr parentHandle, int style)
     {
         uint dwStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP;
@@ -253,8 +275,8 @@ internal class Win32DateTime : IPlatformDateTime
         }
         else if ((style & SWT.CALENDAR) != 0)
         {
-            // For calendar, we use the MonthCalendar control instead
-            return CreateWindowEx(0, "MonthCalendar", "", dwStyle,
+            // For calendar, we use the SysMonthCal32 control (Common Controls)
+            return CreateWindowEx(0, "SysMonthCal32", "", dwStyle,
                 0, 0, 200, 150, parentHandle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         }
         else // SWT.DATE or default
@@ -280,6 +302,10 @@ internal class Win32DateTime : IPlatformDateTime
     // P/Invoke declarations
 
 #if NET7_0_OR_GREATER
+    [LibraryImport("comctl32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool InitCommonControlsEx(ref INITCOMMONCONTROLSEX picce);
+
     [LibraryImport("user32.dll", EntryPoint = "CreateWindowExW",
         StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
     private static partial IntPtr CreateWindowEx(
@@ -322,6 +348,10 @@ internal class Win32DateTime : IPlatformDateTime
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool IsWindowEnabled(IntPtr hWnd);
 #else
+    [DllImport("comctl32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool InitCommonControlsEx(ref INITCOMMONCONTROLSEX picce);
+
     [DllImport("user32.dll", EntryPoint = "CreateWindowExW",
         CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr CreateWindowEx(
@@ -357,6 +387,13 @@ internal class Win32DateTime : IPlatformDateTime
     [DllImport("user32.dll")]
     private static extern bool IsWindowEnabled(IntPtr hWnd);
 #endif
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INITCOMMONCONTROLSEX
+    {
+        public int dwSize;
+        public int dwICC;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT

@@ -21,7 +21,9 @@ public static class TestHelpers
             shell = new Shell(display);
             configure?.Invoke(shell);
         });
-        return shell!;
+        if (shell == null)
+            throw new InvalidOperationException("Failed to create Shell on UI thread");
+        return shell;
     }
 
     /// <summary>
@@ -29,8 +31,9 @@ public static class TestHelpers
     /// </summary>
     public static Button CreateTestButton(Composite parent, string text = "Test", int style = SWT.PUSH)
     {
+        ArgumentNullException.ThrowIfNull(parent);
         Button? button = null;
-        parent.Display.SyncExec(() =>
+        parent.Display!.SyncExec(() =>
         {
             button = new Button(parent, style);
             button.Text = text;
@@ -45,8 +48,9 @@ public static class TestHelpers
     /// </summary>
     public static Label CreateTestLabel(Composite parent, string text = "Test", int style = SWT.NONE)
     {
+        ArgumentNullException.ThrowIfNull(parent);
         Label? label = null;
-        parent.Display.SyncExec(() =>
+        parent.Display!.SyncExec(() =>
         {
             label = new Label(parent, style);
             label.Text = text;
@@ -61,8 +65,9 @@ public static class TestHelpers
     /// </summary>
     public static Composite CreateTestComposite(Composite parent, int style = SWT.NONE)
     {
+        ArgumentNullException.ThrowIfNull(parent);
         Composite? composite = null;
-        parent.Display.SyncExec(() =>
+        parent.Display!.SyncExec(() =>
         {
             composite = new Composite(parent, style);
         });

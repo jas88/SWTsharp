@@ -20,15 +20,17 @@ public class PlatformTestExamples : TestBase
     {
         // This test runs on all platforms
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "Test Shell";
             shell.SetSize(300, 200);
+            shellText = shell.Text;
         });
 
         AssertNotDisposed(shell);
-        Assert.Equal("Test Shell", shell.Text);
+        Assert.Equal("Test Shell", shellText);
     }
 
     [Theory]
@@ -40,15 +42,17 @@ public class PlatformTestExamples : TestBase
         // Theory tests work across platforms
         var shell = CreateTestShell();
         Button? button = null;
+        string? buttonText = null;
 
         RunOnUIThread(() =>
         {
             button = new Button(shell, style);
             button.Text = text;
+            buttonText = button.Text;
         });
 
         Assert.NotNull(button);
-        Assert.Equal(text, button.Text);
+        Assert.Equal(text, buttonText);
     }
 
     #endregion
@@ -61,13 +65,15 @@ public class PlatformTestExamples : TestBase
         // This test only runs on Windows
         // Automatically skipped on Linux and macOS
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "Windows Test";
+            shellText = shell.Text;
         });
 
-        Assert.Equal("Windows Test", shell.Text);
+        Assert.Equal("Windows Test", shellText);
     }
 
     [LinuxFact]
@@ -76,13 +82,15 @@ public class PlatformTestExamples : TestBase
         // This test only runs on Linux
         // Automatically skipped on Windows and macOS
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "Linux Test";
+            shellText = shell.Text;
         });
 
-        Assert.Equal("Linux Test", shell.Text);
+        Assert.Equal("Linux Test", shellText);
     }
 
     [MacOSFact]
@@ -91,13 +99,15 @@ public class PlatformTestExamples : TestBase
         // This test only runs on macOS
         // Automatically skipped on Windows and Linux
         var shell = CreateTestShell();
+        string? shellText = null;
 
         RunOnUIThread(() =>
         {
             shell.Text = "macOS Test";
+            shellText = shell.Text;
         });
 
-        Assert.Equal("macOS Test", shell.Text);
+        Assert.Equal("macOS Test", shellText);
     }
 
     #endregion
@@ -107,28 +117,37 @@ public class PlatformTestExamples : TestBase
     [FactSkipPlatform("macOS")]
     public void Example_SkipOnMacOS_ShouldRunOnWindowsAndLinux()
     {
-        // This test runs on Windows and Linux only
-        // Skipped on macOS
-        var shell = CreateTestShell();
-        Assert.NotNull(shell);
+        RunOnUIThread(() =>
+        {
+            // This test runs on Windows and Linux only
+            // Skipped on macOS
+            var shell = CreateTestShell();
+            Assert.NotNull(shell);
+        });
     }
 
     [FactSkipPlatform("Windows", "Linux")]
     public void Example_SkipOnMultiple_ShouldRunOnMacOSOnly()
     {
-        // This test runs on macOS only
-        // Skipped on Windows and Linux
-        var shell = CreateTestShell();
-        Assert.NotNull(shell);
+        RunOnUIThread(() =>
+        {
+            // This test runs on macOS only
+            // Skipped on Windows and Linux
+            var shell = CreateTestShell();
+            Assert.NotNull(shell);
+        });
     }
 
     [FactOnlyPlatform("Windows", "Linux")]
     public void Example_OnlyOnMultiple_ShouldSkipMacOS()
     {
-        // This test runs on Windows and Linux only
-        // Alternative syntax to SkipPlatform
-        var shell = CreateTestShell();
-        Assert.NotNull(shell);
+        RunOnUIThread(() =>
+        {
+            // This test runs on Windows and Linux only
+            // Alternative syntax to SkipPlatform
+            var shell = CreateTestShell();
+            Assert.NotNull(shell);
+        });
     }
 
     #endregion
@@ -138,17 +157,20 @@ public class PlatformTestExamples : TestBase
     [Fact]
     public void Example_UsingTestHelpers_CreateWidgets()
     {
-        var shell = CreateTestShell();
+        RunOnUIThread(() =>
+        {
+            var shell = CreateTestShell();
 
-        // Create widgets using helpers
-        var button = TestHelpers.CreateTestButton(shell, "Test Button");
-        var label = TestHelpers.CreateTestLabel(shell, "Test Label");
-        var composite = TestHelpers.CreateTestComposite(shell);
+            // Create widgets using helpers
+            var button = TestHelpers.CreateTestButton(shell, "Test Button");
+            var label = TestHelpers.CreateTestLabel(shell, "Test Label");
+            var composite = TestHelpers.CreateTestComposite(shell);
 
-        // Assert widgets are created
-        TestHelpers.AssertNotDisposed(button);
-        TestHelpers.AssertNotDisposed(label);
-        TestHelpers.AssertNotDisposed(composite);
+            // Assert widgets are created
+            TestHelpers.AssertNotDisposed(button);
+            TestHelpers.AssertNotDisposed(label);
+            TestHelpers.AssertNotDisposed(composite);
+        });
     }
 
     [Fact]
@@ -161,58 +183,74 @@ public class PlatformTestExamples : TestBase
 
         RunOnUIThread(() =>
         {
-            button.Click += (s, e) => eventFired = true;
+            // Use SWT Listener instead of Click event
+            // NotifyListeners only triggers SWT listeners, not C# events
+            button.AddListener(SWT.Selection, new TestListener(() => eventFired = true));
             button.NotifyListeners(SWT.Selection, new Event());
         });
 
         // Wait for event to fire
         TestHelpers.AssertCondition(
             () => eventFired,
-            "Button click event should fire"
+            "Button selection event should fire"
         );
+    }
+
+    // Helper class for event testing
+    private class TestListener : IListener
+    {
+        private readonly Action _action;
+        public TestListener(Action action) => _action = action;
+        public void HandleEvent(Event e) => _action();
     }
 
     [Fact]
     public void Example_UsingTestHelpers_WaitForCondition()
     {
-        var shell = CreateTestShell();
-        bool condition = false;
-
-        // Simulate async operation
         RunOnUIThread(() =>
         {
-            System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
-            {
-                condition = true;
-            });
-        });
+            var shell = CreateTestShell();
+            bool condition = false;
 
-        // Wait for condition with timeout
-        TestHelpers.AssertCondition(
-            () => condition,
-            System.TimeSpan.FromSeconds(1),
-            "Condition should become true within 1 second"
-        );
+            // Simulate async operation
+            RunOnUIThread(() =>
+            {
+                System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
+                {
+                    condition = true;
+                });
+            });
+
+            // Wait for condition with timeout
+            TestHelpers.AssertCondition(
+                () => condition,
+                System.TimeSpan.FromSeconds(1),
+                "Condition should become true within 1 second"
+            );
+        });
     }
 
     [Fact]
     public void Example_UsingTestHelpers_MeasurePerformance()
     {
-        var shell = CreateTestShell();
-
-        // Measure UI operation time
-        var elapsed = TestHelpers.MeasureUITime(Display, () =>
+        RunOnUIThread(() =>
         {
-            for (int i = 0; i < 100; i++)
-            {
-                var button = new Button(shell, SWT.PUSH);
-                button.Text = $"Button {i}";
-            }
-        });
+            var shell = CreateTestShell();
 
-        // Assert performance requirements
-        Assert.True(elapsed < System.TimeSpan.FromSeconds(1),
-            $"Creating 100 buttons should take less than 1 second, took {elapsed.TotalMilliseconds}ms");
+            // Measure UI operation time
+            var elapsed = TestHelpers.MeasureUITime(Display, () =>
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    var button = new Button(shell, SWT.PUSH);
+                    button.Text = $"Button {i}";
+                }
+            });
+
+            // Assert performance requirements
+            Assert.True(elapsed < System.TimeSpan.FromSeconds(1),
+                $"Creating 100 buttons should take less than 1 second, took {elapsed.TotalMilliseconds}ms");
+        });
     }
 
     #endregion

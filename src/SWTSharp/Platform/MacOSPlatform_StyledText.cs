@@ -76,15 +76,28 @@ internal partial class MacOSPlatform
         public void SetSelection(int start, int end)
         {
             if (_disposed || _handle == IntPtr.Zero) return;
-            // Create NSRange and set selected range
-            // For now, simplified - proper implementation would use NSRange struct
+
+            // Validate range parameters to prevent underflow
+            if (start < 0) start = 0;
+            if (end < start) end = start;
+
+            // Create NSRange with location and length
+            NSRange range = new NSRange(start, end - start);
+
+            // Call setSelectedRange: on NSTextView
+            var setSelectedRangeSel = sel_registerName("setSelectedRange:");
+            objc_msgSend_range(_handle, setSelectedRangeSel, range);
         }
 
         public (int Start, int End) GetSelection()
         {
             if (_disposed || _handle == IntPtr.Zero) return (0, 0);
-            // NSRange range = objc_msgSend_stret(_handle, sel_selectedRange);
-            return (0, 0); // Simplified
+
+            // Get selectedRange from NSTextView using architecture-aware method
+            var selectedRangeSel = sel_registerName("selectedRange");
+            objc_msgSend_stret(out NSRange range, _handle, selectedRangeSel);
+
+            return ((int)range.location, (int)(range.location + range.length));
         }
 
         public string GetSelectionText()
@@ -323,4 +336,14 @@ internal partial class MacOSPlatform
     }
 
     private Dictionary<IntPtr, MacOSStyledText> _styledTextWidgets = new Dictionary<IntPtr, MacOSStyledText>();
+
+    // P/Invoke for setSelectedRange: (takes NSRange argument)
+    // NSRange struct and objc_msgSend_stret(out NSRange...) are defined in MacOSPlatform.cs
+#if NET7_0_OR_GREATER
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void objc_msgSend_range(IntPtr receiver, IntPtr selector, NSRange arg);
+#else
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_range(IntPtr receiver, IntPtr selector, NSRange arg);
+#endif
 }

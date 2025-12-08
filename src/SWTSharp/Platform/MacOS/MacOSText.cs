@@ -401,11 +401,46 @@ internal class MacOSText : MacOSWidget, IPlatformTextInput
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_range(IntPtr receiver, IntPtr selector, NSRange arg);
 
-    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern NSRange objc_msgSend_stret(IntPtr receiver, IntPtr selector);
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (NSRange is 16 bytes, NSRect is 32 bytes)
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRange objc_msgSend_nsrange_arm64(IntPtr receiver, IntPtr selector);
 
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern NSRect objc_msgSend_stret_rect(IntPtr receiver, IntPtr selector);
+    private static extern void objc_msgSend_stret_range_x64(out NSRange retval, IntPtr receiver, IntPtr selector);
+
+    private static NSRange objc_msgSend_stret(IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            return objc_msgSend_nsrange_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_range_x64(out NSRange retval, receiver, selector);
+            return retval;
+        }
+    }
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRect objc_msgSend_nsrect_arm64(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_rect_x64(out NSRect retval, IntPtr receiver, IntPtr selector);
+
+    private static NSRect objc_msgSend_stret_rect(IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            return objc_msgSend_nsrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_rect_x64(out NSRect retval, receiver, selector);
+            return retval;
+        }
+    }
 
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend_color(IntPtr receiver, IntPtr selector,

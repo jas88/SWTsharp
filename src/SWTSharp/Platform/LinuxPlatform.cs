@@ -122,14 +122,42 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformList CreateListWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxList in Phase 5.3
-        throw new NotImplementedException("CreateListWidget will be implemented in Phase 5.3");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating list widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var list = new Linux.LinuxList(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] List widget created successfully");
+
+        return list;
     }
 
     public IPlatformProgressBar CreateProgressBarWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxProgressBar in Phase 5.3
-        throw new NotImplementedException("CreateProgressBarWidget will be implemented in Phase 5.3");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating progressbar widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var progressBar = new Linux.LinuxProgressBar(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] ProgressBar widget created successfully");
+
+        return progressBar;
     }
 
     public IPlatformSlider CreateSliderWidget(IPlatformWidget? parent, int style)
@@ -140,8 +168,14 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxScale in Phase 5.3
-        throw new NotImplementedException("CreateScaleWidget will be implemented in Phase 5.3");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        return new Linux.LinuxScale(parentHandle, style);
     }
 
     public IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style)

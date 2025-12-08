@@ -202,11 +202,12 @@ public class LinuxButtonTests : TestBase
             using var shell = new Shell(Display);
             using var button = new Button(shell, SWT.PUSH);
 
-            var clicked = false;
-            button.Click += (sender, e) => clicked = true;
+            var clickCount = 0;
+            button.Click += (sender, e) => clickCount++;
 
             // Verify subscription doesn't throw
             Assert.False(button.IsDisposed);
+            _ = clickCount; // Suppress unused variable warning
         });
     }
 

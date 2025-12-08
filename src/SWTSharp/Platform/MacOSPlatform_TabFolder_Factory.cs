@@ -1,3 +1,5 @@
+using SWTSharp.Platform.MacOS;
+
 namespace SWTSharp.Platform;
 
 /// <summary>
@@ -10,9 +12,11 @@ internal partial class MacOSPlatform
     /// </summary>
     public IPlatformTabFolder CreateTabFolderWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement macOS TabFolder using existing MacOSPlatform_TabFolder.cs code
-        // For now, throw NotImplementedException to satisfy interface
-        // This will be implemented when macOS platform work continues
-        throw new NotImplementedException("CreateTabFolderWidget will be implemented for macOS in Phase 5.8");
+        IntPtr parentHandle = MacOSPlatformHelpers.GetParentHandle(parent);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating tab folder widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        return new MacOSTabFolder(parentHandle, style);
     }
 }

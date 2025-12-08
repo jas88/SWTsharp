@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp.Platform;
@@ -75,7 +76,9 @@ internal partial class MacOSPlatform : IPlatform
         IntPtr windowHandle = IntPtr.Zero;
         if (parent is MacOSWindow macOSWindow)
         {
-            windowHandle = macOSWindow.GetNativeHandle();
+            // Use GetWindowHandle() not GetNativeHandle() because setToolbar:
+            // must be called on NSWindow, not on its contentView
+            windowHandle = macOSWindow.GetWindowHandle();
         }
 
         if (windowHandle == IntPtr.Zero)
@@ -199,8 +202,27 @@ internal partial class MacOSPlatform : IPlatform
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static partial void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
 
+    // Architecture-aware CGRect return handling
+    // ARM64: Use objc_msgSend directly (structs returned in registers)
+    // x86_64: Use objc_msgSend_stret (structs > 16 bytes returned via pointer)
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial CGRect objc_msgSend_cgrect_arm64(IntPtr receiver, IntPtr selector);
+
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static partial void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+    private static partial void objc_msgSend_cgrect_x86_64(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_cgrect_x86_64(out retval, receiver, selector);
+        }
+    }
 
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static partial void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
@@ -245,8 +267,27 @@ internal partial class MacOSPlatform : IPlatform
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
 
+    // Architecture-aware CGRect return handling
+    // ARM64: Use objc_msgSend directly (structs returned in registers)
+    // x86_64: Use objc_msgSend_stret (structs > 16 bytes returned via pointer)
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_cgrect_arm64(IntPtr receiver, IntPtr selector);
+
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+    private static extern void objc_msgSend_cgrect_x86_64(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_cgrect_x86_64(out retval, receiver, selector);
+        }
+    }
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
@@ -1387,11 +1428,49 @@ internal partial class MacOSPlatform : IPlatform
     }
 
 #if NET7_0_OR_GREATER
+    // Architecture-aware NSRange return handling
+    // ARM64: Use objc_msgSend directly (structs returned in registers)
+    // x86_64: Use objc_msgSend_stret (structs > 16 bytes returned via pointer)
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial NSRange objc_msgSend_nsrange_arm64(IntPtr receiver, IntPtr selector);
+
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static partial void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector);
+    private static partial void objc_msgSend_nsrange_x86_64(out NSRange retval, IntPtr receiver, IntPtr selector);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_nsrange_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_nsrange_x86_64(out retval, receiver, selector);
+        }
+    }
 #else
+    // Architecture-aware NSRange return handling
+    // ARM64: Use objc_msgSend directly (structs returned in registers)
+    // x86_64: Use objc_msgSend_stret (structs > 16 bytes returned via pointer)
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern NSRange objc_msgSend_nsrange_arm64(IntPtr receiver, IntPtr selector);
+
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector);
+    private static extern void objc_msgSend_nsrange_x86_64(out NSRange retval, IntPtr receiver, IntPtr selector);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void objc_msgSend_stret(out NSRange retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_nsrange_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_nsrange_x86_64(out retval, receiver, selector);
+        }
+    }
 #endif
 
     public void SetTextLimit(IntPtr handle, int limit)

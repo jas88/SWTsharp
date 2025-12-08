@@ -350,8 +350,27 @@ internal class MacOSTracker : IPlatformTracker
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, NSRect rect);
 
+    // ARM64: Large structs returned directly via objc_msgSend
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRect objc_msgSend_NSRect_arm64(IntPtr receiver, IntPtr selector);
+
+    // x86_64: Large structs (>16 bytes) require objc_msgSend_stret with out parameter
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
-    private static extern NSRect objc_msgSend_stret_NSRect(IntPtr receiver, IntPtr selector);
+    private static extern void objc_msgSend_stret_NSRect_x64(out NSRect ret, IntPtr receiver, IntPtr selector);
+
+    // Architecture-aware wrapper for NSRect returns
+    private static NSRect objc_msgSend_stret_NSRect(IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            return objc_msgSend_NSRect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_NSRect_x64(out NSRect result, receiver, selector);
+            return result;
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct NSRect

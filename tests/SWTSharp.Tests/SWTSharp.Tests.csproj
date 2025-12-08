@@ -15,6 +15,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <StartupObject>SWTSharp.Tests.Program</StartupObject>
+    <!-- Application manifest for Windows Common Controls v6 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

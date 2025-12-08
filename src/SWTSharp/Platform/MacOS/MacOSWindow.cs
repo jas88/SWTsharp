@@ -11,6 +11,7 @@ namespace SWTSharp.Platform.MacOS;
 internal class MacOSWindow : MacOSWidget, IPlatformWindow
 {
     private IntPtr _nsWindowHandle;
+    private IntPtr _contentView;
     private readonly List<IPlatformWidget> _platformChildren = new();
     private bool _disposed;
 
@@ -28,21 +29,20 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     {
         // Create NSWindow using objc_msgSend
         _nsWindowHandle = CreateNSWindow(style, title);
+
+        // Cache the contentView for child widgets to use
+        var contentViewSelector = sel_registerName("contentView");
+        _contentView = objc_msgSend(_nsWindowHandle, contentViewSelector);
     }
 
     public void SetBounds(int x, int y, int width, int height)
     {
         if (_disposed || _nsWindowHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsWindowHandle, setFrame:, NSMakeRect(x, y, width, height), display:YES)
-        var rectClass = objc_getClass("NSValue");
-        var selector = sel_registerName("valueWithRect:");
+        // NSWindow setFrame:display: takes NSRect struct directly
         var rect = new NSRect { x = x, y = y, width = width, height = height };
-        var rectValue = objc_msgSend(rectClass, selector, rect);
-
         var setFrameSelector = sel_registerName("setFrame:display:");
-        // setFrame:display: takes NSRect* and BOOL parameters
-        objc_msgSend(_nsWindowHandle, setFrameSelector, rectValue, true, 0); // backing parameter defaults to 0
+        objc_msgSend_rect_bool(_nsWindowHandle, setFrameSelector, rect, true);
 
         // Fire LayoutRequested event when bounds change
         LayoutRequested?.Invoke(this, EventArgs.Empty);
@@ -52,13 +52,9 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     {
         if (_disposed || _nsWindowHandle == IntPtr.Zero) return default(SWTSharp.Graphics.Rectangle);
 
-        // objc_msgSend(_nsWindowHandle, frame)
+        // NSWindow frame returns NSRect struct directly
         var selector = sel_registerName("frame");
-        var frameValue = objc_msgSend(_nsWindowHandle, selector);
-
-        // Extract NSRect from NSValue
-        var rectSelector = sel_registerName("rectValue");
-        var rect = Marshal.PtrToStructure<NSRect>(objc_msgSend(frameValue, rectSelector));
+        objc_msgSend_stret(out NSRect rect, _nsWindowHandle, selector);
 
         return new SWTSharp.Graphics.Rectangle((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height);
     }
@@ -133,10 +129,10 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     {
         if (_disposed || _nsWindowHandle == IntPtr.Zero) return;
 
-        // objc_msgSend(_nsWindowHandle, setTitle:, NSString stringWithString:title)
+        // Create NSString from UTF8 C string
         var strClass = objc_getClass("NSString");
-        var selector = sel_registerName("stringWithString:");
-        var textPtr = Marshal.StringToHGlobalAuto(title);
+        var selector = sel_registerName("stringWithUTF8String:");
+        var textPtr = Marshal.StringToHGlobalAnsi(title ?? string.Empty);
         try
         {
             var nsString = objc_msgSend(strClass, selector, textPtr);
@@ -278,6 +274,16 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
 
     public override IntPtr GetNativeHandle()
     {
+        // Return contentView so child widgets can call addSubview: on it
+        // (NSWindow doesn't respond to addSubview:, only its contentView does)
+        return _contentView;
+    }
+
+    /// <summary>
+    /// Gets the actual NSWindow handle for window-specific operations.
+    /// </summary>
+    public IntPtr GetWindowHandle()
+    {
         return _nsWindowHandle;
     }
 
@@ -301,8 +307,8 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
         if (!string.IsNullOrEmpty(title))
         {
             var strClass = objc_getClass("NSString");
-            var stringSelector = sel_registerName("stringWithString:");
-            var textPtr = Marshal.StringToHGlobalAuto(title);
+            var stringSelector = sel_registerName("stringWithUTF8String:");
+            var textPtr = Marshal.StringToHGlobalAnsi(title);
             try
             {
                 var nsString = objc_msgSend(strClass, stringSelector, textPtr);
@@ -371,6 +377,30 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
 
     [DllImport("/usr/lib/libobjc.A.dylib")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg, bool display, int backing);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_rect_bool(IntPtr receiver, IntPtr selector, NSRect rect, bool display);
+
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (NSRect is 32 bytes)
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRect objc_msgSend_nsrect_arm64(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_x64(out NSRect retval, IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out NSRect retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_nsrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_x64(out retval, receiver, selector);
+        }
+    }
 
     private static string NSStringToString(IntPtr nsString)
     {

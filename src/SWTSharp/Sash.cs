@@ -39,13 +39,19 @@ public class Sash : Control
     /// </summary>
     /// <param name="parent">The parent composite.</param>
     /// <param name="style">Style bits (HORIZONTAL or VERTICAL).</param>
-    public Sash(Composite parent, int style) : base(parent, style)
+    public Sash(Composite parent, int style) : base(parent, NormalizeStyle(style))
     {
+        CreateWidget();
+    }
+
+    private static int NormalizeStyle(int style)
+    {
+        // Default to HORIZONTAL if neither HORIZONTAL nor VERTICAL is specified
         if ((style & (SWT.HORIZONTAL | SWT.VERTICAL)) == 0)
         {
             style |= SWT.HORIZONTAL;
         }
-        CreateWidget();
+        return style;
     }
 
     private void CreateWidget()

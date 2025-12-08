@@ -355,35 +355,53 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
         }
     }
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string className);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "sel_registerName")]
     private static extern IntPtr sel_registerName(string selector);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, int arg);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, IntPtr arg);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, bool arg);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
 
-    [DllImport(ObjCLibrary)]
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_rect(IntPtr receiver, IntPtr selector, CGRect rect);
 
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (CGRect is 32 bytes)
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_cgrect_arm64(IntPtr receiver, IntPtr selector);
+
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
-    private static extern void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector);
+    private static extern void objc_msgSend_stret_x64(out CGRect retval, IntPtr receiver, IntPtr selector);
+
+    private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_x64(out retval, receiver, selector);
+        }
+    }
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
     private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);

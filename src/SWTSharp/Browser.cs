@@ -31,7 +31,10 @@ public class Browser : Composite
         get
         {
             CheckWidget();
-            return _platformBrowser?.GetUrl() ?? _url;
+            // Query platform browser for current URL (handles redirects and user navigation)
+            // Fall back to cached URL if platform browser returns empty (not yet navigated)
+            var currentUrl = _platformBrowser?.GetUrl() ?? string.Empty;
+            return string.IsNullOrEmpty(currentUrl) ? _url : currentUrl;
         }
     }
 
@@ -225,9 +228,10 @@ public class Browser : Composite
     public bool Navigate(string url)
     {
         CheckWidget();
+
         if (string.IsNullOrEmpty(url))
         {
-            throw new ArgumentException("URL cannot be null or empty", nameof(url));
+            return false;
         }
 
         _url = url;
@@ -253,12 +257,11 @@ public class Browser : Composite
     public bool SetText(string html, string? baseUrl = null)
     {
         CheckWidget();
-        if (html == null)
-        {
-            throw new ArgumentNullException(nameof(html));
-        }
+        html = html ?? string.Empty;
 
         _text = html;
+
+        // Always call platform browser to update content, even for empty string
         return _platformBrowser?.SetText(html, baseUrl) ?? false;
     }
 
@@ -429,12 +432,8 @@ public class Browser : Composite
     public Graphics.Point GetSize()
     {
         CheckWidget();
-        if (PlatformWidget != null)
-        {
-            var bounds = PlatformWidget.GetBounds();
-            return new Graphics.Point(bounds.Width, bounds.Height);
-        }
-        return new Graphics.Point(0, 0);
+        var bounds = GetBounds();
+        return new Graphics.Point(bounds.Width, bounds.Height);
     }
 
     // Event handlers that forward platform events to public events
