@@ -68,7 +68,9 @@ internal partial class LinuxPlatform
             GtkTextIter start, end;
             gtk_text_buffer_get_bounds(_buffer, out start, out end);
             IntPtr textPtr = gtk_text_buffer_get_text(_buffer, ref start, ref end, false);
-            return PtrToStringUTF8(textPtr);
+            string result = PtrToStringUTF8(textPtr);
+            g_free(textPtr);
+            return result;
         }
 
         public void SetEditable(bool editable)
@@ -118,7 +120,9 @@ internal partial class LinuxPlatform
             if (gtk_text_buffer_get_selection_bounds(_buffer, out startIter, out endIter))
             {
                 IntPtr textPtr = gtk_text_buffer_get_text(_buffer, ref startIter, ref endIter, false);
-                return PtrToStringUTF8(textPtr);
+                string result = PtrToStringUTF8(textPtr);
+                g_free(textPtr);
+                return result;
             }
             return string.Empty;
         }
@@ -170,7 +174,9 @@ internal partial class LinuxPlatform
                 gtk_text_iter_forward_to_line_end(ref endIter);
             }
             IntPtr textPtr = gtk_text_buffer_get_text(_buffer, ref startIter, ref endIter, false);
-            return PtrToStringUTF8(textPtr);
+            string result = PtrToStringUTF8(textPtr);
+            g_free(textPtr);
+            return result;
         }
 
         public int GetLineCount()

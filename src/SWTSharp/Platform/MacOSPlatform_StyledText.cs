@@ -77,6 +77,10 @@ internal partial class MacOSPlatform
         {
             if (_disposed || _handle == IntPtr.Zero) return;
 
+            // Validate range parameters to prevent underflow
+            if (start < 0) start = 0;
+            if (end < start) end = start;
+
             // Create NSRange with location and length
             NSRange range = new NSRange(start, end - start);
 

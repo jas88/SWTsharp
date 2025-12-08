@@ -37,9 +37,13 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate bool GtkMotionNotifyFunc(IntPtr widget, IntPtr eventPtr, IntPtr data);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void GtkRealizeFunc(IntPtr widget, IntPtr data);
+
     private readonly GtkButtonPressFunc _buttonPressCallback;
     private readonly GtkButtonReleaseFunc _buttonReleaseCallback;
     private readonly GtkMotionNotifyFunc _motionNotifyCallback;
+    private readonly GtkRealizeFunc _realizeCallback;
 
     // Event handling
     public event EventHandler<int>? PositionChanged;
@@ -60,6 +64,7 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
         _buttonPressCallback = OnButtonPress;
         _buttonReleaseCallback = OnButtonRelease;
         _motionNotifyCallback = OnMotionNotify;
+        _realizeCallback = OnRealize;
 
         // Create GtkEventBox for event handling
         _sashHandle = gtk_event_box_new();
@@ -78,8 +83,7 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
         gtk_widget_set_size_request(_sashHandle, width, height);
         _requestedBounds = new Rectangle(0, 0, width, height);
 
-        // Set cursor to indicate draggable area
-        SetCursor();
+        // Note: SetCursor is called in OnRealize callback after widget is realized
 
         // Enable events on the event box
         gtk_widget_add_events(_sashHandle,
@@ -98,6 +102,16 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
 
         // Setup event handlers
         SetupEventHandlers();
+
+        // Connect to 'realize' signal to set cursor after widget is realized
+        g_signal_connect_data(
+            _sashHandle,
+            "realize",
+            Marshal.GetFunctionPointerForDelegate(_realizeCallback),
+            IntPtr.Zero,
+            IntPtr.Zero,
+            0
+        );
     }
 
     public void SetPosition(int position)
@@ -221,6 +235,12 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
             gdk_window_set_cursor(gdkWindow, cursor);
             g_object_unref(cursor);
         }
+    }
+
+    private void OnRealize(IntPtr widget, IntPtr data)
+    {
+        // Called when widget is realized and has a GdkWindow
+        SetCursor();
     }
 
     private void SetupEventHandlers()

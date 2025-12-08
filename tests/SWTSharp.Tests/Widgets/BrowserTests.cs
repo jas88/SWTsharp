@@ -158,7 +158,7 @@ public class BrowserTests : WidgetTestBase
         Shell? shell = null;
         Browser? browser = null;
         string? navigatedUrl = null;
-        bool navigationComplete = false;
+        int navigationComplete = 0; // Use int for Interlocked operations (0=false, 1=true)
 
         // Setup: create shell and browser, attach event handler, navigate
         RunOnUIThread(() =>
@@ -169,7 +169,7 @@ public class BrowserTests : WidgetTestBase
             browser.Navigated += (sender, e) =>
             {
                 navigatedUrl = e.Url;
-                navigationComplete = true;
+                System.Threading.Interlocked.Exchange(ref navigationComplete, 1);
             };
 
             // Navigate to a URL - browser may normalize it (e.g., add trailing slash)
@@ -179,7 +179,7 @@ public class BrowserTests : WidgetTestBase
         // Wait for navigation by repeatedly calling RunOnUIThread to pump events
         // This works on macOS where ReadAndDispatch inside RunOnUIThread blocks
         var timeout = System.DateTime.UtcNow.AddSeconds(5);
-        while (!navigationComplete && System.DateTime.UtcNow < timeout)
+        while (System.Threading.Volatile.Read(ref navigationComplete) == 0 && System.DateTime.UtcNow < timeout)
         {
             RunOnUIThread(() => { }); // Pump events
             System.Threading.Thread.Sleep(10); // Small delay to avoid spinning
@@ -188,7 +188,7 @@ public class BrowserTests : WidgetTestBase
         // Verify and cleanup
         RunOnUIThread(() =>
         {
-            if (navigationComplete)
+            if (System.Threading.Volatile.Read(ref navigationComplete) == 1)
             {
                 // After navigation completes, GetUrl returns the actual URL from browser
                 var actualUrl = browser?.GetUrl();

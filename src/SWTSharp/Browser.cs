@@ -261,11 +261,7 @@ public class Browser : Composite
 
         _text = html;
 
-        if (string.IsNullOrEmpty(html))
-        {
-            return true;
-        }
-
+        // Always call platform browser to update content, even for empty string
         return _platformBrowser?.SetText(html, baseUrl) ?? false;
     }
 

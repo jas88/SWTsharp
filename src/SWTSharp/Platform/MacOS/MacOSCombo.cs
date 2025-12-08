@@ -144,9 +144,12 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
     {
         var strClass = objc_getClass("NSString");
         var selector = sel_registerName("stringWithUTF8String:");
-        var utf8Ptr = Marshal.StringToHGlobalAnsi(text ?? string.Empty);
+        // Use UTF-8 encoding, not ANSI, for Objective-C NSString
+        byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes((text ?? string.Empty) + "\0");
+        var utf8Ptr = Marshal.AllocHGlobal(utf8Bytes.Length);
         try
         {
+            Marshal.Copy(utf8Bytes, 0, utf8Ptr, utf8Bytes.Length);
             return objc_msgSend(strClass, selector, utf8Ptr);
         }
         finally
