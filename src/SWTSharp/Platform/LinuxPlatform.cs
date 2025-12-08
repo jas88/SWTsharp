@@ -168,8 +168,14 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxScale in Phase 5.3
-        throw new NotImplementedException("CreateScaleWidget will be implemented in Phase 5.3");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        return new Linux.LinuxScale(parentHandle, style);
     }
 
     public IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style)

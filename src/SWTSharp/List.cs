@@ -12,6 +12,7 @@ public class List : Control
     private readonly System.Collections.Generic.List<string> _items = new();
     private readonly System.Collections.Generic.List<int> _selectedIndices = new();
     private bool _multiSelect;
+    private bool _suppressPlatformSelectionEvents;
 
     /// <summary>
     /// Gets the number of items in the list.
@@ -508,13 +509,22 @@ public class List : Control
         // Use IPlatformList interface to update selection
         if (PlatformWidget is IPlatformList listWidget)
         {
-            if (_multiSelect)
+            // Suppress platform events to avoid feedback loops during programmatic selection
+            _suppressPlatformSelectionEvents = true;
+            try
             {
-                listWidget.SelectionIndices = _selectedIndices.ToArray();
+                if (_multiSelect)
+                {
+                    listWidget.SelectionIndices = _selectedIndices.ToArray();
+                }
+                else
+                {
+                    listWidget.SelectionIndex = _selectedIndices.Count > 0 ? _selectedIndices[0] : -1;
+                }
             }
-            else
+            finally
             {
-                listWidget.SelectionIndex = _selectedIndices.Count > 0 ? _selectedIndices[0] : -1;
+                _suppressPlatformSelectionEvents = false;
             }
         }
         OnSelectionChanged(EventArgs.Empty);
@@ -526,6 +536,12 @@ public class List : Control
     private void OnPlatformSelectionChanged(object? sender, int selectedIndex)
     {
         CheckWidget();
+
+        // Ignore platform events triggered by programmatic selection changes
+        if (_suppressPlatformSelectionEvents)
+        {
+            return;
+        }
 
         // Handle single selection mode
         if (!_multiSelect)
