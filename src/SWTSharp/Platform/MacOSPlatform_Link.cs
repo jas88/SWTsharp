@@ -127,15 +127,42 @@ internal partial class MacOSPlatform
             IntPtr attrString = objc_msgSend(objc_msgSend(objc_getClass("NSMutableAttributedString"), sel_registerName("alloc")), sel_registerName("initWithString:"), nsString);
             objc_msgSend(nsString, sel_registerName("release"));
 
-            // Add link attribute if text contains <a> tags
-            // Simplified implementation - just make the whole text a link
-            IntPtr linkClass = objc_getClass("NSURL");
-            IntPtr url = objc_msgSend(linkClass, sel_registerName("URLWithString:"), CreateNSString("#"));
-            IntPtr linkAttrName = CreateNSString("NSLink");
-            objc_msgSend(attrString, sel_registerName("addAttribute:value:range:"), linkAttrName, url);
+            // Only add link attribute if text is not empty
+            if (!string.IsNullOrEmpty(text))
+            {
+                // Add link attribute - make the whole text a link
+                IntPtr linkClass = objc_getClass("NSURL");
+                IntPtr urlString = CreateNSString("#");
+                IntPtr url = objc_msgSend(linkClass, sel_registerName("URLWithString:"), urlString);
+                objc_msgSend(urlString, sel_registerName("release"));
+
+                IntPtr linkAttrName = CreateNSString("NSLink");
+
+                // Create NSRange for the full text length
+                // NSRange is a struct with location (nint) and length (nint)
+                NSRange range = new NSRange(0, text.Length);
+                objc_msgSend_addAttribute(attrString, sel_registerName("addAttribute:value:range:"), linkAttrName, url, range);
+                objc_msgSend(linkAttrName, sel_registerName("release"));
+            }
 
             return attrString;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NSRange
+        {
+            public nint location;
+            public nint length;
+
+            public NSRange(nint location, nint length)
+            {
+                this.location = location;
+                this.length = length;
+            }
+        }
+
+        [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+        private static extern void objc_msgSend_addAttribute(IntPtr receiver, IntPtr selector, IntPtr attrName, IntPtr value, NSRange range);
 
         private IntPtr CreateNSString(string text)
         {
