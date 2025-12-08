@@ -17,25 +17,34 @@ public class BrowserTests : WidgetTestBase
     [Fact]
     public void Browser_Create_ShouldSucceed()
     {
-        AssertWidgetCreation(shell => new Browser(shell, SWT.NONE));
+        RunOnUIThread(() =>
+        {
+            AssertWidgetCreation(shell => new Browser(shell, SWT.NONE));
+        });
     }
 
     [Fact]
     public void Browser_Create_WithStyles_ShouldSucceed()
     {
-        AssertWidgetStyles(
-            (shell, style) => new Browser(shell, style),
-            SWT.NONE,
-            SWT.WEBKIT,
-            SWT.MOZILLA,
-            SWT.BORDER
-        );
+        RunOnUIThread(() =>
+        {
+            AssertWidgetStyles(
+                (shell, style) => new Browser(shell, style),
+                SWT.NONE,
+                SWT.WEBKIT,
+                SWT.MOZILLA,
+                SWT.BORDER
+            );
+        });
     }
 
     [Fact]
     public void Browser_Parent_ShouldBeCorrect()
     {
-        AssertControlParent(shell => new Browser(shell, SWT.NONE));
+        RunOnUIThread(() =>
+        {
+            AssertControlParent(shell => new Browser(shell, SWT.NONE));
+        });
     }
 
     #endregion
@@ -556,16 +565,22 @@ public class BrowserTests : WidgetTestBase
     [Fact]
     public void Browser_Dispose_ShouldSetIsDisposed()
     {
-        AssertWidgetDisposal(shell => new Browser(shell, SWT.NONE));
+        RunOnUIThread(() =>
+        {
+            AssertWidgetDisposal(shell => new Browser(shell, SWT.NONE));
+        });
     }
 
     [Fact]
     public void Browser_SetUrl_AfterDispose_ShouldThrow()
     {
-        AssertThrowsAfterDisposal(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.SetUrl("https://www.example.com")
-        );
+        RunOnUIThread(() =>
+        {
+            AssertThrowsAfterDisposal(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.SetUrl("https://www.example.com")
+            );
+        });
     }
 
     [Fact]
@@ -584,10 +599,13 @@ public class BrowserTests : WidgetTestBase
     [Fact]
     public void Browser_SetText_AfterDispose_ShouldThrow()
     {
-        AssertThrowsAfterDisposal(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.SetText("<html><body>Test</body></html>")
-        );
+        RunOnUIThread(() =>
+        {
+            AssertThrowsAfterDisposal(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.SetText("<html><body>Test</body></html>")
+            );
+        });
     }
 
     [Fact]
@@ -606,37 +624,49 @@ public class BrowserTests : WidgetTestBase
     [Fact]
     public void Browser_Refresh_AfterDispose_ShouldThrow()
     {
-        AssertThrowsAfterDisposal(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.Refresh()
-        );
+        RunOnUIThread(() =>
+        {
+            AssertThrowsAfterDisposal(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.Refresh()
+            );
+        });
     }
 
     [Fact]
     public void Browser_Stop_AfterDispose_ShouldThrow()
     {
-        AssertThrowsAfterDisposal(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.Stop()
-        );
+        RunOnUIThread(() =>
+        {
+            AssertThrowsAfterDisposal(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.Stop()
+            );
+        });
     }
 
     [Fact]
     public void Browser_Back_AfterDispose_ShouldThrow()
     {
-        AssertThrowsAfterDisposal(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.Back()
-        );
+        RunOnUIThread(() =>
+        {
+            AssertThrowsAfterDisposal(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.Back()
+            );
+        });
     }
 
     [Fact]
     public void Browser_Forward_AfterDispose_ShouldThrow()
     {
-        AssertThrowsAfterDisposal(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.Forward()
-        );
+        RunOnUIThread(() =>
+        {
+            AssertThrowsAfterDisposal(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.Forward()
+            );
+        });
     }
 
     #endregion
@@ -646,29 +676,38 @@ public class BrowserTests : WidgetTestBase
     [Fact]
     public void Browser_Data_ShouldGetAndSet()
     {
-        AssertWidgetData(shell => new Browser(shell, SWT.NONE));
+        RunOnUIThread(() =>
+        {
+            AssertWidgetData(shell => new Browser(shell, SWT.NONE));
+        });
     }
 
     [Fact]
     public void Browser_Visible_ShouldGetAndSet()
     {
-        AssertPropertyGetSet(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.Visible,
-            (b, v) => b.Visible = v,
-            false
-        );
+        RunOnUIThread(() =>
+        {
+            AssertPropertyGetSet(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.Visible,
+                (b, v) => b.Visible = v,
+                false
+            );
+        });
     }
 
     [Fact]
     public void Browser_Enabled_ShouldGetAndSet()
     {
-        AssertPropertyGetSet(
-            shell => new Browser(shell, SWT.NONE),
-            b => b.Enabled,
-            (b, v) => b.Enabled = v,
-            false
-        );
+        RunOnUIThread(() =>
+        {
+            AssertPropertyGetSet(
+                shell => new Browser(shell, SWT.NONE),
+                b => b.Enabled,
+                (b, v) => b.Enabled = v,
+                false
+            );
+        });
     }
 
     #endregion

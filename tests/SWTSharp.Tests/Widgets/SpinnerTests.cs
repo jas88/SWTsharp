@@ -87,42 +87,51 @@ public class SpinnerTests : WidgetTestBase
     [FactSkipPlatform("linux")]
     public void Spinner_Selection_ClampedToMinimum()
     {
-        using var shell = CreateTestShell();
-        var spinner = new Spinner(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var spinner = new Spinner(shell, SWT.NONE);
 
-        spinner.Minimum = 10;
-        spinner.Selection = 5;
+            spinner.Minimum = 10;
+            spinner.Selection = 5;
 
-        Assert.Equal(10, spinner.Selection);
+            Assert.Equal(10, spinner.Selection);
 
-        spinner.Dispose();
+            spinner.Dispose();
+        });
     }
 
     [FactSkipPlatform("linux")]
     public void Spinner_Selection_ClampedToMaximum()
     {
-        using var shell = CreateTestShell();
-        var spinner = new Spinner(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var spinner = new Spinner(shell, SWT.NONE);
 
-        spinner.Maximum = 100;
-        spinner.Selection = 150;
+            spinner.Maximum = 100;
+            spinner.Selection = 150;
 
-        Assert.Equal(100, spinner.Selection);
+            Assert.Equal(100, spinner.Selection);
 
-        spinner.Dispose();
+            spinner.Dispose();
+        });
     }
 
     [FactSkipPlatform("linux")]
     public void Spinner_DefaultValues_ShouldBeCorrect()
     {
-        using var shell = CreateTestShell();
-        var spinner = new Spinner(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var spinner = new Spinner(shell, SWT.NONE);
 
-        Assert.Equal(0, spinner.Minimum);
-        Assert.Equal(100, spinner.Maximum);
-        Assert.Equal(0, spinner.Selection);
+            Assert.Equal(0, spinner.Minimum);
+            Assert.Equal(100, spinner.Maximum);
+            Assert.Equal(0, spinner.Selection);
 
-        spinner.Dispose();
+            spinner.Dispose();
+        });
     }
 
     [FactSkipPlatform("linux")]

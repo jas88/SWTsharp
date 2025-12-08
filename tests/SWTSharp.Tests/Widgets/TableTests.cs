@@ -33,87 +33,105 @@ public class TableTests : WidgetTestBase
     [Fact]
     public void Table_AddColumn_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.NONE);
-        var column = new TableColumn(table, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.NONE);
+            var column = new TableColumn(table, SWT.NONE);
 
-        Assert.NotNull(column);
-        Assert.Equal(1, table.ColumnCount);
+            Assert.NotNull(column);
+            Assert.Equal(1, table.ColumnCount);
 
-        table.Dispose();
+            table.Dispose();
+        });
     }
 
     [Fact]
     public void Table_AddMultipleColumns_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.NONE);
 
-        var col1 = new TableColumn(table, SWT.NONE);
-        var col2 = new TableColumn(table, SWT.NONE);
-        var col3 = new TableColumn(table, SWT.NONE);
+            var col1 = new TableColumn(table, SWT.NONE);
+            var col2 = new TableColumn(table, SWT.NONE);
+            var col3 = new TableColumn(table, SWT.NONE);
 
-        Assert.Equal(3, table.ColumnCount);
+            Assert.Equal(3, table.ColumnCount);
 
-        table.Dispose();
+            table.Dispose();
+        });
     }
 
     [Fact]
     public void Table_AddItem_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.NONE);
-        var item = new TableItem(table, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.NONE);
+            var item = new TableItem(table, SWT.NONE);
 
-        Assert.NotNull(item);
-        Assert.Equal(1, table.ItemCount);
+            Assert.NotNull(item);
+            Assert.Equal(1, table.ItemCount);
 
-        table.Dispose();
+            table.Dispose();
+        });
     }
 
     [Fact]
     public void Table_AddMultipleItems_ShouldSucceed()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.NONE);
 
-        var item1 = new TableItem(table, SWT.NONE);
-        var item2 = new TableItem(table, SWT.NONE);
-        var item3 = new TableItem(table, SWT.NONE);
+            var item1 = new TableItem(table, SWT.NONE);
+            var item2 = new TableItem(table, SWT.NONE);
+            var item3 = new TableItem(table, SWT.NONE);
 
-        Assert.Equal(3, table.ItemCount);
+            Assert.Equal(3, table.ItemCount);
 
-        table.Dispose();
+            table.Dispose();
+        });
     }
 
     [Fact]
     public void Table_GetItem_ShouldReturnCorrectItem()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.NONE);
 
-        var item1 = new TableItem(table, SWT.NONE);
-        var item2 = new TableItem(table, SWT.NONE);
+            var item1 = new TableItem(table, SWT.NONE);
+            var item2 = new TableItem(table, SWT.NONE);
 
-        var retrieved = table.GetItem(1);
-        Assert.Same(item2, retrieved);
+            var retrieved = table.GetItem(1);
+            Assert.Same(item2, retrieved);
 
-        table.Dispose();
+            table.Dispose();
+        });
     }
 
     [Fact]
     public void Table_GetColumn_ShouldReturnCorrectColumn()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.NONE);
 
-        var col1 = new TableColumn(table, SWT.NONE);
-        var col2 = new TableColumn(table, SWT.NONE);
+            var col1 = new TableColumn(table, SWT.NONE);
+            var col2 = new TableColumn(table, SWT.NONE);
 
-        var retrieved = table.GetColumn(1);
-        Assert.Same(col2, retrieved);
+            var retrieved = table.GetColumn(1);
+            Assert.Same(col2, retrieved);
 
-        table.Dispose();
+            table.Dispose();
+        });
     }
 
     [Fact]
@@ -141,17 +159,20 @@ public class TableTests : WidgetTestBase
     [Fact]
     public void Table_SelectionIndex_ShouldGetAndSet()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.SINGLE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.SINGLE);
 
-        var item1 = new TableItem(table, SWT.NONE);
-        var item2 = new TableItem(table, SWT.NONE);
+            var item1 = new TableItem(table, SWT.NONE);
+            var item2 = new TableItem(table, SWT.NONE);
 
-        table.SetSelection(new[] { item2 });
-        Assert.Single(table.Selection);
-        Assert.Same(item2, table.Selection[0]);
+            table.SetSelection(new[] { item2 });
+            Assert.Single(table.Selection);
+            Assert.Same(item2, table.Selection[0]);
 
-        table.Dispose();
+            table.Dispose();
+        });
     }
 
     [Fact]
@@ -169,16 +190,19 @@ public class TableTests : WidgetTestBase
     [Fact]
     public void Table_Dispose_ShouldDisposeItemsAndColumns()
     {
-        using var shell = CreateTestShell();
-        var table = new Table(shell, SWT.NONE);
-        var column = new TableColumn(table, SWT.NONE);
-        var item = new TableItem(table, SWT.NONE);
+        RunOnUIThread(() =>
+        {
+            using var shell = CreateTestShell();
+            var table = new Table(shell, SWT.NONE);
+            var column = new TableColumn(table, SWT.NONE);
+            var item = new TableItem(table, SWT.NONE);
 
-        table.Dispose();
+            table.Dispose();
 
-        Assert.True(table.IsDisposed);
-        Assert.True(column.IsDisposed);
-        Assert.True(item.IsDisposed);
+            Assert.True(table.IsDisposed);
+            Assert.True(column.IsDisposed);
+            Assert.True(item.IsDisposed);
+        });
     }
 
     [Fact]

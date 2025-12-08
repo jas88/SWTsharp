@@ -310,21 +310,43 @@ internal class MacOSDateTime : IPlatformDateTime
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, double arg1, double arg2, double arg3, double arg4);
 
-    // On ARM64 macOS, objc_msgSend_stret doesn't exist - struct returns use objc_msgSend directly
+    // Architecture-specific struct return handling:
+    // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
+    // - x86_64: objc_msgSend_stret required for structs > 16 bytes (CGRect is 32 bytes)
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-    private static extern CGRect objc_msgSend_stret_cgrect(IntPtr receiver, IntPtr selector);
+    private static extern CGRect objc_msgSend_cgrect_arm64(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_x64(out CGRect retval, IntPtr receiver, IntPtr selector);
 
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-    private static extern CGRect objc_msgSend_stret_cgrect_arg(IntPtr receiver, IntPtr selector, CGRect arg1);
+    private static extern CGRect objc_msgSend_cgrect_arg_arm64(IntPtr receiver, IntPtr selector, CGRect arg1);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_arg_x64(out CGRect retval, IntPtr receiver, IntPtr selector, CGRect arg1);
 
     private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector)
     {
-        retval = objc_msgSend_stret_cgrect(receiver, selector);
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arm64(receiver, selector);
+        }
+        else
+        {
+            objc_msgSend_stret_x64(out retval, receiver, selector);
+        }
     }
 
     private static void objc_msgSend_stret(out CGRect retval, IntPtr receiver, IntPtr selector, CGRect arg1)
     {
-        retval = objc_msgSend_stret_cgrect_arg(receiver, selector, arg1);
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_arg_arm64(receiver, selector, arg1);
+        }
+        else
+        {
+            objc_msgSend_stret_arg_x64(out retval, receiver, selector, arg1);
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
