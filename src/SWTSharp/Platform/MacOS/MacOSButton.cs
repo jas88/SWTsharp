@@ -388,29 +388,36 @@ internal class MacOSButton : MacOSWidget, IPlatformTextWidget
         {
             if (!_classRegistered)
             {
-                // Create "SWTButtonTarget" class from NSObject
-                var nsObjectClass = objc_getClass("NSObject");
-                _targetClass = objc_allocateClassPair(nsObjectClass, "SWTButtonTarget", 0);
+                // First check if the class already exists (from a previous test run in the same process)
+                _targetClass = objc_getClass("SWTButtonTarget");
 
                 if (_targetClass == IntPtr.Zero)
                 {
-                    throw new InvalidOperationException("Failed to allocate Objective-C class pair for SWTButtonTarget");
+                    // Create "SWTButtonTarget" class from NSObject
+                    var nsObjectClass = objc_getClass("NSObject");
+                    _targetClass = objc_allocateClassPair(nsObjectClass, "SWTButtonTarget", 0);
+
+                    if (_targetClass == IntPtr.Zero)
+                    {
+                        throw new InvalidOperationException("Failed to allocate Objective-C class pair for SWTButtonTarget");
+                    }
+
+                    // Step 2: Add "buttonClicked:" method to the class
+                    var actionSelector = sel_registerName("buttonClicked:");
+                    var callbackPtr = Marshal.GetFunctionPointerForDelegate(_staticClickCallback);
+
+                    // Type encoding: "v@:@" means void return (@=id self, :=SEL selector, @=id sender)
+                    bool methodAdded = class_addMethod(_targetClass, actionSelector, callbackPtr, "v@:@");
+
+                    if (!methodAdded)
+                    {
+                        throw new InvalidOperationException("Failed to add buttonClicked: method to SWTButtonTarget class");
+                    }
+
+                    // Step 3: Register the class with Objective-C runtime
+                    objc_registerClassPair(_targetClass);
                 }
 
-                // Step 2: Add "buttonClicked:" method to the class
-                var actionSelector = sel_registerName("buttonClicked:");
-                var callbackPtr = Marshal.GetFunctionPointerForDelegate(_staticClickCallback);
-
-                // Type encoding: "v@:@" means void return (@=id self, :=SEL selector, @=id sender)
-                bool methodAdded = class_addMethod(_targetClass, actionSelector, callbackPtr, "v@:@");
-
-                if (!methodAdded)
-                {
-                    throw new InvalidOperationException("Failed to add buttonClicked: method to SWTButtonTarget class");
-                }
-
-                // Step 3: Register the class with Objective-C runtime
-                objc_registerClassPair(_targetClass);
                 _classRegistered = true;
             }
         }
