@@ -8,6 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace SWTSharp.TestAdapter;
 
@@ -153,7 +156,7 @@ public class SWTSharpTestExecutor : ITestExecutor
                 break;
             }
 
-            System.Threading.Thread.Sleep(100);
+            Thread.Sleep(100);
         }
 
         process.WaitForExit();
@@ -170,38 +173,92 @@ public class SWTSharpTestExecutor : ITestExecutor
         frameworkHandle.SendMessage(TestMessageLevel.Informational,
             "SWTSharp TestAdapter: Using default test host (Windows/Linux)");
 
-        // On Windows/Linux, we can run tests in-process
-        // This is a simplified implementation - in production, you'd use xUnit's execution engine
-        foreach (var test in tests)
+        // Group tests by source assembly
+        var testsBySource = tests.GroupBy(t => t.Source).ToList();
+
+        foreach (var sourceGroup in testsBySource)
         {
             if (_cancelled)
                 break;
 
-            frameworkHandle.RecordStart(test);
+            var source = sourceGroup.Key;
+            var sourceTests = sourceGroup.ToList();
+
+            frameworkHandle.SendMessage(TestMessageLevel.Informational,
+                $"SWTSharp TestAdapter: Running {sourceTests.Count} tests from {Path.GetFileName(source)}");
 
             try
             {
-                // TODO: Implement actual test execution via xUnit
-                // For now, mark as skipped with a message
-                frameworkHandle.RecordResult(new TestResult(test)
+                // Use XunitFrontController to discover and run tests in-process
+                using var controller = new XunitFrontController(
+                    AppDomainSupport.Denied,
+                    source,
+                    configFileName: null,
+                    shadowCopy: false,
+                    diagnosticMessageSink: new NullMessageSink());
+
+                // Discover tests
+                var discoveryVisitor = new TestDiscoveryVisitor();
+                var discoveryOptions = TestFrameworkOptions.ForDiscovery();
+                controller.Find(
+                    includeSourceInformation: false,
+                    messageSink: discoveryVisitor,
+                    discoveryOptions: discoveryOptions);
+
+                if (!discoveryVisitor.Finished.WaitOne(TimeSpan.FromSeconds(30)))
                 {
-                    Outcome = TestOutcome.Skipped,
-                    ErrorMessage = "SWTSharp TestAdapter: Default host implementation pending"
-                });
+                    frameworkHandle.SendMessage(TestMessageLevel.Error,
+                        "SWTSharp TestAdapter: Test discovery timed out");
+                    MarkTestsAsFailed(sourceTests, frameworkHandle, "Test discovery timed out");
+                    continue;
+                }
+
+                // Filter discovered tests to match requested test cases
+                var testNamesToRun = new HashSet<string>(sourceTests.Select(t => t.FullyQualifiedName));
+                var testsToRun = discoveryVisitor.TestCases
+                    .Where(tc => testNamesToRun.Contains(tc.TestMethod.TestClass.Class.Name + "." + tc.TestMethod.Method.Name)
+                              || testNamesToRun.Any(n => n.Contains(tc.DisplayName)))
+                    .ToList();
+
+                if (testsToRun.Count == 0)
+                {
+                    frameworkHandle.SendMessage(TestMessageLevel.Warning,
+                        "SWTSharp TestAdapter: No tests matched filter, running all discovered tests");
+                    testsToRun = discoveryVisitor.TestCases;
+                }
+
+                // Run tests
+                var executionVisitor = new TestExecutionVisitor(sourceTests, frameworkHandle, () => _cancelled);
+                var executionOptions = TestFrameworkOptions.ForExecution();
+                executionOptions.SetValue("xunit.execution.MaxParallelThreads", 1);
+
+                controller.RunTests(testsToRun, executionVisitor, executionOptions);
+
+                if (!executionVisitor.Finished.WaitOne(TimeSpan.FromMinutes(5)))
+                {
+                    frameworkHandle.SendMessage(TestMessageLevel.Error,
+                        "SWTSharp TestAdapter: Test execution timed out");
+                    executionVisitor.MarkRemainingAsFailed("Test execution timed out");
+                }
             }
             catch (Exception ex)
             {
-                frameworkHandle.RecordResult(new TestResult(test)
-                {
-                    Outcome = TestOutcome.Failed,
-                    ErrorMessage = ex.Message,
-                    ErrorStackTrace = ex.StackTrace
-                });
+                frameworkHandle.SendMessage(TestMessageLevel.Error,
+                    $"SWTSharp TestAdapter: Failed to run tests from {source}: {ex.Message}");
+                MarkTestsAsFailed(sourceTests, frameworkHandle, $"Test host error: {ex.Message}");
             }
-            finally
+        }
+    }
+
+    private void MarkTestsAsFailed(List<TestCase> tests, IFrameworkHandle frameworkHandle, string message)
+    {
+        foreach (var test in tests)
+        {
+            frameworkHandle.RecordResult(new TestResult(test)
             {
-                frameworkHandle.RecordEnd(test, TestOutcome.Skipped);
-            }
+                Outcome = TestOutcome.Failed,
+                ErrorMessage = message
+            });
         }
     }
 
@@ -287,5 +344,171 @@ public class SWTSharpTestExecutor : ITestExecutor
         {
             TestCases.Add(discoveredTest);
         }
+    }
+
+    /// <summary>
+    /// Collects discovered xUnit test cases.
+    /// </summary>
+    private class TestDiscoveryVisitor : IMessageSink
+    {
+        public List<ITestCase> TestCases { get; } = new();
+        public ManualResetEvent Finished { get; } = new(false);
+
+        public bool OnMessage(IMessageSinkMessage message)
+        {
+            if (message is ITestCaseDiscoveryMessage discoveryMessage)
+            {
+                TestCases.Add(discoveryMessage.TestCase);
+            }
+            else if (message is IDiscoveryCompleteMessage)
+            {
+                Finished.Set();
+            }
+
+            return true;
+        }
+
+        public void Dispose()
+        {
+            Finished?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Handles xUnit test execution messages and reports results via VSTest IFrameworkHandle.
+    /// </summary>
+    private class TestExecutionVisitor : IMessageSink
+    {
+        private readonly List<TestCase> _testCases;
+        private readonly IFrameworkHandle _frameworkHandle;
+        private readonly Func<bool> _isCancelled;
+        private readonly HashSet<string> _reportedTests = new();
+        private readonly Stopwatch _testStopwatch = new();
+        private readonly object _lock = new();
+        public ManualResetEvent Finished { get; } = new(false);
+
+        public TestExecutionVisitor(List<TestCase> testCases, IFrameworkHandle frameworkHandle, Func<bool> isCancelled)
+        {
+            _testCases = testCases;
+            _frameworkHandle = frameworkHandle;
+            _isCancelled = isCancelled;
+        }
+
+        public bool OnMessage(IMessageSinkMessage message)
+        {
+            if (_isCancelled())
+            {
+                return false; // Stop processing
+            }
+
+            switch (message)
+            {
+                case ITestStarting starting:
+                    var startTest = FindTestCase(starting.Test.DisplayName);
+                    if (startTest != null)
+                    {
+                        _frameworkHandle.RecordStart(startTest);
+                        _testStopwatch.Restart();
+                    }
+                    break;
+
+                case ITestPassed passed:
+                    RecordResult(passed.Test.DisplayName, TestOutcome.Passed, passed.ExecutionTime, null, null);
+                    break;
+
+                case ITestFailed failed:
+                    var errorMessage = failed.Messages.Length > 0 ? string.Join(Environment.NewLine, failed.Messages) : "Test failed";
+                    var stackTrace = failed.StackTraces.Length > 0 ? string.Join(Environment.NewLine, failed.StackTraces) : null;
+                    RecordResult(failed.Test.DisplayName, TestOutcome.Failed, failed.ExecutionTime, errorMessage, stackTrace);
+                    break;
+
+                case ITestSkipped skipped:
+                    RecordResult(skipped.Test.DisplayName, TestOutcome.Skipped, 0, skipped.Reason, null);
+                    break;
+
+                case ITestAssemblyFinished:
+                    Finished.Set();
+                    break;
+            }
+
+            return true;
+        }
+
+        private void RecordResult(string testName, TestOutcome outcome, decimal executionTime, string? errorMessage, string? stackTrace)
+        {
+            lock (_lock)
+            {
+                if (_reportedTests.Contains(testName))
+                    return;
+
+                var testCase = FindTestCase(testName);
+                if (testCase == null)
+                    return;
+
+                _reportedTests.Add(testName);
+
+                var result = new TestResult(testCase)
+                {
+                    Outcome = outcome,
+                    Duration = TimeSpan.FromSeconds((double)executionTime),
+                    ErrorMessage = errorMessage,
+                    ErrorStackTrace = stackTrace
+                };
+
+                _frameworkHandle.RecordResult(result);
+                _frameworkHandle.RecordEnd(testCase, outcome);
+            }
+        }
+
+        private TestCase? FindTestCase(string displayName)
+        {
+            // Try exact match on DisplayName
+            var testCase = _testCases.FirstOrDefault(t => t.DisplayName == displayName);
+            if (testCase != null)
+                return testCase;
+
+            // Try matching on FullyQualifiedName containing the display name
+            testCase = _testCases.FirstOrDefault(t => t.FullyQualifiedName.EndsWith("." + displayName));
+            if (testCase != null)
+                return testCase;
+
+            // Try partial match
+            return _testCases.FirstOrDefault(t =>
+                t.FullyQualifiedName.Contains(displayName) || displayName.Contains(t.DisplayName));
+        }
+
+        public void MarkRemainingAsFailed(string message)
+        {
+            lock (_lock)
+            {
+                foreach (var testCase in _testCases)
+                {
+                    if (!_reportedTests.Contains(testCase.DisplayName))
+                    {
+                        _reportedTests.Add(testCase.DisplayName);
+                        _frameworkHandle.RecordResult(new TestResult(testCase)
+                        {
+                            Outcome = TestOutcome.Failed,
+                            ErrorMessage = message
+                        });
+                    }
+                }
+                Finished.Set();
+            }
+        }
+
+        public void Dispose()
+        {
+            Finished?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Null message sink that ignores all messages (for diagnostics).
+    /// </summary>
+    private class NullMessageSink : IMessageSink
+    {
+        public bool OnMessage(IMessageSinkMessage message) => true;
+        public void Dispose() { }
     }
 }
