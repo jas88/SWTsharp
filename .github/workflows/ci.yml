@@ -41,27 +41,25 @@ jobs:
       - name: Build
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
-        run: dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --logger "trx;LogFileName=test-results.trx"
+        run: |
+          dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          directory: ./tests/SWTSharp.Tests/TestResults
-          flags: windows
-          name: windows-coverage
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload test results
+      - name: Upload test results and coverage
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: test-results-windows
-          path: '**/test-results.trx'
+          path: |
+            ./TestResults/**/*.trx
+            ./TestResults/**/coverage.cobertura.xml
           retention-days: 30
 
   test-macos:
@@ -96,28 +94,26 @@ jobs:
       # Platform-specific tests are filtered at discovery time via IXunitTestCaseDiscoverer
       # Tests that require Thread 1 should use the appropriate platform attributes
 
-      - name: Run tests
+      - name: Run tests with coverage
         timeout-minutes: 5  # Prevent infinite hanging on macOS
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
-        run: dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --logger "trx;LogFileName=test-results.trx"
+        run: |
+          dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          directory: ./tests/SWTSharp.Tests/TestResults
-          flags: macos
-          name: macos-coverage
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload test results
+      - name: Upload test results and coverage
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: test-results-macos
-          path: '**/test-results.trx'
+          path: |
+            ./TestResults/**/*.trx
+            ./TestResults/**/coverage.cobertura.xml
           retention-days: 30
 
   test-linux:
@@ -177,33 +173,31 @@ jobs:
       - name: Build
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
           DISPLAY: :99
-        run: dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --logger "trx;LogFileName=test-results.trx"
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          directory: ./tests/SWTSharp.Tests/TestResults
-          flags: linux
-          name: linux-coverage
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:csharp"
 
-      - name: Upload test results
+      - name: Upload test results and coverage
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: test-results-linux
-          path: '**/test-results.trx'
+          path: |
+            ./TestResults/**/*.trx
+            ./TestResults/**/coverage.cobertura.xml
           retention-days: 30
 
       - name: Create NuGet package
@@ -267,3 +261,33 @@ jobs:
             - Debug symbols (.snupkg)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Merge coverage from all platforms and upload to Codecov
+  merge-coverage:
+    name: Merge Coverage
+    needs: [test-windows, test-macos, test-linux]
+    runs-on: ubuntu-latest
+    if: always() && (needs.test-windows.result == 'success' || needs.test-macos.result == 'success' || needs.test-linux.result == 'success')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: test-results-*
+          path: ./coverage
+          merge-multiple: true
+
+      - name: Display coverage structure
+        run: find ./coverage -name "*.xml" -type f
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          directory: ./coverage
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
