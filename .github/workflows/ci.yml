@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     tags:
       - 'v*'
   pull_request:
@@ -16,6 +16,7 @@ jobs:
   test-windows:
     name: Test on Windows
     runs-on: windows-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -26,6 +27,14 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
         run: dotnet restore
 
@@ -35,7 +44,7 @@ jobs:
       - name: Run tests
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
+        run: dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -57,7 +66,8 @@ jobs:
 
   test-macos:
     name: Test on macOS (All Tests with CFRunLoop)
-    runs-on: macos-latest
+    runs-on: macos-15
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -68,6 +78,14 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
         run: dotnet restore
 
@@ -75,15 +93,14 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       # NOTE: GitHub Actions macOS runners have WindowServer running with loginwindow active
-      # Custom test runner uses CFRunLoop on Thread 1 with GCD dispatch for proper GUI support
-      # This enables ALL tests (including GUI tests) to run in CI
-      # WARNING: Tests may hang due to main thread dispatch issues - timeout prevents infinite wait
+      # Platform-specific tests are filtered at discovery time via IXunitTestCaseDiscoverer
+      # Tests that require Thread 1 should use the appropriate platform attributes
 
-      - name: Run all tests (including GUI tests)
+      - name: Run tests
         timeout-minutes: 5  # Prevent infinite hanging on macOS
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
+        run: dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -106,6 +123,7 @@ jobs:
   test-linux:
     name: Test on Linux with CodeQL, Package & Publish
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       security-events: write
       actions: read
@@ -145,6 +163,14 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
         run: dotnet restore
 
@@ -155,7 +181,7 @@ jobs:
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
           DISPLAY: :99
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
+        run: dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
