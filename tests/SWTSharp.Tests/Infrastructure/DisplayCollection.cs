@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace SWTSharp.Tests.Infrastructure;
@@ -14,15 +15,32 @@ public class DisplayCollection : ICollectionFixture<DisplayFixture>
 
 /// <summary>
 /// Shared fixture that creates a single UI thread and Display for all tests.
+/// Implements IAsyncLifetime for proper async initialization/disposal pattern.
 /// </summary>
-public class DisplayFixture : IDisposable
+/// <remarks>
+/// This fixture is designed to work with the [Collection("Display Tests")] and
+/// [Collection("GUI Tests")] patterns where GUI tests run serially and share
+/// a Display instance for performance.
+///
+/// The Display is created once when the first test in the collection runs,
+/// and disposed after the last test completes.
+/// </remarks>
+public class DisplayFixture : IAsyncLifetime
 {
     private Thread _uiThread = null!;
     private bool _disposed;
 
+    /// <summary>
+    /// Gets the shared Display instance for GUI tests.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if accessed before InitializeAsync or after DisposeAsync.</exception>
     public Display Display { get; private set; } = null!;
 
-    public DisplayFixture()
+    /// <summary>
+    /// Initializes the fixture by creating the shared Display instance.
+    /// Called by xUnit before the first test in the collection runs.
+    /// </summary>
+    public Task InitializeAsync()
     {
         Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}");
 
@@ -70,9 +88,15 @@ public class DisplayFixture : IDisposable
 
         var displayThread = Display.GetType().GetField("_thread", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(Display) as Thread;
         Console.WriteLine($"DisplayFixture: Display thread = {displayThread?.ManagedThreadId ?? -1}");
+
+        return Task.CompletedTask;
     }
 
-    public void Dispose()
+    /// <summary>
+    /// Disposes the fixture by disposing the shared Display instance.
+    /// Called by xUnit after the last test in the collection completes.
+    /// </summary>
+    public Task DisposeAsync()
     {
         if (!_disposed)
         {
@@ -94,5 +118,7 @@ public class DisplayFixture : IDisposable
                 // Swallow exceptions during disposal
             }
         }
+
+        return Task.CompletedTask;
     }
 }
