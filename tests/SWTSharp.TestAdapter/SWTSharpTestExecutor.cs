@@ -506,7 +506,7 @@ public class SWTSharpTestExecutor : ITestExecutor
     /// <summary>
     /// Null message sink that ignores all messages (for diagnostics).
     /// </summary>
-    private class NullMessageSink : IMessageSink
+    private class NullMessageSink : IMessageSink, IDisposable
     {
         public bool OnMessage(IMessageSinkMessage message) => true;
         public void Dispose() { }
