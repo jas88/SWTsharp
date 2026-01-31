@@ -11,6 +11,7 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
 {
     private const string GtkLib = "libgtk-3.so.0";
     private const string GLib = "libglib-2.0.so.0";
+    private const string GObject = "libgobject-2.0.so.0";
 
     private IntPtr _gtkTreeView;
     private IntPtr _gtkListStore;
@@ -620,7 +621,7 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
 
-    [DllImport(GLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    [DllImport(GObject, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     private static extern IntPtr g_type_from_name(string name);
 
     // Note: g_object_set is variadic and cannot be P/Invoked directly.
@@ -628,7 +629,7 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_cell_renderer_set_alignment(IntPtr cell, float xalign, float yalign);
 
-    [DllImport(GLib, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(GObject, CallingConvention = CallingConvention.Cdecl)]
     private static extern void g_object_unref(IntPtr @object);
 
     [DllImport(GLib, CallingConvention = CallingConvention.Cdecl)]
