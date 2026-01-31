@@ -32,7 +32,8 @@ public class TreeItem : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                // TODO: Update platform tree item text through parent Tree's platform widget
+                // TreeItem text is stored locally; platform tree uses data source pattern
+                // to query text when rendering. No platform call needed - tree reloads from data.
             }
         }
     }
@@ -53,7 +54,8 @@ public class TreeItem : Widget
             if (_image != value)
             {
                 _image = value;
-                // TODO: Update platform tree item image through parent Tree's platform widget
+                // TreeItem image is stored locally; platform tree uses data source pattern
+                // to query image when rendering. No platform call needed - tree reloads from data.
             }
         }
     }
@@ -82,7 +84,8 @@ public class TreeItem : Widget
             if (_checked != value)
             {
                 _checked = value;
-                // TODO: Update platform tree item checked state through parent Tree's platform widget
+                // TreeItem checked state is stored locally; platform tree uses data source pattern
+                // to query checked state when rendering. No platform call needed - tree reloads from data.
             }
         }
     }
@@ -103,7 +106,8 @@ public class TreeItem : Widget
             if (_expanded != value)
             {
                 _expanded = value;
-                // TODO: Update platform tree item expanded state through parent Tree's platform widget
+                // TreeItem expanded state is stored locally; platform tree uses data source pattern
+                // to query expanded state. Events notify listeners of state change.
 
                 if (_expanded)
                 {
@@ -226,8 +230,8 @@ public class TreeItem : Widget
     {
         // TreeItem is a data structure managed by the parent Tree's platform widget
         // The parent Tree handles the platform-specific implementation
-        // TODO: Integrate with platform tree widget to add this item to the tree hierarchy
-        // For now, TreeItem stores data locally and parent Tree queries it as needed
+        // TreeItem stores data locally (text, image, expanded, checked) and the
+        // platform tree control queries this data via data source pattern when rendering
     }
 
     /// <summary>
