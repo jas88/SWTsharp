@@ -134,8 +134,10 @@ public class Combo : Control
             {
                 Text = _text.SliceToString(0, _textLimit);
             }
-            // TODO: Implement SetComboTextLimit using platform widget interface
-            // Platform.PlatformFactory.Instance.SetComboTextLimit(Handle, _textLimit);
+            if (PlatformWidget is IPlatformCombo comboWidget)
+            {
+                comboWidget.SetTextLimit(_textLimit);
+            }
         }
     }
 
@@ -157,8 +159,10 @@ public class Combo : Control
                 throw new ArgumentException("Visible item count must be at least 1");
             }
             _visibleItemCount = value;
-            // TODO: Implement SetComboVisibleItemCount using platform widget interface
-            // Platform.PlatformFactory.Instance.SetComboVisibleItemCount(Handle, value);
+            if (PlatformWidget is IPlatformCombo comboWidget)
+            {
+                comboWidget.SetVisibleItemCount(value);
+            }
         }
     }
 
@@ -364,8 +368,10 @@ public class Combo : Control
     public void ClearSelection()
     {
         CheckWidget();
-        // TODO: Implement SetComboTextSelection using platform widget interface
-        // Platform.PlatformFactory.Instance.SetComboTextSelection(Handle, 0, 0);
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.SetTextSelection(0, 0);
+        }
     }
 
     /// <summary>
@@ -380,8 +386,10 @@ public class Combo : Control
         {
             throw new ArgumentOutOfRangeException("Invalid selection range");
         }
-        // TODO: Implement SetComboTextSelection using platform widget interface
-        // Platform.PlatformFactory.Instance.SetComboTextSelection(Handle, start, end);
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.SetTextSelection(start, end);
+        }
     }
 
     /// <summary>
@@ -391,9 +399,11 @@ public class Combo : Control
     public (int Start, int End) GetSelection()
     {
         CheckWidget();
-        // TODO: Implement GetComboTextSelection using platform widget interface
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            return comboWidget.GetTextSelection();
+        }
         return (0, 0);
-        // return Platform.PlatformFactory.Instance.GetComboTextSelection(Handle);
     }
 
     /// <summary>
@@ -418,8 +428,10 @@ public class Combo : Control
     public void Copy()
     {
         CheckWidget();
-        // TODO: Implement ComboTextCopy using platform widget interface
-        // Platform.PlatformFactory.Instance.ComboTextCopy(Handle);
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.Copy();
+        }
     }
 
     /// <summary>
@@ -428,10 +440,9 @@ public class Combo : Control
     public void Cut()
     {
         CheckWidget();
-        if (!_readOnly)
+        if (!_readOnly && PlatformWidget is IPlatformCombo comboWidget)
         {
-            // TODO: Implement ComboTextCut using platform widget interface
-            // Platform.PlatformFactory.Instance.ComboTextCut(Handle);
+            comboWidget.Cut();
         }
     }
 
@@ -441,10 +452,9 @@ public class Combo : Control
     public void Paste()
     {
         CheckWidget();
-        if (!_readOnly)
+        if (!_readOnly && PlatformWidget is IPlatformCombo comboWidget)
         {
-            // TODO: Implement ComboTextPaste using platform widget interface
-            // Platform.PlatformFactory.Instance.ComboTextPaste(Handle);
+            comboWidget.Paste();
         }
     }
 
@@ -610,14 +620,7 @@ public class Combo : Control
         NotifyListeners(SWT.KeyDown, keyEvent);
 
         // Handle keyboard navigation for dropdown
-        if (!_readOnly)
-        {
-            // Handle navigation keys for editable combo
-            if (e.KeyCode == SWT.ARROW_DOWN && _dropDown)
-            {
-                // TODO: Open dropdown
-            }
-        }
+        // Arrow key navigation is handled by the platform combo widget
     }
 
     /// <summary>
@@ -700,7 +703,7 @@ public class Combo : Control
         if (e.Shift) stateMask |= SWT.SHIFT;
         if (e.Control) stateMask |= SWT.CTRL;
         if (e.Alt) stateMask |= SWT.ALT;
-        // TODO: Add Command key detection on macOS
+        if (e.Command) stateMask |= SWT.COMMAND;
         return stateMask;
     }
 

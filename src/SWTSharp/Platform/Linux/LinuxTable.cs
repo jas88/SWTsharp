@@ -359,6 +359,61 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         return _columnCount;
     }
 
+    public void SetColumnResizable(int columnIndex, bool resizable)
+    {
+        if (_gtkTreeView == IntPtr.Zero || columnIndex < 0) return;
+
+        IntPtr column = gtk_tree_view_get_column(_gtkTreeView, columnIndex);
+        if (column != IntPtr.Zero)
+        {
+            gtk_tree_view_column_set_resizable(column, resizable);
+        }
+    }
+
+    public void SetColumnMoveable(int columnIndex, bool moveable)
+    {
+        if (_gtkTreeView == IntPtr.Zero || columnIndex < 0) return;
+
+        IntPtr column = gtk_tree_view_get_column(_gtkTreeView, columnIndex);
+        if (column != IntPtr.Zero)
+        {
+            gtk_tree_view_column_set_reorderable(column, moveable);
+        }
+    }
+
+    public void SetColumnToolTip(int columnIndex, string? tooltip)
+    {
+        // GTK TreeView columns don't have built-in tooltip support
+        // Would require custom handling via query-tooltip signal
+    }
+
+    public int PackColumn(int columnIndex)
+    {
+        if (_gtkTreeView == IntPtr.Zero || columnIndex < 0) return 0;
+
+        IntPtr column = gtk_tree_view_get_column(_gtkTreeView, columnIndex);
+        if (column != IntPtr.Zero)
+        {
+            // Set sizing to autosize, then queue resize
+            gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+            gtk_tree_view_columns_autosize(_gtkTreeView);
+            return gtk_tree_view_column_get_width(column);
+        }
+        return 0;
+    }
+
+    public void ShowItem(int itemIndex)
+    {
+        if (_gtkTreeView == IntPtr.Zero || itemIndex < 0 || itemIndex >= _rowData.Count) return;
+
+        IntPtr path = gtk_tree_path_new_from_indices(itemIndex, -1);
+        if (path != IntPtr.Zero)
+        {
+            gtk_tree_view_scroll_to_cell(_gtkTreeView, path, IntPtr.Zero, false, 0, 0);
+            gtk_tree_path_free(path);
+        }
+    }
+
     public void AddChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
     public void RemoveChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
     public IReadOnlyList<IPlatformWidget> GetChildren() => Array.Empty<IPlatformWidget>();
@@ -480,6 +535,7 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
     private const int GTK_SELECTION_SINGLE = 1;
     private const int GTK_SELECTION_MULTIPLE = 3;
     private const int GTK_TREE_VIEW_COLUMN_FIXED = 1;
+    private const int GTK_TREE_VIEW_COLUMN_AUTOSIZE = 0;
     private const int GTK_TREE_VIEW_GRID_LINES_NONE = 0;
     private const int GTK_TREE_VIEW_GRID_LINES_BOTH = 3;
 
@@ -542,6 +598,24 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_tree_view_column_set_sizing(IntPtr tree_column, int type);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_tree_view_column_set_resizable(IntPtr tree_column, bool resizable);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_tree_view_column_set_reorderable(IntPtr tree_column, bool reorderable);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int gtk_tree_view_column_get_width(IntPtr tree_column);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_tree_view_get_column(IntPtr tree_view, int n);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_tree_view_columns_autosize(IntPtr tree_view);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_tree_view_scroll_to_cell(IntPtr tree_view, IntPtr path, IntPtr column, bool use_align, float row_align, float col_align);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern int gtk_tree_view_append_column(IntPtr tree_view, IntPtr column);

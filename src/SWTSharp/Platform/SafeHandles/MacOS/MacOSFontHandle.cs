@@ -62,6 +62,29 @@ public sealed class MacOSFontHandle : SafeFontHandle
         }
     }
 
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
+    private static extern IntPtr objc_getClass(string name);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_IntPtr_double(IntPtr receiver, IntPtr selector, IntPtr arg1, double arg2);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_double(IntPtr receiver, IntPtr selector, double arg1);
+
+    private static readonly IntPtr _selFontWithNameSize = sel_registerName("fontWithName:size:");
+    private static readonly IntPtr _selSystemFontOfSize = sel_registerName("systemFontOfSize:");
+    private static readonly IntPtr _selBoldSystemFontOfSize = sel_registerName("boldSystemFontOfSize:");
+    private static readonly IntPtr _selRetain = sel_registerName("retain");
+    private static readonly IntPtr _clsNSFont = objc_getClass("NSFont");
+    private static readonly IntPtr _clsNSString = objc_getClass("NSString");
+    private static readonly IntPtr _selStringWithUTF8String = sel_registerName("stringWithUTF8String:");
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_string(IntPtr receiver, IntPtr selector, string arg1);
+
     /// <summary>
     /// Creates a new macOS font handle.
     /// </summary>
@@ -74,9 +97,39 @@ public sealed class MacOSFontHandle : SafeFontHandle
     /// </exception>
     internal static MacOSFontHandle Create(string fontName, int fontSize, int fontStyle)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSFont
-        throw new NotImplementedException("MacOS font creation via SafeHandle not yet implemented.");
+        IntPtr font = IntPtr.Zero;
+
+        // If no font name specified, use system font
+        if (string.IsNullOrEmpty(fontName))
+        {
+            if ((fontStyle & SWT.BOLD) != 0)
+            {
+                font = objc_msgSend_IntPtr_double(_clsNSFont, _selBoldSystemFontOfSize, fontSize);
+            }
+            else
+            {
+                font = objc_msgSend_IntPtr_double(_clsNSFont, _selSystemFontOfSize, fontSize);
+            }
+        }
+        else
+        {
+            // Create NSString for font name
+            IntPtr nsName = objc_msgSend_string(_clsNSString, _selStringWithUTF8String, fontName);
+            if (nsName != IntPtr.Zero)
+            {
+                font = objc_msgSend_IntPtr_IntPtr_double(_clsNSFont, _selFontWithNameSize, nsName, fontSize);
+            }
+        }
+
+        if (font == IntPtr.Zero)
+        {
+            throw new InvalidOperationException($"Failed to create macOS font '{fontName ?? "system"}' at size {fontSize}.");
+        }
+
+        // Retain the font since we own it
+        objc_msgSend_void(font, _selRetain);
+
+        return new MacOSFontHandle(font, true);
     }
 
     /// <summary>

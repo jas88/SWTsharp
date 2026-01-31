@@ -162,6 +162,11 @@ public interface IPlatformWindow : IPlatformComposite, IPlatformEventHandling
     /// Gets whether the window is disposed.
     /// </summary>
     bool IsDisposed { get; }
+
+    /// <summary>
+    /// Gets the native window handle for use in platform-specific operations (e.g., dialogs).
+    /// </summary>
+    IntPtr GetNativeHandle();
 }
 
 /// <summary>
@@ -292,6 +297,32 @@ public interface IPlatformTable : IPlatformComposite, IPlatformSelectionEvents
     /// Gets the number of columns in the table.
     /// </summary>
     int GetColumnCount();
+
+    /// <summary>
+    /// Sets whether a column is resizable.
+    /// </summary>
+    void SetColumnResizable(int columnIndex, bool resizable);
+
+    /// <summary>
+    /// Sets whether columns are moveable (reorderable).
+    /// </summary>
+    void SetColumnMoveable(int columnIndex, bool moveable);
+
+    /// <summary>
+    /// Sets the tooltip text for a column.
+    /// </summary>
+    void SetColumnToolTip(int columnIndex, string? tooltip);
+
+    /// <summary>
+    /// Auto-sizes a column to fit its content.
+    /// </summary>
+    /// <returns>The new width after packing</returns>
+    int PackColumn(int columnIndex);
+
+    /// <summary>
+    /// Shows the specified item, scrolling if necessary.
+    /// </summary>
+    void ShowItem(int itemIndex);
 }
 
 /// <summary>
@@ -528,6 +559,75 @@ public class PlatformKeyEventArgs : EventArgs
     /// Whether alt key is pressed.
     /// </summary>
     public bool Alt { get; set; }
+
+    /// <summary>
+    /// Whether command key is pressed (macOS only, maps to Windows key on other platforms).
+    /// </summary>
+    public bool Command { get; set; }
+}
+
+/// <summary>
+/// Platform widget that supports selection state (checkboxes, radio buttons, toggle buttons).
+/// </summary>
+public interface IPlatformSelectionWidget : IPlatformWidget
+{
+    /// <summary>
+    /// Gets the selection state.
+    /// </summary>
+    bool GetSelection();
+
+    /// <summary>
+    /// Sets the selection state.
+    /// </summary>
+    void SetSelection(bool selected);
+}
+
+/// <summary>
+/// Platform widget that supports text alignment.
+/// </summary>
+public interface IPlatformAlignmentWidget : IPlatformWidget
+{
+    /// <summary>
+    /// Gets the text alignment (SWT.LEFT, SWT.CENTER, SWT.RIGHT).
+    /// </summary>
+    int GetAlignment();
+
+    /// <summary>
+    /// Sets the text alignment (SWT.LEFT, SWT.CENTER, SWT.RIGHT).
+    /// </summary>
+    void SetAlignment(int alignment);
+}
+
+/// <summary>
+/// Interface for querying current keyboard modifier state.
+/// </summary>
+public interface IPlatformModifierState
+{
+    /// <summary>
+    /// Gets the current modifier key state as SWT flags (SHIFT, CTRL, ALT, COMMAND).
+    /// </summary>
+    int GetModifierKeyState();
+}
+
+/// <summary>
+/// Interface for clipboard operations on text widgets.
+/// </summary>
+public interface IPlatformClipboard
+{
+    /// <summary>
+    /// Copies the selected text to the clipboard.
+    /// </summary>
+    void Copy();
+
+    /// <summary>
+    /// Cuts the selected text to the clipboard.
+    /// </summary>
+    void Cut();
+
+    /// <summary>
+    /// Pastes text from the clipboard at the current cursor position.
+    /// </summary>
+    void Paste();
 }
 
 /// <summary>
@@ -630,6 +730,41 @@ public interface IPlatformCombo : IPlatformWidget, IPlatformSelectionEvents, IPl
     /// Gets or sets the selected text.
     /// </summary>
     string Text { get; set; }
+
+    /// <summary>
+    /// Sets the maximum number of characters allowed in the text field.
+    /// </summary>
+    void SetTextLimit(int limit);
+
+    /// <summary>
+    /// Sets the number of visible items in the dropdown.
+    /// </summary>
+    void SetVisibleItemCount(int count);
+
+    /// <summary>
+    /// Sets the text selection range.
+    /// </summary>
+    void SetTextSelection(int start, int end);
+
+    /// <summary>
+    /// Gets the text selection range.
+    /// </summary>
+    (int Start, int End) GetTextSelection();
+
+    /// <summary>
+    /// Copies the selected text to the clipboard.
+    /// </summary>
+    void Copy();
+
+    /// <summary>
+    /// Cuts the selected text to the clipboard.
+    /// </summary>
+    void Cut();
+
+    /// <summary>
+    /// Pastes text from the clipboard.
+    /// </summary>
+    void Paste();
 }
 
 /// <summary>
@@ -666,6 +801,16 @@ public interface IPlatformList : IPlatformWidget, IPlatformSelectionEvents, IPla
     /// Gets or sets the selected index (single selection mode).
     /// </summary>
     int SelectionIndex { get; set; }
+
+    /// <summary>
+    /// Gets the index of the item currently at the top of the list.
+    /// </summary>
+    int GetTopIndex();
+
+    /// <summary>
+    /// Sets the index of the item to display at the top of the list.
+    /// </summary>
+    void SetTopIndex(int index);
 }
 
 /// <summary>
@@ -751,6 +896,11 @@ public interface IPlatformScale : IPlatformWidget, IPlatformValueEvents, IPlatfo
     int Increment { get; set; }
 
     /// <summary>
+    /// Gets or sets the page increment value.
+    /// </summary>
+    int PageIncrement { get; set; }
+
+    /// <summary>
     /// Gets or sets whether to show tick marks.
     /// </summary>
     bool ShowTicks { get; set; }
@@ -785,6 +935,16 @@ public interface IPlatformSpinner : IPlatformWidget, IPlatformValueEvents, IPlat
     /// Gets or sets the number of digits to display.
     /// </summary>
     int Digits { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of characters allowed in the text field.
+    /// </summary>
+    int TextLimit { get; set; }
+
+    /// <summary>
+    /// Occurs when the text content changes.
+    /// </summary>
+    event EventHandler<string>? TextChanged;
 }
 
 /// <summary>
@@ -863,6 +1023,185 @@ public interface IPlatformScrollBar : IPlatformWidget, IPlatformValueEvents, IPl
     /// Gets or sets the thumb (visible range) size.
     /// </summary>
     int Thumb { get; set; }
+}
+
+/// <summary>
+/// Platform group box (labeled frame container) widget.
+/// </summary>
+public interface IPlatformGroup : IPlatformComposite
+{
+    /// <summary>
+    /// Sets the text displayed in the group's border.
+    /// </summary>
+    void SetText(string text);
+
+    /// <summary>
+    /// Gets the text displayed in the group's border.
+    /// </summary>
+    string GetText();
+
+    /// <summary>
+    /// Gets the client area rectangle, accounting for the title height and border.
+    /// </summary>
+    /// <returns>The client area as (x, y, width, height) relative to the group.</returns>
+    (int X, int Y, int Width, int Height) GetClientArea();
+}
+
+/// <summary>
+/// Platform menu widget (menu bar, popup menu, or drop-down menu).
+/// </summary>
+public interface IPlatformMenu : IDisposable
+{
+    /// <summary>
+    /// Sets whether the menu is visible.
+    /// </summary>
+    void SetVisible(bool visible);
+
+    /// <summary>
+    /// Gets whether the menu is visible.
+    /// </summary>
+    bool GetVisible();
+
+    /// <summary>
+    /// Sets the location for popup menus.
+    /// </summary>
+    void SetLocation(int x, int y);
+
+    /// <summary>
+    /// Attaches this menu to a window (for menu bars).
+    /// </summary>
+    void AttachToWindow(IPlatformWindow? window);
+
+    /// <summary>
+    /// Creates a menu item within this menu.
+    /// </summary>
+    /// <param name="style">The menu item style (PUSH, CHECK, RADIO, CASCADE, SEPARATOR).</param>
+    /// <param name="index">The index at which to insert the item, or -1 to append.</param>
+    /// <returns>The created platform menu item.</returns>
+    IPlatformMenuItem CreateMenuItem(int style, int index);
+}
+
+/// <summary>
+/// Platform menu item widget (button, checkbox, radio, cascade, or separator in a menu).
+/// </summary>
+public interface IPlatformMenuItem : IDisposable
+{
+    /// <summary>
+    /// Sets the menu item's text.
+    /// </summary>
+    void SetText(string text);
+
+    /// <summary>
+    /// Gets the menu item's text.
+    /// </summary>
+    string GetText();
+
+    /// <summary>
+    /// Sets the menu item's image.
+    /// </summary>
+    void SetImage(IPlatformImage? image);
+
+    /// <summary>
+    /// Sets the keyboard accelerator for this menu item.
+    /// </summary>
+    void SetAccelerator(int accelerator);
+
+    /// <summary>
+    /// Gets the keyboard accelerator for this menu item.
+    /// </summary>
+    int GetAccelerator();
+
+    /// <summary>
+    /// Sets the selection state for CHECK and RADIO menu items.
+    /// </summary>
+    void SetSelection(bool selected);
+
+    /// <summary>
+    /// Gets the selection state for CHECK and RADIO menu items.
+    /// </summary>
+    bool GetSelection();
+
+    /// <summary>
+    /// Sets whether the menu item is enabled.
+    /// </summary>
+    void SetEnabled(bool enabled);
+
+    /// <summary>
+    /// Gets whether the menu item is enabled.
+    /// </summary>
+    bool GetEnabled();
+
+    /// <summary>
+    /// Sets the submenu for CASCADE menu items.
+    /// </summary>
+    void SetMenu(IPlatformMenu? menu);
+}
+
+/// <summary>
+/// Platform tree widget with hierarchical items.
+/// </summary>
+public interface IPlatformTree : IPlatformComposite, IPlatformSelectionEvents
+{
+    /// <summary>
+    /// Adds a root item to the tree.
+    /// </summary>
+    /// <param name="text">Item text</param>
+    /// <param name="index">Index at which to insert, or -1 to append</param>
+    /// <returns>Item handle</returns>
+    IPlatformTreeItem AddItem(string text, int index);
+
+    /// <summary>
+    /// Adds a child item to a parent item.
+    /// </summary>
+    /// <param name="parent">Parent item</param>
+    /// <param name="text">Item text</param>
+    /// <param name="index">Index at which to insert, or -1 to append</param>
+    /// <returns>Item handle</returns>
+    IPlatformTreeItem AddChildItem(IPlatformTreeItem parent, string text, int index);
+
+    /// <summary>
+    /// Removes an item from the tree.
+    /// </summary>
+    /// <param name="item">Item to remove</param>
+    void RemoveItem(IPlatformTreeItem item);
+
+    /// <summary>
+    /// Removes all items from the tree.
+    /// </summary>
+    void RemoveAllItems();
+
+    /// <summary>
+    /// Gets the selected items.
+    /// </summary>
+    /// <returns>Array of selected items</returns>
+    IPlatformTreeItem[] GetSelection();
+
+    /// <summary>
+    /// Sets the selected items.
+    /// </summary>
+    /// <param name="items">Items to select</param>
+    void SetSelection(IPlatformTreeItem[] items);
+
+    /// <summary>
+    /// Shows the specified item, scrolling if necessary.
+    /// </summary>
+    /// <param name="item">Item to show</param>
+    void ShowItem(IPlatformTreeItem item);
+
+    /// <summary>
+    /// Gets the number of root items.
+    /// </summary>
+    int GetItemCount();
+
+    /// <summary>
+    /// Occurs when an item is expanded.
+    /// </summary>
+    event EventHandler<IPlatformTreeItem>? ItemExpanded;
+
+    /// <summary>
+    /// Occurs when an item is collapsed.
+    /// </summary>
+    event EventHandler<IPlatformTreeItem>? ItemCollapsed;
 }
 
 /// <summary>

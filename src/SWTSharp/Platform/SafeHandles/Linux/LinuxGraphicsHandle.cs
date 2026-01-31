@@ -59,19 +59,63 @@ public sealed class LinuxGraphicsHandle : SafeGraphicsHandle
         }
     }
 
+    private const string GdkLib = "libgdk-3.so.0";
+
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gdk_cairo_create(IntPtr window);
+
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gdk_window_get_effective_toplevel(IntPtr window);
+
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_window(IntPtr widget);
+
     /// <summary>
     /// Creates a new Linux/Cairo graphics context for the specified window.
     /// </summary>
-    /// <param name="windowHandle">The window handle to get a graphics context for.</param>
+    /// <param name="windowHandle">The GTK widget or GDK window handle to get a graphics context for.</param>
     /// <returns>A new LinuxGraphicsHandle instance.</returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown when graphics context creation fails.
+    /// Thrown when graphics context creation fails. This typically happens when:
+    /// - The window handle is not realized (not yet mapped to a GDK window)
+    /// - The handle is not a valid GTK widget or GDK window
+    /// - GTK/GDK libraries are not properly initialized
     /// </exception>
+    /// <remarks>
+    /// The windowHandle can be either a GtkWidget pointer or a GdkWindow pointer.
+    /// If it's a GtkWidget, its underlying GdkWindow will be used.
+    /// For drawing during expose/draw events, the cairo context is typically
+    /// provided directly - use FromHandle() in those cases.
+    /// </remarks>
     internal static LinuxGraphicsHandle Create(IntPtr windowHandle)
     {
-        // This is a placeholder - actual implementation would require
-        // proper GTK/Cairo interop to create a cairo context
-        throw new NotImplementedException("Linux graphics context creation via SafeHandle not yet implemented.");
+        if (windowHandle == IntPtr.Zero)
+        {
+            throw new ArgumentException("Window handle cannot be null.", nameof(windowHandle));
+        }
+
+        // Try to get GDK window from widget
+        IntPtr gdkWindow = gtk_widget_get_window(windowHandle);
+
+        // If that fails, assume windowHandle is already a GdkWindow
+        if (gdkWindow == IntPtr.Zero)
+        {
+            gdkWindow = windowHandle;
+        }
+
+        // Create cairo context for the GDK window
+        IntPtr cairoContext = gdk_cairo_create(gdkWindow);
+
+        if (cairoContext == IntPtr.Zero)
+        {
+            throw new InvalidOperationException(
+                "Failed to create Cairo graphics context. " +
+                "Ensure the widget is realized and has a valid GDK window. " +
+                "For drawing during expose events, use FromHandle() with the provided cairo_t.");
+        }
+
+        var handle = new LinuxGraphicsHandle(cairoContext, true);
+        return handle;
     }
 
     /// <summary>

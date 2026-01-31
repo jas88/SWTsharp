@@ -301,7 +301,10 @@ public class Tree : Composite
         {
             throw new ArgumentNullException(nameof(item));
         }
-        // TODO: Implement platform widget interface for ShowTreeItem
+        if (PlatformWidget is Platform.IPlatformTree platformTree && item.PlatformTreeItem != null)
+        {
+            platformTree.ShowItem(item.PlatformTreeItem);
+        }
     }
 
     /// <summary>
@@ -316,7 +319,10 @@ public class Tree : Composite
         }
         _items.Clear();
         _selection.Clear();
-        // TODO: Implement platform widget interface for ClearTreeItems
+        if (PlatformWidget is Platform.IPlatformTree platformTree)
+        {
+            platformTree.RemoveAllItems();
+        }
     }
 
     /// <summary>
@@ -393,8 +399,14 @@ public class Tree : Composite
     /// </summary>
     private void UpdateSelection()
     {
-        // TODO: Implement platform widget interface for SetTreeSelection
-        // TODO: Update platform tree selection through platform widget interface
+        if (PlatformWidget is Platform.IPlatformTree platformTree)
+        {
+            var platformItems = _selection
+                .Where(item => item.PlatformTreeItem != null)
+                .Select(item => item.PlatformTreeItem!)
+                .ToArray();
+            platformTree.SetSelection(platformItems);
+        }
         OnSelectionChanged(EventArgs.Empty);
     }
 

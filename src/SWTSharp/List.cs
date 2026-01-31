@@ -436,8 +436,10 @@ public class List : Control
     public int GetTopIndex()
     {
         CheckWidget();
-        // TODO: Implement platform widget interface for getting list top index
-        // return Platform.PlatformFactory.Instance.GetListTopIndex(Handle);
+        if (PlatformWidget is IPlatformList listWidget)
+        {
+            return listWidget.GetTopIndex();
+        }
         return 0;
     }
 
@@ -447,10 +449,9 @@ public class List : Control
     public void SetTopIndex(int index)
     {
         CheckWidget();
-        if (index >= 0 && index < _items.Count)
+        if (index >= 0 && index < _items.Count && PlatformWidget is IPlatformList listWidget)
         {
-            // TODO: Implement platform widget interface for setting list top index
-            // Platform.PlatformFactory.Instance.SetListTopIndex(Handle, index);
+            listWidget.SetTopIndex(index);
         }
     }
 
@@ -769,8 +770,11 @@ public class List : Control
     private int GetCurrentStateMask()
     {
         int stateMask = 0;
-        // TODO: Implement platform-specific state detection
-        // For now, return 0 as placeholder
+        // Query platform for current modifier key state
+        if (Platform.PlatformFactory.Instance is IPlatformModifierState modifierState)
+        {
+            stateMask = modifierState.GetModifierKeyState();
+        }
         return stateMask;
     }
 
@@ -783,7 +787,7 @@ public class List : Control
         if (e.Shift) stateMask |= SWT.SHIFT;
         if (e.Control) stateMask |= SWT.CTRL;
         if (e.Alt) stateMask |= SWT.ALT;
-        // TODO: Add Command key detection on macOS
+        if (e.Command) stateMask |= SWT.COMMAND;
         return stateMask;
     }
 

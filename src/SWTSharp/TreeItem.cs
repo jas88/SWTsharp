@@ -17,6 +17,11 @@ public class TreeItem : Widget
     private readonly System.Collections.Generic.List<TreeItem> _items = new();
 
     /// <summary>
+    /// Gets the platform tree item for platform operations.
+    /// </summary>
+    internal IPlatformTreeItem? PlatformTreeItem { get; private set; }
+
+    /// <summary>
     /// Gets or sets the text displayed in the tree item.
     /// </summary>
     public string Text
@@ -32,7 +37,7 @@ public class TreeItem : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                // TODO: Update platform tree item text through parent Tree's platform widget
+                PlatformTreeItem?.SetText(_text);
             }
         }
     }
@@ -53,7 +58,9 @@ public class TreeItem : Widget
             if (_image != value)
             {
                 _image = value;
-                // TODO: Update platform tree item image through parent Tree's platform widget
+                // Image-to-platform-image conversion requires platform graphics support
+                // Currently passing null as images are displayed via custom cell rendering
+                PlatformTreeItem?.SetImage(null);
             }
         }
     }
@@ -82,7 +89,7 @@ public class TreeItem : Widget
             if (_checked != value)
             {
                 _checked = value;
-                // TODO: Update platform tree item checked state through parent Tree's platform widget
+                PlatformTreeItem?.SetChecked(_checked);
             }
         }
     }
@@ -103,7 +110,7 @@ public class TreeItem : Widget
             if (_expanded != value)
             {
                 _expanded = value;
-                // TODO: Update platform tree item expanded state through parent Tree's platform widget
+                PlatformTreeItem?.SetExpanded(_expanded);
 
                 if (_expanded)
                 {
@@ -215,19 +222,29 @@ public class TreeItem : Widget
         }
         _parentTree = null;
         _parentItem = parent;
-        CreateWidget(parent.ParentTree.PlatformWidget, parent.PlatformWidget, index);
+        CreateWidget(parent.ParentTree.PlatformWidget, parent.PlatformTreeItem, index);
         parent.AddItem(this, index >= 0 ? index : parent.ItemCount);
     }
 
     /// <summary>
     /// Creates the platform-specific tree item.
     /// </summary>
-    private void CreateWidget(IPlatformWidget? treeWidget, IPlatformWidget? parentItemWidget, int index)
+    private void CreateWidget(IPlatformWidget? treeWidget, IPlatformTreeItem? parentPlatformItem, int index)
     {
         // TreeItem is a data structure managed by the parent Tree's platform widget
-        // The parent Tree handles the platform-specific implementation
-        // TODO: Integrate with platform tree widget to add this item to the tree hierarchy
-        // For now, TreeItem stores data locally and parent Tree queries it as needed
+        if (treeWidget is IPlatformTree platformTree)
+        {
+            if (parentPlatformItem != null)
+            {
+                // Creating child item under parent item
+                PlatformTreeItem = platformTree.AddChildItem(parentPlatformItem, _text, index);
+            }
+            else
+            {
+                // Creating root item
+                PlatformTreeItem = platformTree.AddItem(_text, index);
+            }
+        }
     }
 
     /// <summary>

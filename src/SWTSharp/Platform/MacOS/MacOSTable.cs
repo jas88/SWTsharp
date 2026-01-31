@@ -449,6 +449,54 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         return _columns.Count;
     }
 
+    public void SetColumnResizable(int columnIndex, bool resizable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        IntPtr column = _columns[columnIndex];
+        IntPtr selSetResizingMask = sel_registerName("setResizingMask:");
+        // NSTableColumnNoResizing = 0, NSTableColumnAutoresizingMask = 1, NSTableColumnUserResizingMask = 2
+        int mask = resizable ? 2 : 0;
+        objc_msgSend(column, selSetResizingMask, new IntPtr(mask));
+    }
+
+    public void SetColumnMoveable(int columnIndex, bool moveable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        // NSTableView has allowsColumnReordering property
+        IntPtr selSetAllowsColumnReordering = sel_registerName("setAllowsColumnReordering:");
+        objc_msgSend(_tableView, selSetAllowsColumnReordering, moveable);
+    }
+
+    public void SetColumnToolTip(int columnIndex, string? tooltip)
+    {
+        // NSTableColumn doesn't have direct tooltip support
+        // Would require custom header cell implementation
+    }
+
+    public int PackColumn(int columnIndex)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return 0;
+
+        IntPtr column = _columns[columnIndex];
+        IntPtr selSizeToFit = sel_registerName("sizeToFit");
+        objc_msgSend(column, selSizeToFit);
+
+        IntPtr selWidth = sel_registerName("width");
+        double width = objc_msgSend_fpret_ret(column, selWidth);
+        return (int)width;
+    }
+
+    public void ShowItem(int itemIndex)
+    {
+        if (_disposed || itemIndex < 0 || itemIndex >= _rows.Count) return;
+
+        // [tableView scrollRowToVisible:itemIndex]
+        IntPtr selScrollRowToVisible = sel_registerName("scrollRowToVisible:");
+        objc_msgSend(_tableView, selScrollRowToVisible, new IntPtr(itemIndex));
+    }
+
     // IPlatformComposite implementation
     public void AddChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
     public void RemoveChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
@@ -677,6 +725,9 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern void objc_msgSend_fpret(IntPtr receiver, IntPtr selector, double arg1);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_fpret")]
+    private static extern double objc_msgSend_fpret_ret(IntPtr receiver, IntPtr selector);
 
     // For setFrame: which takes CGRect as input argument (not returns it)
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]

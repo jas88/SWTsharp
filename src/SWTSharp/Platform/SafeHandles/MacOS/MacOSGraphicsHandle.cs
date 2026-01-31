@@ -62,13 +62,25 @@ public sealed class MacOSGraphicsHandle : SafeGraphicsHandle
     /// <param name="windowHandle">The window handle to get a graphics context for.</param>
     /// <returns>A new MacOSGraphicsHandle instance.</returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown when graphics context creation fails.
+    /// Thrown when graphics context creation fails. On macOS, graphics contexts are typically
+    /// obtained during drawRect: callbacks or via NSGraphicsContext.currentContext.
+    /// Use FromHandle() to wrap an existing CGContextRef instead.
     /// </exception>
+    /// <remarks>
+    /// On macOS, graphics contexts cannot be created directly from a window handle.
+    /// The system provides a CGContextRef during paint events via NSGraphicsContext.
+    /// For off-screen drawing, use CGBitmapContextCreate or similar Core Graphics functions.
+    /// </remarks>
     internal static MacOSGraphicsHandle Create(IntPtr windowHandle)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C/Core Graphics interop
-        throw new NotImplementedException("MacOS graphics context creation via SafeHandle not yet implemented.");
+        // macOS graphics contexts are provided by the system during drawRect: callbacks.
+        // Direct creation from a window handle is not supported - use the platform's
+        // paint event mechanism or NSGraphicsContext.currentContext instead.
+        throw new InvalidOperationException(
+            "Cannot create graphics context directly from window handle on macOS. " +
+            "Graphics contexts are provided by the system during paint events. " +
+            "Use FromHandle() to wrap an existing CGContextRef, or use the platform's " +
+            "paint event mechanism to obtain the current context.");
     }
 
     /// <summary>

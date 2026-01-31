@@ -61,6 +61,40 @@ public sealed class MacOSWindowHandle : SafeWindowHandle
         }
     }
 
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
+    private static extern IntPtr objc_getClass(string name);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_alloc(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_initWithContentRect(
+        IntPtr receiver, IntPtr selector,
+        double x, double y, double width, double height,
+        nuint styleMask, nuint backing, bool defer);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_setTitle(IntPtr receiver, IntPtr selector, IntPtr title);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_stringWithUTF8String(IntPtr receiver, IntPtr selector, string str);
+
+    private static readonly IntPtr _selAlloc = sel_registerName("alloc");
+    private static readonly IntPtr _selInitWithContentRect = sel_registerName("initWithContentRect:styleMask:backing:defer:");
+    private static readonly IntPtr _selSetTitle = sel_registerName("setTitle:");
+    private static readonly IntPtr _selStringWithUTF8String = sel_registerName("stringWithUTF8String:");
+    private static readonly IntPtr _clsNSWindow = objc_getClass("NSWindow");
+    private static readonly IntPtr _clsNSString = objc_getClass("NSString");
+
+    // NSWindow style mask constants
+    private const nuint NSWindowStyleMaskTitled = 1 << 0;
+    private const nuint NSWindowStyleMaskClosable = 1 << 1;
+    private const nuint NSWindowStyleMaskMiniaturizable = 1 << 2;
+    private const nuint NSWindowStyleMaskResizable = 1 << 3;
+
+    // NSBackingStoreType
+    private const nuint NSBackingStoreBuffered = 2;
+
     /// <summary>
     /// Creates a new macOS window handle.
     /// </summary>
@@ -72,10 +106,44 @@ public sealed class MacOSWindowHandle : SafeWindowHandle
     /// </exception>
     internal static MacOSWindowHandle Create(int style, string title)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSWindow
-        // See MacOSPlatform.CreateWindow for reference
-        throw new NotImplementedException("MacOS window creation via SafeHandle not yet implemented. Use MacOSPlatform.CreateWindow.");
+        // Convert SWT style to NSWindow style mask
+        nuint styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable;
+
+        if ((style & SWT.RESIZE) != 0 || (style & SWT.MAX) != 0)
+        {
+            styleMask |= NSWindowStyleMaskResizable;
+        }
+
+        // Allocate and initialize NSWindow
+        IntPtr allocated = objc_msgSend_alloc(_clsNSWindow, _selAlloc);
+        if (allocated == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to allocate NSWindow.");
+        }
+
+        // Default window size and position
+        IntPtr window = objc_msgSend_initWithContentRect(
+            allocated, _selInitWithContentRect,
+            100, 100, 400, 300,  // x, y, width, height
+            styleMask, NSBackingStoreBuffered, false);
+
+        if (window == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to initialize NSWindow.");
+        }
+
+        // Set window title if provided
+        if (!string.IsNullOrEmpty(title))
+        {
+            IntPtr nsTitle = objc_msgSend_stringWithUTF8String(_clsNSString, _selStringWithUTF8String, title);
+            if (nsTitle != IntPtr.Zero)
+            {
+                objc_msgSend_setTitle(window, _selSetTitle, nsTitle);
+            }
+        }
+
+        // initWithContentRect: returns a retained object, so we own it
+        return new MacOSWindowHandle(window, true);
     }
 
     /// <summary>

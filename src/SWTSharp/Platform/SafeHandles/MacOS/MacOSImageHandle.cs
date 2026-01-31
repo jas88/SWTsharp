@@ -61,6 +61,19 @@ public sealed class MacOSImageHandle : SafeImageHandle
         }
     }
 
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
+    private static extern IntPtr objc_getClass(string name);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_alloc(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_initWithSize(IntPtr receiver, IntPtr selector, double width, double height);
+
+    private static readonly IntPtr _selAlloc = sel_registerName("alloc");
+    private static readonly IntPtr _selInitWithSize = sel_registerName("initWithSize:");
+    private static readonly IntPtr _clsNSImage = objc_getClass("NSImage");
+
     /// <summary>
     /// Creates a new macOS image handle.
     /// </summary>
@@ -72,9 +85,26 @@ public sealed class MacOSImageHandle : SafeImageHandle
     /// </exception>
     internal static MacOSImageHandle Create(int width, int height)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSImage
-        throw new NotImplementedException("MacOS image creation via SafeHandle not yet implemented.");
+        if (width <= 0 || height <= 0)
+        {
+            throw new ArgumentException($"Image dimensions must be positive. Got {width}x{height}.");
+        }
+
+        // [[NSImage alloc] initWithSize:NSMakeSize(width, height)]
+        IntPtr allocated = objc_msgSend_alloc(_clsNSImage, _selAlloc);
+        if (allocated == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to allocate NSImage.");
+        }
+
+        IntPtr image = objc_msgSend_initWithSize(allocated, _selInitWithSize, width, height);
+        if (image == IntPtr.Zero)
+        {
+            throw new InvalidOperationException($"Failed to create NSImage with dimensions {width}x{height}.");
+        }
+
+        // initWithSize: returns a retained object, so we own it
+        return new MacOSImageHandle(image, true);
     }
 
     /// <summary>

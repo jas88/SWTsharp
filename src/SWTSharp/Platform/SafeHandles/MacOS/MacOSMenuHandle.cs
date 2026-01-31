@@ -61,6 +61,19 @@ public sealed class MacOSMenuHandle : SafeMenuHandle
         }
     }
 
+    [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
+    private static extern IntPtr objc_getClass(string name);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_alloc(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_init(IntPtr receiver, IntPtr selector);
+
+    private static readonly IntPtr _selAlloc = sel_registerName("alloc");
+    private static readonly IntPtr _selInit = sel_registerName("init");
+    private static readonly IntPtr _clsNSMenu = objc_getClass("NSMenu");
+
     /// <summary>
     /// Creates a new macOS menu handle.
     /// </summary>
@@ -71,9 +84,21 @@ public sealed class MacOSMenuHandle : SafeMenuHandle
     /// </exception>
     internal static MacOSMenuHandle Create(int style)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSMenu
-        throw new NotImplementedException("MacOS menu creation via SafeHandle not yet implemented.");
+        // [[NSMenu alloc] init]
+        IntPtr allocated = objc_msgSend_alloc(_clsNSMenu, _selAlloc);
+        if (allocated == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to allocate NSMenu.");
+        }
+
+        IntPtr menu = objc_msgSend_init(allocated, _selInit);
+        if (menu == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to initialize NSMenu.");
+        }
+
+        // init returns a retained object, so we own it
+        return new MacOSMenuHandle(menu, true);
     }
 
     /// <summary>
