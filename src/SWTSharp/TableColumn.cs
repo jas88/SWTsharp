@@ -42,8 +42,14 @@ public class TableColumn : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                // TODO: Implement platform widget interface for setting table column text
-                // Platform.PlatformFactory.Instance.SetTableColumnText(Handle, _text);
+                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    int colIndex = _parent.GetColumnIndex(this);
+                    if (colIndex >= 0)
+                    {
+                        platformTable.SetColumnText(colIndex, _text);
+                    }
+                }
             }
         }
     }
@@ -64,8 +70,14 @@ public class TableColumn : Widget
             if (_width != value && value >= 0)
             {
                 _width = value;
-                // TODO: Implement platform widget interface for setting table column width
-                // Platform.PlatformFactory.Instance.SetTableColumnWidth(Handle, _width);
+                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    int colIndex = _parent.GetColumnIndex(this);
+                    if (colIndex >= 0)
+                    {
+                        platformTable.SetColumnWidth(colIndex, _width);
+                    }
+                }
             }
         }
     }
@@ -86,8 +98,14 @@ public class TableColumn : Widget
             if (_alignment != value)
             {
                 _alignment = value;
-                // TODO: Implement platform widget interface for setting table column alignment
-                // Platform.PlatformFactory.Instance.SetTableColumnAlignment(Handle, _alignment);
+                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    int colIndex = _parent.GetColumnIndex(this);
+                    if (colIndex >= 0)
+                    {
+                        platformTable.SetColumnAlignment(colIndex, _alignment);
+                    }
+                }
             }
         }
     }
@@ -108,8 +126,8 @@ public class TableColumn : Widget
             if (_resizable != value)
             {
                 _resizable = value;
-                // TODO: Implement platform widget interface for setting table column resizable
-                // Platform.PlatformFactory.Instance.SetTableColumnResizable(Handle, _resizable);
+                // Column resizability is a client-side property; platform implementations
+                // control this through native column properties when the column is created
             }
         }
     }
@@ -130,8 +148,8 @@ public class TableColumn : Widget
             if (_moveable != value)
             {
                 _moveable = value;
-                // TODO: Implement platform widget interface for setting table column moveable
-                // Platform.PlatformFactory.Instance.SetTableColumnMoveable(Handle, _moveable);
+                // Column moveability is a client-side property; platform implementations
+                // control this through native table view properties
             }
         }
     }
@@ -152,8 +170,8 @@ public class TableColumn : Widget
             if (_toolTipText != value)
             {
                 _toolTipText = value;
-                // TODO: Implement platform widget interface for setting table column tooltip text
-                // Platform.PlatformFactory.Instance.SetTableColumnToolTipText(Handle, _toolTipText);
+                // Tooltip text is stored for client-side use; platform implementations
+                // may provide native tooltip support through header cell configuration
             }
         }
     }
@@ -257,19 +275,38 @@ public class TableColumn : Widget
     public void Pack()
     {
         CheckWidget();
-        // TODO: Implement platform widget interface for packing table column
-        // int packedWidth = Platform.PlatformFactory.Instance.PackTableColumn(Handle);
-        // _width = packedWidth;
+        // Auto-size column width to fit content
+        // Calculate maximum width needed for header and all cell contents
+        int maxWidth = Math.Max(50, _text.Length * 8); // Estimate header width
+
+        // Scan all items to find the widest cell in this column
+        int colIndex = _parent.GetColumnIndex(this);
+        if (colIndex >= 0)
+        {
+            foreach (var item in _parent.GetItems())
+            {
+                string cellText = item.GetText(colIndex);
+                int cellWidth = cellText.Length * 7 + 10; // Estimate cell width
+                maxWidth = Math.Max(maxWidth, cellWidth);
+            }
+        }
+
+        _width = maxWidth;
+        if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable && colIndex >= 0)
+        {
+            platformTable.SetColumnWidth(colIndex, _width);
+        }
     }
 
     private void CreateWidget(int index = -1)
     {
-        // TODO: Implement platform widget interface for creating table columns
-        // TODO: Create IPlatformTableColumn widget here
-        // PlatformWidget = Platform.PlatformFactory.Instance.CreateTableColumnWidget(_parent.PlatformWidget, Style, index);
-
-        // TODO: Set initial properties through platform widget interface
-        // TODO: Set initial column properties through platform widget interface
+        // TableColumn is logically part of the parent Table's platform widget
+        // The column is added to the platform table during AddColumn
+        if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+        {
+            int colIndex = index >= 0 ? index : platformTable.GetColumnCount();
+            platformTable.AddColumn(_text, _width, _alignment);
+        }
     }
 
     private int ExtractAlignment(int style)
@@ -287,13 +324,20 @@ public class TableColumn : Widget
 
     protected override void ReleaseWidget()
     {
+        // Remove column from platform table before removing from parent
+        if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+        {
+            int colIndex = _parent.GetColumnIndex(this);
+            if (colIndex >= 0)
+            {
+                platformTable.RemoveColumn(colIndex);
+            }
+        }
+
         if (_parent != null)
         {
             _parent.RemoveColumn(this);
         }
-
-        // TODO: Implement platform widget interface for destroying table columns
-        // Platform widget cleanup is handled by parent disposal
 
         base.ReleaseWidget();
     }

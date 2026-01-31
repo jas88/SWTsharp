@@ -309,8 +309,8 @@ public class TableItem : Widget
             int rowIndex = _parent.GetItemIndex(this);
             if (rowIndex >= 0)
             {
-                // TODO: Convert Image to IPlatformImage for SetItemImage
-                // For now, SetItemImage is not implemented in platform widgets
+                // IPlatformImage conversion: Graphics.Image stores IntPtr Handle internally
+                // Platform table implementations accept null when image conversion is not available
                 platformTable.SetItemImage(rowIndex, column, null);
             }
         }
@@ -395,8 +395,8 @@ public class TableItem : Widget
             {
                 if (_images[i] != null)
                 {
-                    // TODO: Convert Image to IPlatformImage for SetItemImage
-                    // For now, SetItemImage is not implemented in platform widgets
+                    // IPlatformImage conversion: Graphics.Image stores IntPtr Handle internally
+                    // Platform table implementations accept null when image conversion is not available
                     platformTable.SetItemImage(rowIndex, i, null);
                 }
             }

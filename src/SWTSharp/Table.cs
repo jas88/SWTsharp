@@ -379,10 +379,12 @@ public class Table : Composite
         lock (_items)
         {
             int index = _items.IndexOf(item);
-            if (index >= 0)
+            if (index >= 0 && PlatformWidget is Platform.IPlatformTable platformTable)
             {
-                // TODO: Implement platform widget interface for ShowTableItem
-                // Platform.PlatformFactory.Instance.ShowTableItem(Handle, index);
+                // Show the item by scrolling to it - selection change triggers scroll visibility
+                var currentSelection = platformTable.GetSelection();
+                platformTable.SetSelection(new[] { index });
+                platformTable.SetSelection(currentSelection); // Restore original selection
             }
         }
     }
