@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -44,9 +46,14 @@ public class Group : Composite
     /// </summary>
     protected override void CreateWidget()
     {
-        // For now, Group uses the standard composite widget
-        // TODO: Future enhancement - create IPlatformGroup with native group box (GROUPBOX on Windows, GtkFrame on Linux, NSBox on macOS)
-        base.CreateWidget();
+        // Create a group widget through the platform factory
+        // IPlatform.CreateGroupWidget returns IPlatformComposite for group boxes
+        // (GROUPBOX on Windows, GtkFrame on Linux, NSBox on macOS)
+        PlatformWidget = PlatformFactory.Instance.CreateGroupWidget(
+            Parent?.PlatformWidget,
+            Style,
+            _text
+        );
     }
 
     /// <summary>
@@ -54,44 +61,66 @@ public class Group : Composite
     /// </summary>
     private void UpdateText()
     {
-        // TODO: Implement text update using platform widget interface
-        // TODO: Call IPlatformWidget.SetText or Group.SetText method
-        // TODO: Handle text changes through the platform widget abstraction
-        if (PlatformWidget != null)
+        // Group widgets store text in the border label
+        // IPlatformGroup interface extends IPlatformComposite with SetText support
+        if (PlatformWidget is IPlatformGroup groupWidget)
         {
-            // TODO: PlatformWidget.SetText(_text);
+            groupWidget.SetText(_text);
         }
     }
 
+    /// <summary>
+    /// Updates the group's visibility state.
+    /// </summary>
     protected override void UpdateVisible()
     {
-        // TODO: Implement visibility update using platform widget interface
-        // TODO: Call IPlatformWidget.SetVisible method
-        if (PlatformWidget != null)
-        {
-            // TODO: PlatformWidget.SetVisible(Visible);
-        }
+        // Use IPlatformWidget.SetVisible method from base interface
+        PlatformWidget?.SetVisible(Visible);
     }
 
+    /// <summary>
+    /// Updates the group's enabled state.
+    /// </summary>
     protected override void UpdateEnabled()
     {
-        // TODO: Implement enabled state update using platform widget interface
-        // TODO: Call IPlatformWidget.SetEnabled method
-        if (PlatformWidget != null)
-        {
-            // TODO: PlatformWidget.SetEnabled(Enabled);
-        }
+        // Use IPlatformWidget.SetEnabled method from base interface
+        PlatformWidget?.SetEnabled(Enabled);
     }
 
+    /// <summary>
+    /// Updates the group's bounds (position and size).
+    /// </summary>
     protected override void UpdateBounds()
     {
-        // TODO: Implement bounds update using platform widget interface
-        // TODO: Call IPlatformWidget.SetBounds method
-        if (PlatformWidget != null)
+        // Delegate to base class implementation which calls PlatformWidget.SetBounds
+        base.UpdateBounds();
+    }
+
+    /// <summary>
+    /// Gets the client area rectangle, accounting for the title height and border.
+    /// </summary>
+    /// <returns>The client area as (x, y, width, height) relative to the group.</returns>
+    public (int X, int Y, int Width, int Height) GetClientArea()
+    {
+        CheckWidget();
+
+        // Get client area from platform widget if available
+        if (PlatformWidget is IPlatformGroup groupWidget)
         {
-            var (x, y, width, height) = GetBounds();
-            PlatformWidget.SetBounds(x, y, width, height);
+            return groupWidget.GetClientArea();
         }
+
+        // Default: full bounds minus estimated border/title space
+        var (_, _, width, height) = GetBounds();
+        const int borderWidth = 2;
+        const int titleHeight = 16; // Approximate title height
+
+        return (
+            borderWidth,
+            titleHeight + borderWidth,
+            Math.Max(0, width - 2 * borderWidth),
+            Math.Max(0, height - titleHeight - 2 * borderWidth)
+        );
     }
 
     protected override void ReleaseWidget()

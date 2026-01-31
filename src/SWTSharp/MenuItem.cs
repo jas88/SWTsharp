@@ -1,3 +1,6 @@
+using SWTSharp.Graphics;
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -11,7 +14,9 @@ public class MenuItem : Widget
     private bool _selection;
     private bool _enabled = true;
     private Menu? _menu;
-    // Handle property removed - replaced with PlatformWidget
+    private Image? _image;
+    private int _accelerator;
+    private IPlatformMenuItem? _platformMenuItem;
     private int _id;
     private static int _nextId = 1000;
 
@@ -46,7 +51,47 @@ public class MenuItem : Widget
         {
             CheckWidget();
             _text = value ?? string.Empty;
-            // TODO: Implement text updates through platform widget interface
+            // Update text through platform menu item interface
+            _platformMenuItem?.SetText(_text);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the menu item's image.
+    /// </summary>
+    public Image? Image
+    {
+        get
+        {
+            CheckWidget();
+            return _image;
+        }
+        set
+        {
+            CheckWidget();
+            _image = value;
+            // Update image through platform menu item interface
+            _platformMenuItem?.SetImage(value != null ? new Platform.MacOS.MacOSImage(value) : null);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the keyboard accelerator for this menu item.
+    /// The accelerator is a combination of modifier keys and a key code.
+    /// </summary>
+    public int Accelerator
+    {
+        get
+        {
+            CheckWidget();
+            return _accelerator;
+        }
+        set
+        {
+            CheckWidget();
+            _accelerator = value;
+            // Update accelerator through platform menu item interface
+            _platformMenuItem?.SetAccelerator(value);
         }
     }
 
@@ -75,7 +120,8 @@ public class MenuItem : Widget
             if (_selection != value)
             {
                 _selection = value;
-                // TODO: Implement selection updates through platform widget interface
+                // Update selection through platform menu item interface
+                _platformMenuItem?.SetSelection(_selection);
 
                 // If this is a radio item being selected, deselect siblings
                 if (IsRadio && value && _parent != null)
@@ -108,7 +154,8 @@ public class MenuItem : Widget
             if (_enabled != value)
             {
                 _enabled = value;
-                // TODO: Implement enabled state updates through platform widget interface
+                // Update enabled state through platform menu item interface
+                _platformMenuItem?.SetEnabled(_enabled);
             }
         }
     }
@@ -134,7 +181,8 @@ public class MenuItem : Widget
             if (_menu != value)
             {
                 _menu = value;
-                // TODO: Implement submenu updates through platform widget interface
+                // Update submenu through platform menu item interface
+                _platformMenuItem?.SetMenu(value?.PlatformMenu);
             }
         }
     }
@@ -192,8 +240,50 @@ public class MenuItem : Widget
             return;
         }
 
-        // TODO: Implement menu item creation through platform widget interface
-        // Handle property removed - replaced with PlatformWidget
+        // Create menu item through parent menu's platform interface
+        if (_parent.PlatformMenu != null)
+        {
+            _platformMenuItem = _parent.PlatformMenu.CreateMenuItem(Style, index);
+            if (_platformMenuItem != null)
+            {
+                _platformMenuItem.SetText(_text);
+                _platformMenuItem.SetEnabled(_enabled);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sets the image for this menu item.
+    /// </summary>
+    public void SetImage(Image? image)
+    {
+        Image = image;
+    }
+
+    /// <summary>
+    /// Gets the image for this menu item.
+    /// </summary>
+    public Image? GetImage()
+    {
+        CheckWidget();
+        return _image;
+    }
+
+    /// <summary>
+    /// Sets the keyboard accelerator for this menu item.
+    /// </summary>
+    public void SetAccelerator(int accelerator)
+    {
+        Accelerator = accelerator;
+    }
+
+    /// <summary>
+    /// Gets the keyboard accelerator for this menu item.
+    /// </summary>
+    public int GetAccelerator()
+    {
+        CheckWidget();
+        return _accelerator;
     }
 
     /// <summary>
@@ -273,8 +363,8 @@ public class MenuItem : Widget
     /// </summary>
     private void UpdateSelection()
     {
-        // TODO: Implement selection updates through platform widget interface
-        // Platform.PlatformFactory.Instance.SetMenuItemSelection(_handle, _selection);
+        // Update selection through platform menu item interface
+        _platformMenuItem?.SetSelection(_selection);
     }
 
     protected override void ReleaseWidget()
@@ -289,8 +379,11 @@ public class MenuItem : Widget
             _menu = null;
         }
 
-        // TODO: Implement menu item disposal through platform widget interface
+        // Dispose platform menu item
+        _platformMenuItem?.Dispose();
+        _platformMenuItem = null;
 
+        _image = null;
         _parent = null;
 
         base.ReleaseWidget();

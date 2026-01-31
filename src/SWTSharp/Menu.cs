@@ -1,3 +1,5 @@
+using SWTSharp.Platform;
+
 namespace SWTSharp;
 
 /// <summary>
@@ -11,7 +13,9 @@ public class Menu : Widget
     private Menu? _parentMenu;
     private bool _visible;
     private readonly List<MenuItem> _items = new();
-    // Handle property removed - replaced with PlatformWidget
+    private int _locationX;
+    private int _locationY;
+    private IPlatformMenu? _platformMenu;
 
     /// <summary>
     /// Gets the parent widget of this menu.
@@ -65,7 +69,8 @@ public class Menu : Widget
             if (_visible != value)
             {
                 _visible = value;
-                // TODO: Implement visibility updates through platform widget interface
+                // Update visibility through platform menu interface
+                _platformMenu?.SetVisible(_visible);
             }
         }
     }
@@ -141,11 +146,10 @@ public class Menu : Widget
         _parent = parent;
         CreateWidget();
 
-        // TODO: Implement menu bar attachment through platform widget interface
-        // If this is a menu bar, attach it to the shell
-        if ((style & SWT.BAR) != 0)
+        // Attach menu bar to shell through platform interface
+        if ((style & SWT.BAR) != 0 && _platformMenu != null)
         {
-            // Will be implemented through platform widget interface
+            _platformMenu.AttachToWindow(parent.PlatformWidget as IPlatformWindow);
         }
     }
 
@@ -195,8 +199,8 @@ public class Menu : Widget
 
     private void CreateWidget()
     {
-        // TODO: Implement menu creation through platform widget interface
-        // Handle property removed - replaced with PlatformWidget
+        // Create menu through platform factory
+        _platformMenu = PlatformFactory.Instance.CreateMenuWidget(Style);
     }
 
     /// <summary>
@@ -256,7 +260,7 @@ public class Menu : Widget
     }
 
     /// <summary>
-    /// Shows the popup menu at the specified location.
+    /// Sets the location where the popup menu will be displayed.
     /// </summary>
     /// <param name="x">X coordinate in screen coordinates</param>
     /// <param name="y">Y coordinate in screen coordinates</param>
@@ -268,7 +272,11 @@ public class Menu : Widget
             throw new SWTException(SWT.ERROR_MENU_NOT_POP_UP);
         }
 
-        // TODO: Implement popup menu display through platform widget interface
+        _locationX = x;
+        _locationY = y;
+
+        // Set location through platform menu interface
+        _platformMenu?.SetLocation(x, y);
     }
 
     /// <summary>
@@ -298,7 +306,11 @@ public class Menu : Widget
         }
     }
 
-    
+    /// <summary>
+    /// Gets the platform menu interface for internal use.
+    /// </summary>
+    internal IPlatformMenu? PlatformMenu => _platformMenu;
+
     protected override void ReleaseWidget()
     {
         // Dispose all items
@@ -311,7 +323,9 @@ public class Menu : Widget
             _items.Clear();
         }
 
-        // TODO: Implement menu disposal through platform widget interface
+        // Dispose platform menu
+        _platformMenu?.Dispose();
+        _platformMenu = null;
 
         _parent = null;
         _parentItem = null;
