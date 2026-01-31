@@ -349,7 +349,7 @@ public class SWTSharpTestExecutor : ITestExecutor
     /// <summary>
     /// Collects discovered xUnit test cases.
     /// </summary>
-    private class TestDiscoveryVisitor : IMessageSink, IDisposable
+    private sealed class TestDiscoveryVisitor : IMessageSink, IDisposable
     {
         public List<ITestCase> TestCases { get; } = new();
         public ManualResetEvent Finished { get; } = new(false);
@@ -377,7 +377,7 @@ public class SWTSharpTestExecutor : ITestExecutor
     /// <summary>
     /// Handles xUnit test execution messages and reports results via VSTest IFrameworkHandle.
     /// </summary>
-    private class TestExecutionVisitor : IMessageSink, IDisposable
+    private sealed class TestExecutionVisitor : IMessageSink, IDisposable
     {
         private readonly List<TestCase> _testCases;
         private readonly IFrameworkHandle _frameworkHandle;
@@ -506,7 +506,7 @@ public class SWTSharpTestExecutor : ITestExecutor
     /// <summary>
     /// Null message sink that ignores all messages (for diagnostics).
     /// </summary>
-    private class NullMessageSink : IMessageSink, IDisposable
+    private sealed class NullMessageSink : IMessageSink, IDisposable
     {
         public bool OnMessage(IMessageSinkMessage message) => true;
 
