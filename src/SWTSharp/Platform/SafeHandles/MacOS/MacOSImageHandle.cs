@@ -72,9 +72,11 @@ public sealed class MacOSImageHandle : SafeImageHandle
     /// </exception>
     internal static MacOSImageHandle Create(int width, int height)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSImage
-        throw new NotImplementedException("MacOS image creation via SafeHandle not yet implemented.");
+        // Images are created via platform layer (MacOSPlatformGraphics)
+        // Use FromHandle() to wrap an existing NSImage* obtained from the platform layer
+        throw new InvalidOperationException(
+            "Use MacOSPlatformGraphics.CreateImage() to create images, " +
+            "then FromHandle() to wrap the resulting NSImage pointer.");
     }
 
     /// <summary>

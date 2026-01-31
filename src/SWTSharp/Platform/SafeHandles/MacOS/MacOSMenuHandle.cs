@@ -71,9 +71,11 @@ public sealed class MacOSMenuHandle : SafeMenuHandle
     /// </exception>
     internal static MacOSMenuHandle Create(int style)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSMenu
-        throw new NotImplementedException("MacOS menu creation via SafeHandle not yet implemented.");
+        // Menus are created via platform layer (MacOSPlatform)
+        // Use FromHandle() to wrap an existing NSMenu* obtained from the platform layer
+        throw new InvalidOperationException(
+            "Use MacOSPlatform.CreateMenu() to create menus, " +
+            "then FromHandle() to wrap the resulting NSMenu pointer.");
     }
 
     /// <summary>

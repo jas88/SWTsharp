@@ -66,9 +66,11 @@ public sealed class MacOSGraphicsHandle : SafeGraphicsHandle
     /// </exception>
     internal static MacOSGraphicsHandle Create(IntPtr windowHandle)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C/Core Graphics interop
-        throw new NotImplementedException("MacOS graphics context creation via SafeHandle not yet implemented.");
+        // Graphics contexts are created via platform layer (MacOSPlatformGraphics)
+        // Use FromHandle() to wrap an existing CGContextRef obtained from the platform layer
+        throw new InvalidOperationException(
+            "Use MacOSPlatformGraphics.CreateGraphicsContext() to create graphics contexts, " +
+            "then FromHandle() to wrap the resulting CGContextRef.");
     }
 
     /// <summary>
