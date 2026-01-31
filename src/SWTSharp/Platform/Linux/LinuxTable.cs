@@ -108,9 +108,9 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
             gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
         }
 
-        // Set alignment
+        // Set alignment using gtk_cell_renderer_set_alignment (non-variadic, unlike g_object_set)
         float xalign = alignment == SWT.CENTER ? 0.5f : (alignment == SWT.RIGHT ? 1.0f : 0.0f);
-        g_object_set_float(renderer, "xalign", xalign);
+        gtk_cell_renderer_set_alignment(renderer, xalign, 0.5f);
 
         // Add column to tree view
         gtk_tree_view_append_column(_gtkTreeView, column);
@@ -166,7 +166,7 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
             IntPtr renderer = g_list_nth_data(renderers, 0);
             if (renderer != IntPtr.Zero)
             {
-                g_object_set_float(renderer, "xalign", xalign);
+                gtk_cell_renderer_set_alignment(renderer, xalign, 0.5f);
             }
             g_list_free(renderers);
         }
@@ -623,13 +623,10 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
     [DllImport(GLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     private static extern IntPtr g_type_from_name(string name);
 
-    [DllImport(GLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    private static extern void g_object_set(IntPtr @object, string property_name, float value, IntPtr terminator);
-
-    private static void g_object_set_float(IntPtr @object, string property_name, float value)
-    {
-        g_object_set(@object, property_name, value, IntPtr.Zero);
-    }
+    // Note: g_object_set is variadic and cannot be P/Invoked directly.
+    // Use gtk_cell_renderer_set_alignment instead for setting cell alignment.
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_cell_renderer_set_alignment(IntPtr cell, float xalign, float yalign);
 
     [DllImport(GLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void g_object_unref(IntPtr @object);

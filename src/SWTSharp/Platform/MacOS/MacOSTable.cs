@@ -180,9 +180,9 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         IntPtr selHeaderCell = sel_registerName("headerCell");
         IntPtr selSetStringValue = sel_registerName("setStringValue:");
 
-        objc_msgSend_fpret(column, selSetWidth, width > 0 ? (double)width : 100.0);
-        objc_msgSend_fpret(column, selSetMinWidth, 20.0);
-        objc_msgSend_fpret(column, selSetMaxWidth, 10000.0);
+        objc_msgSend_double(column, selSetWidth, width > 0 ? (double)width : 100.0);
+        objc_msgSend_double(column, selSetMinWidth, 20.0);
+        objc_msgSend_double(column, selSetMaxWidth, 10000.0);
 
         // Set header text
         IntPtr headerCell = objc_msgSend(column, selHeaderCell);
@@ -267,7 +267,7 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
         IntPtr column = _columns[columnIndex];
         IntPtr selSetWidth = sel_registerName("setWidth:");
-        objc_msgSend_fpret(column, selSetWidth, Math.Max(0, width));
+        objc_msgSend_double(column, selSetWidth, Math.Max(0, width));
     }
 
     public void SetColumnAlignment(int columnIndex, int alignment)
@@ -675,8 +675,9 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, string arg1);
 
-    [DllImport("/usr/lib/libobjc.dylib")]
-    private static extern void objc_msgSend_fpret(IntPtr receiver, IntPtr selector, double arg1);
+    // For methods that take a double/CGFloat argument (not returning float - that would need fpret on x64)
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
 
     // For setFrame: which takes CGRect as input argument (not returns it)
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
