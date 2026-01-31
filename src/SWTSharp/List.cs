@@ -436,28 +436,28 @@ public class List : Control
     public int GetTopIndex()
     {
         CheckWidget();
-        // Return the stored top index set via SetTopIndex
-        // Note: True scroll position requires platform-specific scroll query APIs
-        return _topIndex;
+        if (PlatformWidget is IPlatformList platformList)
+        {
+            return platformList.GetTopIndex();
+        }
+        return 0;
     }
 
     /// <summary>
     /// Sets the zero-relative index of the item which is currently at the top of the list.
+    /// This scrolls the list so the specified item is at the top of the visible area.
     /// </summary>
     public void SetTopIndex(int index)
     {
         CheckWidget();
         if (index >= 0 && index < _items.Count)
         {
-            // Store the top index for scroll position tracking
-            // Note: True scroll-to-index requires platform-specific scroll APIs
-            // (Win32 LB_SETTOPINDEX, GTK gtk_tree_view_scroll_to_cell, macOS scrollRowToVisible)
-            // For now, store the value for GetTopIndex() consistency
-            _topIndex = index;
+            if (PlatformWidget is IPlatformList platformList)
+            {
+                platformList.SetTopIndex(index);
+            }
         }
     }
-
-    private int _topIndex;
 
     /// <summary>
     /// Searches the list for an item starting at the specified index.

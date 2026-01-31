@@ -666,6 +666,16 @@ public interface IPlatformList : IPlatformWidget, IPlatformSelectionEvents, IPla
     /// Gets or sets the selected index (single selection mode).
     /// </summary>
     int SelectionIndex { get; set; }
+
+    /// <summary>
+    /// Gets the index of the item currently at the top of the visible area.
+    /// </summary>
+    int GetTopIndex();
+
+    /// <summary>
+    /// Scrolls the list so the item at the given index is at the top of the visible area.
+    /// </summary>
+    void SetTopIndex(int index);
 }
 
 /// <summary>
