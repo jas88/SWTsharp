@@ -789,4 +789,16 @@ internal partial class LinuxPlatform : IPlatform
 #endif
     }
 
+    /// <summary>
+    /// Creates a menu widget.
+    /// </summary>
+    /// <param name="style">Menu style (SWT.BAR, SWT.DROP_DOWN, SWT.POP_UP)</param>
+    /// <returns>Platform menu implementation</returns>
+    public IPlatformMenu CreateMenuWidget(int style)
+    {
+        // Menu widget implementation will be completed in a future phase
+        // For now, return a stub that throws NotImplementedException
+        throw new NotImplementedException("Linux menu widget will be implemented in Phase 3");
+    }
+
 }

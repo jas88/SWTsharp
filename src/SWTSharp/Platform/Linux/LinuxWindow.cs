@@ -240,6 +240,15 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
         return _container != IntPtr.Zero ? _container : _gtkWindowHandle;
     }
 
+    /// <summary>
+    /// Gets the actual GtkWindow handle for window-specific operations (required by IPlatformWindow).
+    /// This is used for dialog parenting, where the actual window handle is needed.
+    /// </summary>
+    IntPtr IPlatformWindow.GetNativeHandle()
+    {
+        return _gtkWindowHandle;
+    }
+
     // GTK Window Type Enumeration
     private enum GtkWindowType
     {

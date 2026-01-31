@@ -280,6 +280,15 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
     }
 
     /// <summary>
+    /// Gets the actual NSWindow handle for window-specific operations (required by IPlatformWindow).
+    /// This is used for dialog parenting, where the actual window handle is needed.
+    /// </summary>
+    IntPtr IPlatformWindow.GetNativeHandle()
+    {
+        return _nsWindowHandle;
+    }
+
+    /// <summary>
     /// Gets the actual NSWindow handle for window-specific operations.
     /// </summary>
     public IntPtr GetWindowHandle()

@@ -262,9 +262,9 @@ internal class Win32Window : IPlatformWindow
 
     /// <summary>
     /// Gets the native Win32 handle (HWND) for this window.
-    /// Used internally by platform code for parent-child relationships.
+    /// Required by IPlatformWindow interface for dialog parenting.
     /// </summary>
-    internal IntPtr GetNativeHandle()
+    public IntPtr GetNativeHandle()
     {
         return _hwnd;
     }
