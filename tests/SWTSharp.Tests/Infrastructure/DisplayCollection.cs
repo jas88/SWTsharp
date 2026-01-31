@@ -80,20 +80,15 @@ public class DisplayFixture : IAsyncLifetime
         }
         else
         {
-            // For Windows/Linux: Use the shared Display singleton and run actions directly.
+            // For Windows/Linux: Use the shared Display singleton.
             // Unlike macOS, there's no strict thread requirement for Win32/GTK in test contexts.
-            // We set a custom async executor that runs actions synchronously on the calling thread.
-            // This avoids issues with multiple xUnit collections each creating their own threads
-            // while sharing the Display singleton.
             Display = Display.Default;
 
-            // Hook Display.AsyncExec to run actions directly (synchronously)
-            // This works because:
-            // 1. Tests run serially (DisableParallelization = true)
-            // 2. We're not in a real GUI event loop, just testing widget logic
-            // 3. SyncExec becomes a direct call instead of cross-thread dispatch
-            Display.SetAsyncExecutor(action => action());
-            Console.WriteLine("DisplayFixture: Set custom async executor to run actions directly");
+            // Reset Display's thread to current thread so IsValidThread() returns true.
+            // This is necessary because xUnit may run fixture initialization on a different
+            // thread than where Display was first created (Display is a singleton).
+            Display.SetThreadForTesting();
+            Console.WriteLine($"DisplayFixture: Reset Display thread to {Thread.CurrentThread.ManagedThreadId}");
         }
 
         var displayThread = Display.GetType().GetField("_thread", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(Display) as Thread;
