@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Xunit;
@@ -29,6 +30,9 @@ public class DisplayFixture : IAsyncLifetime
 {
     private Thread _uiThread = null!;
     private bool _disposed;
+    private BlockingCollection<Action>? _actionQueue;
+    private Thread? _dispatcherThread;
+    private CancellationTokenSource? _cts;
 
     /// <summary>
     /// Gets the shared Display instance for GUI tests.
@@ -82,8 +86,55 @@ public class DisplayFixture : IAsyncLifetime
         }
         else
         {
-            Display = Display.Default;
-            _uiThread = Thread.CurrentThread;
+            // For Windows/Linux: Create a dedicated UI thread with an action queue
+            // This ensures SyncExec works when tests run on different threads than fixture init
+            _actionQueue = new BlockingCollection<Action>();
+            _cts = new CancellationTokenSource();
+            var displayReady = new ManualResetEventSlim(false);
+
+            _dispatcherThread = new Thread(() =>
+            {
+                Display = Display.Default;
+                _uiThread = Thread.CurrentThread;
+                Console.WriteLine($"DisplayFixture: Display created on Thread {Thread.CurrentThread.ManagedThreadId}");
+                displayReady.Set();
+
+                // Process actions from the queue
+                try
+                {
+                    foreach (var action in _actionQueue.GetConsumingEnumerable(_cts.Token))
+                    {
+                        try
+                        {
+                            action();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.Error.WriteLine($"DisplayFixture: Error executing action: {ex.Message}");
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Normal shutdown
+                }
+            })
+            {
+                Name = "SWTSharp UI Thread",
+                IsBackground = true
+            };
+            _dispatcherThread.Start();
+
+            // Wait for Display to be created
+            displayReady.Wait(TimeSpan.FromSeconds(10));
+            if (Display == null)
+            {
+                throw new InvalidOperationException("Failed to create Display on UI thread within timeout");
+            }
+
+            // Hook Display.AsyncExec to use our action queue
+            Display.SetAsyncExecutor(action => _actionQueue.Add(action));
+            Console.WriteLine("DisplayFixture: Set custom async executor to use action queue dispatcher");
         }
 
         var displayThread = Display.GetType().GetField("_thread", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(Display) as Thread;
@@ -102,15 +153,43 @@ public class DisplayFixture : IAsyncLifetime
         {
             _disposed = true;
 
-            // Cleanup all shells directly on current thread
-            // Since DisplayFixture runs on xUnit's thread, and that's where we initialized Display,
-            // we're already on the correct thread for macOS
+            // Cleanup all shells
             try
             {
-                var shells = Display.GetShells();
-                foreach (var shell in shells)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    shell?.Dispose();
+                    // On macOS, cleanup on the main thread via MainThreadDispatcher
+                    var shells = Display.GetShells();
+                    foreach (var shell in shells)
+                    {
+                        shell?.Dispose();
+                    }
+                }
+                else if (_actionQueue != null)
+                {
+                    // On Windows/Linux, dispatch cleanup to the UI thread
+                    var cleanupDone = new ManualResetEventSlim(false);
+                    _actionQueue.Add(() =>
+                    {
+                        try
+                        {
+                            var shells = Display.GetShells();
+                            foreach (var shell in shells)
+                            {
+                                shell?.Dispose();
+                            }
+                        }
+                        finally
+                        {
+                            cleanupDone.Set();
+                        }
+                    });
+                    cleanupDone.Wait(TimeSpan.FromSeconds(5));
+
+                    // Shut down the dispatcher thread
+                    _cts?.Cancel();
+                    _actionQueue.CompleteAdding();
+                    _dispatcherThread?.Join(TimeSpan.FromSeconds(2));
                 }
             }
             catch
