@@ -28,7 +28,7 @@
 - Abstract base classes: `Resource`, `Layout`, `Widget`
 - Interfaces: `ISelectionListener`, `IPlatform`, `IDisposable`
 - Exceptions: `SWTException`, `SWTDisposedException`, `SWTInvalidThreadException`
-- Collections: `List<T>`, `Dictionary<TKey, TValue>` (Microsoft.Collections)
+- Collections: `List<T>`, `Dictionary<TKey, TValue>` (System.Collections.Generic)
 
 ## Code Style
 

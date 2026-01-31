@@ -33,7 +33,7 @@
 
 **Platform Implementation Layer:**
 - Purpose: Native OS-specific implementations
-- Location: `src/SWTSharp/Platform/Win32/`, `Platform/MacOS/`, `Platform/Linux/`
+- Location: `src/SWTSharp/Platform/Win32/`, `src/SWTSharp/Platform/MacOS/`, `src/SWTSharp/Platform/Linux/`
 - Contains: Win32Button, MacOSButton, LinuxButton, etc. for each platform
 - Depends on: Platform abstraction interfaces, P/Invoke declarations, native API bindings
 - Used by: PlatformFactory for runtime instantiation
@@ -141,7 +141,7 @@
 - Purpose: Central connection to platform display system and event loop
 - Location: `src/SWTSharp/Display.cs`
 - Responsibility: Event queue processing, thread affinity, async execution, shell management
-- Singleton pattern: Display.Default is thread-local singleton
+- Singleton pattern: Display.Default is a process-wide singleton
 - Thread safety: Lock-protected for multi-threaded access
 
 **Widget Base Class:**
