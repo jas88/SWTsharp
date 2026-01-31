@@ -302,9 +302,11 @@ public class TableColumn : Widget
     {
         // TableColumn is logically part of the parent Table's platform widget
         // The column is added to the platform table during AddColumn
+        // Note: index parameter is for future use when IPlatformTable supports InsertColumn(index, ...)
+        // Currently AddColumn appends to the end; column reordering must be done post-creation
+        _ = index; // Suppress unused parameter warning; reserved for future insertion support
         if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
         {
-            int colIndex = index >= 0 ? index : platformTable.GetColumnCount();
             platformTable.AddColumn(_text, _width, _alignment);
         }
     }

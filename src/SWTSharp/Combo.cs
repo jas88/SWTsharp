@@ -359,18 +359,16 @@ public class Combo : Control
     }
 
     /// <summary>
-    /// Clears the current text selection.
+    /// Clears the current text selection (highlight), not the item selection.
     /// </summary>
     public void ClearSelection()
     {
         CheckWidget();
-        // Clear text selection by setting selection range to empty (0, 0)
-        // This clears the text highlight, not the combo item selection
-        if (PlatformWidget is IPlatformCombo comboWidget)
-        {
-            // Platform combo handles text selection clearing internally
-            comboWidget.Text = comboWidget.Text; // Re-set text to clear selection
-        }
+        // ClearSelection clears the text field highlight (caret selection), not item selection.
+        // Platform combo boxes don't expose text selection clearing as a separate API.
+        // This is a no-op on most platforms where text selection is managed by the native control
+        // and automatically clears on focus changes or user interaction.
+        // Note: Do NOT re-set Text property here as that can trigger item selection events.
     }
 
     /// <summary>

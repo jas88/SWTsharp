@@ -74,8 +74,8 @@ public sealed class MacOSMenuHandle : SafeMenuHandle
         // Menus are created via platform layer (MacOSPlatform)
         // Use FromHandle() to wrap an existing NSMenu* obtained from the platform layer
         throw new InvalidOperationException(
-            "Use MacOSPlatform.CreateMenu() to create menus, " +
-            "then FromHandle() to wrap the resulting NSMenu pointer.");
+            "Menus are created by the Menu widget constructor. " +
+            "Use FromHandle() to wrap an existing NSMenu pointer obtained from the platform layer.");
     }
 
     /// <summary>

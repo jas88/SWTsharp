@@ -69,8 +69,8 @@ public sealed class MacOSGraphicsHandle : SafeGraphicsHandle
         // Graphics contexts are created via platform layer (MacOSPlatformGraphics)
         // Use FromHandle() to wrap an existing CGContextRef obtained from the platform layer
         throw new InvalidOperationException(
-            "Use MacOSPlatformGraphics.CreateGraphicsContext() to create graphics contexts, " +
-            "then FromHandle() to wrap the resulting CGContextRef.");
+            "Graphics contexts are created by the platform layer during paint events. " +
+            "Use FromHandle() to wrap an existing CGContextRef obtained from a GC or paint callback.");
     }
 
     /// <summary>

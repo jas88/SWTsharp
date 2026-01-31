@@ -436,9 +436,9 @@ public class List : Control
     public int GetTopIndex()
     {
         CheckWidget();
-        // Top index is the first visible item in the scrolled view
-        // Platform list controls manage scrolling internally; return 0 as default
-        return 0;
+        // Return the stored top index set via SetTopIndex
+        // Note: True scroll position requires platform-specific scroll query APIs
+        return _topIndex;
     }
 
     /// <summary>
@@ -449,16 +449,15 @@ public class List : Control
         CheckWidget();
         if (index >= 0 && index < _items.Count)
         {
-            // Scrolling to a specific top index is handled by platform list controls
-            // Selection change to the index typically triggers scroll visibility
-            if (PlatformWidget is IPlatformList listWidget)
-            {
-                var currentSelection = listWidget.SelectionIndices;
-                listWidget.SelectionIndex = index;
-                listWidget.SelectionIndices = currentSelection; // Restore selection
-            }
+            // Store the top index for scroll position tracking
+            // Note: True scroll-to-index requires platform-specific scroll APIs
+            // (Win32 LB_SETTOPINDEX, GTK gtk_tree_view_scroll_to_cell, macOS scrollRowToVisible)
+            // For now, store the value for GetTopIndex() consistency
+            _topIndex = index;
         }
     }
+
+    private int _topIndex;
 
     /// <summary>
     /// Searches the list for an item starting at the specified index.

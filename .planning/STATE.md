@@ -19,9 +19,9 @@ Progress: [████████░░] 83% (10/12 total plans)
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: ~5 minutes
-- Total execution time: ~35 minutes
+- Total plans completed: 10
+- Average duration: ~6.5 minutes
+- Total execution time: ~65 minutes
 
 **By Phase:**
 
@@ -31,7 +31,7 @@ Progress: [████████░░] 83% (10/12 total plans)
 | 02 | 6 | ~50m | ~8m |
 
 **Recent Trend:**
-- Last 5 plans: 02-03, 02-04, 02-05, 02-06
+- Last 5 plans: 02-02, 02-03, 02-04, 02-05, 02-06
 - Trend: Consistent execution, complex widgets take longer
 
 *Updated after each plan completion*
