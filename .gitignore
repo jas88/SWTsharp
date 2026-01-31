@@ -105,3 +105,4 @@ hive-mind-prompt-*.txt
 # Claude Code configuration
 CLAUDE.md
 .claude/
+.planning/
