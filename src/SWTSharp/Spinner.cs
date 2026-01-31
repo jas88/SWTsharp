@@ -157,8 +157,10 @@ public class Spinner : Composite
             if (_textLimit != value && value >= 0)
             {
                 _textLimit = value;
-                // TODO: Implement text limit setting via platform widget interface
-                // Platform.PlatformFactory.Instance.SetSpinnerTextLimit(Handle, _textLimit);
+                if (PlatformWidget is IPlatformSpinner spinnerWidget)
+                {
+                    spinnerWidget.TextLimit = _textLimit;
+                }
             }
         }
     }
@@ -247,47 +249,151 @@ public class Spinner : Composite
     private void ConnectEventHandlers()
     {
         // Connect spinner event handlers to platform widget
-        // Event handling will be implemented in Phase 5.8
         if (PlatformWidget is IPlatformSpinner spinnerWidget)
         {
-            // TODO: Connect spinner events through platform widget interface in Phase 5.8
-            // spinnerWidget.ValueChanged += OnNativeSelectionChanged;
-            // spinnerWidget.TextChanged += OnNativeModified;
+            spinnerWidget.ValueChanged += OnPlatformValueChanged;
+            spinnerWidget.TextChanged += OnPlatformTextChanged;
+        }
+
+        // Connect standard widget events
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained += OnPlatformFocusGained;
+            eventHandling.FocusLost += OnPlatformFocusLost;
+            eventHandling.KeyDown += OnPlatformKeyDown;
+            eventHandling.KeyUp += OnPlatformKeyUp;
         }
     }
 
     /// <summary>
-    /// Called when the native spinner value changes.
+    /// Handles platform widget value changed events.
     /// </summary>
-    private void OnNativeSelectionChanged(int newValue)
+    private void OnPlatformValueChanged(object? sender, int newValue)
     {
+        CheckWidget();
+
         if (_selection != newValue)
         {
             _selection = newValue;
-            var evt = new Event
+
+            var selectionEvent = new Event
             {
-                Widget = this,
-                Detail = SWT.NONE
+                Detail = SWT.NONE,
+                Time = Environment.TickCount,
+                Index = newValue
             };
-            NotifyListeners(SWT.Selection, evt);
+            NotifyListeners(SWT.Selection, selectionEvent);
         }
     }
 
     /// <summary>
-    /// Called when the text field is modified.
+    /// Handles platform widget text changed events.
     /// </summary>
-    private void OnNativeModified()
+    private void OnPlatformTextChanged(object? sender, string newText)
     {
-        var evt = new Event
+        CheckWidget();
+
+        var modifyEvent = new Event
         {
-            Widget = this
+            Time = Environment.TickCount
         };
-        NotifyListeners(SWT.Modify, evt);
+        NotifyListeners(SWT.Modify, modifyEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus gained events.
+    /// </summary>
+    private void OnPlatformFocusGained(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusIn, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus lost events.
+    /// </summary>
+    private void OnPlatformFocusLost(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusOut, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key down events.
+    /// </summary>
+    private void OnPlatformKeyDown(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyDown, keyEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key up events.
+    /// </summary>
+    private void OnPlatformKeyUp(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyUp, keyEvent);
+    }
+
+    /// <summary>
+    /// Converts platform key event arguments to SWT state mask.
+    /// </summary>
+    private int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
+    {
+        int stateMask = 0;
+        if (e.Shift) stateMask |= SWT.SHIFT;
+        if (e.Control) stateMask |= SWT.CTRL;
+        if (e.Alt) stateMask |= SWT.ALT;
+        if (e.Command) stateMask |= SWT.COMMAND;
+        return stateMask;
     }
 
     protected override void ReleaseWidget()
     {
-        // TODO: Implement proper widget disposal through platform widget interface
+        // Unsubscribe from platform widget events to prevent memory leaks
+        if (PlatformWidget is IPlatformSpinner spinnerWidget)
+        {
+            spinnerWidget.ValueChanged -= OnPlatformValueChanged;
+            spinnerWidget.TextChanged -= OnPlatformTextChanged;
+        }
+
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained -= OnPlatformFocusGained;
+            eventHandling.FocusLost -= OnPlatformFocusLost;
+            eventHandling.KeyDown -= OnPlatformKeyDown;
+            eventHandling.KeyUp -= OnPlatformKeyUp;
+        }
+
         // Platform widget cleanup is handled by parent disposal
         base.ReleaseWidget();
     }

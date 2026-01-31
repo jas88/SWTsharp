@@ -21,6 +21,7 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
     private int _maximum = 100;
     private int _increment = 1;
     private int _digits = 0;
+    private int _textLimit;
 
     // Event handling
     public event EventHandler<int>? ValueChanged;
@@ -30,6 +31,7 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
     public event EventHandler<int>? FocusLost;
     public event EventHandler<PlatformKeyEventArgs>? KeyDown;
     public event EventHandler<PlatformKeyEventArgs>? KeyUp;
+    public event EventHandler<string>? TextChanged;
     #pragma warning restore CS0067
 
     public MacOSSpinner(IntPtr parentHandle, int style)
@@ -189,6 +191,22 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
 
             _digits = Math.Max(0, value);
             UpdateTextField();
+        }
+    }
+
+    public int TextLimit
+    {
+        get
+        {
+            if (_disposed) return 0;
+            return _textLimit;
+        }
+        set
+        {
+            if (_disposed) return;
+            _textLimit = Math.Max(0, value);
+            // NSTextField text limit is controlled via NSFormatter, which is complex.
+            // For now, store the value but text limit enforcement is not implemented.
         }
     }
 

@@ -152,6 +152,24 @@ internal partial class Win32Scale : IPlatformScale
         }
     }
 
+    private int _pageIncrement = 10;
+
+    public int PageIncrement
+    {
+        get => _pageIncrement;
+        set
+        {
+            if (value > 0)
+            {
+                _pageIncrement = value;
+                if (_hwnd != IntPtr.Zero && !_disposed)
+                {
+                    SendMessage(_hwnd, TBM_SETPAGESIZE, IntPtr.Zero, new IntPtr(_pageIncrement));
+                }
+            }
+        }
+    }
+
     public bool ShowTicks
     {
         get => _showTicks;

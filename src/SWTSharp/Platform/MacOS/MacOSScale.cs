@@ -143,6 +143,22 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
         }
     }
 
+    private int _pageIncrement = 10;
+
+    public int PageIncrement
+    {
+        get
+        {
+            if (_disposed) return 10;
+            return _pageIncrement;
+        }
+        set
+        {
+            if (_disposed) return;
+            _pageIncrement = Math.Max(1, value);
+        }
+    }
+
     public bool ShowTicks
     {
         get

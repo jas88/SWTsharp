@@ -20,6 +20,7 @@ internal class Win32Spinner : IPlatformSpinner
     private int _value;
     private int _increment = 1;
     private int _digits;
+    private int _textLimit;
 
     // Events required by IPlatformValueEvents and IPlatformEventHandling
     #pragma warning disable CS0067
@@ -29,6 +30,7 @@ internal class Win32Spinner : IPlatformSpinner
     public event EventHandler<int>? FocusLost;
     public event EventHandler<PlatformKeyEventArgs>? KeyDown;
     public event EventHandler<PlatformKeyEventArgs>? KeyUp;
+    public event EventHandler<string>? TextChanged;
     #pragma warning restore CS0067
 
     public Win32Spinner(IntPtr parentHandle, int style)
@@ -183,6 +185,19 @@ internal class Win32Spinner : IPlatformSpinner
         }
     }
 
+    public int TextLimit
+    {
+        get => _textLimit;
+        set
+        {
+            _textLimit = value >= 0 ? value : 0;
+            if (_editHandle != IntPtr.Zero && _textLimit > 0)
+            {
+                SendMessage(_editHandle, EM_SETLIMITTEXT, new IntPtr(_textLimit), IntPtr.Zero);
+            }
+        }
+    }
+
     public void SetBounds(int x, int y, int width, int height)
     {
         if (_editHandle == IntPtr.Zero) return;
@@ -307,6 +322,9 @@ internal class Win32Spinner : IPlatformSpinner
     private const int UDM_SETPOS32 = 0x0471;   // WM_USER + 113
     private const int UDM_GETPOS32 = 0x0472;   // WM_USER + 114
     private const int UDM_SETBUDDY = 0x0469;   // WM_USER + 105
+
+    // Edit Control Messages
+    private const int EM_SETLIMITTEXT = 0x00C5;
 
     // SetWindowPos flags
     private const uint SWP_NOZORDER = 0x0004;
