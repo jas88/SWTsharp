@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Xunit;
@@ -28,11 +27,7 @@ public class DisplayCollection : ICollectionFixture<DisplayFixture>
 /// </remarks>
 public class DisplayFixture : IAsyncLifetime
 {
-    private Thread _uiThread = null!;
     private bool _disposed;
-    private BlockingCollection<Action>? _actionQueue;
-    private Thread? _dispatcherThread;
-    private CancellationTokenSource? _cts;
 
     /// <summary>
     /// Gets the shared Display instance for GUI tests.
@@ -76,7 +71,6 @@ public class DisplayFixture : IAsyncLifetime
             SWTSharp.TestHost.MainThreadDispatcher.Invoke(() =>
             {
                 Display = Display.Default;
-                _uiThread = Thread.CurrentThread;
                 Console.WriteLine($"DisplayFixture: Display created on Thread {Thread.CurrentThread.ManagedThreadId}");
             });
 
@@ -86,55 +80,20 @@ public class DisplayFixture : IAsyncLifetime
         }
         else
         {
-            // For Windows/Linux: Create a dedicated UI thread with an action queue
-            // This ensures SyncExec works when tests run on different threads than fixture init
-            _actionQueue = new BlockingCollection<Action>();
-            _cts = new CancellationTokenSource();
-            var displayReady = new ManualResetEventSlim(false);
+            // For Windows/Linux: Use the shared Display singleton and run actions directly.
+            // Unlike macOS, there's no strict thread requirement for Win32/GTK in test contexts.
+            // We set a custom async executor that runs actions synchronously on the calling thread.
+            // This avoids issues with multiple xUnit collections each creating their own threads
+            // while sharing the Display singleton.
+            Display = Display.Default;
 
-            _dispatcherThread = new Thread(() =>
-            {
-                Display = Display.Default;
-                _uiThread = Thread.CurrentThread;
-                Console.WriteLine($"DisplayFixture: Display created on Thread {Thread.CurrentThread.ManagedThreadId}");
-                displayReady.Set();
-
-                // Process actions from the queue
-                try
-                {
-                    foreach (var action in _actionQueue.GetConsumingEnumerable(_cts.Token))
-                    {
-                        try
-                        {
-                            action();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.Error.WriteLine($"DisplayFixture: Error executing action: {ex.Message}");
-                        }
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // Normal shutdown
-                }
-            })
-            {
-                Name = "SWTSharp UI Thread",
-                IsBackground = true
-            };
-            _dispatcherThread.Start();
-
-            // Wait for Display to be created
-            displayReady.Wait(TimeSpan.FromSeconds(10));
-            if (Display == null)
-            {
-                throw new InvalidOperationException("Failed to create Display on UI thread within timeout");
-            }
-
-            // Hook Display.AsyncExec to use our action queue
-            Display.SetAsyncExecutor(action => _actionQueue.Add(action));
-            Console.WriteLine("DisplayFixture: Set custom async executor to use action queue dispatcher");
+            // Hook Display.AsyncExec to run actions directly (synchronously)
+            // This works because:
+            // 1. Tests run serially (DisableParallelization = true)
+            // 2. We're not in a real GUI event loop, just testing widget logic
+            // 3. SyncExec becomes a direct call instead of cross-thread dispatch
+            Display.SetAsyncExecutor(action => action());
+            Console.WriteLine("DisplayFixture: Set custom async executor to run actions directly");
         }
 
         var displayThread = Display.GetType().GetField("_thread", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(Display) as Thread;
@@ -156,40 +115,10 @@ public class DisplayFixture : IAsyncLifetime
             // Cleanup all shells
             try
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                var shells = Display.GetShells();
+                foreach (var shell in shells)
                 {
-                    // On macOS, cleanup on the main thread via MainThreadDispatcher
-                    var shells = Display.GetShells();
-                    foreach (var shell in shells)
-                    {
-                        shell?.Dispose();
-                    }
-                }
-                else if (_actionQueue != null)
-                {
-                    // On Windows/Linux, dispatch cleanup to the UI thread
-                    var cleanupDone = new ManualResetEventSlim(false);
-                    _actionQueue.Add(() =>
-                    {
-                        try
-                        {
-                            var shells = Display.GetShells();
-                            foreach (var shell in shells)
-                            {
-                                shell?.Dispose();
-                            }
-                        }
-                        finally
-                        {
-                            cleanupDone.Set();
-                        }
-                    });
-                    cleanupDone.Wait(TimeSpan.FromSeconds(5));
-
-                    // Shut down the dispatcher thread
-                    _cts?.Cancel();
-                    _actionQueue.CompleteAdding();
-                    _dispatcherThread?.Join(TimeSpan.FromSeconds(2));
+                    shell?.Dispose();
                 }
             }
             catch
