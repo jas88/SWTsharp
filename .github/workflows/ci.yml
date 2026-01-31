@@ -44,7 +44,6 @@ jobs:
       - name: Run tests with coverage
         shell: bash
         timeout-minutes: 10
-        continue-on-error: true
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
         run: |
@@ -176,7 +175,6 @@ jobs:
 
       - name: Run tests with coverage
         timeout-minutes: 10
-        continue-on-error: true
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
           DISPLAY: :99
