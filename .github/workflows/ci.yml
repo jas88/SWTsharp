@@ -171,18 +171,17 @@ jobs:
       - name: Build
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
-      - name: Run tests with coverage
+      # Linux GUI tests use custom runner like Windows/macOS for consistent behavior
+      # VSTest with GTK can hang during test discovery
+      - name: Run tests with custom runner
         timeout-minutes: 10
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
           DISPLAY: :99
         run: |
-          dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
+          dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
             --configuration ${{ env.CONFIGURATION }} \
-            --no-build \
-            --logger "trx;LogFileName=test-results.trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults
+            -- --results-directory ./TestResults
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
