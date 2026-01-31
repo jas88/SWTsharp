@@ -67,13 +67,34 @@ public class FontDialog : Dialog
     {
         CheckWidget();
 
-        // TODO: Implement font dialog using platform widget interface
-        // TODO: Use IPlatformWidget to create native font selection dialog
-        // TODO: Handle font selection with current FontData as default
-        // TODO: Return selected FontData or null if cancelled
-        // TODO: Handle RGB color selection if supported by platform
+        // Get parent window handle
+        IntPtr parentHandle = IntPtr.Zero;
+        if (Parent?.PlatformWidget is IPlatformWindow window)
+        {
+            parentHandle = window.GetNativeHandle();
+        }
 
-        // Temporary implementation - return current font data
+        // Call platform font dialog
+        var result = PlatformFactory.Instance.ShowFontDialog(
+            parentHandle,
+            Text,
+            _fontData,
+            _rgb);
+
+        // User cancelled
+        if (result.FontData == null)
+        {
+            return null;
+        }
+
+        // Update state from result
+        _fontData = result.FontData;
+
+        if (result.Color.HasValue)
+        {
+            _rgb = result.Color;
+        }
+
         return _fontData;
     }
 }

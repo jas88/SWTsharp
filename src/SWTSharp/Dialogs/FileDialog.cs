@@ -104,7 +104,42 @@ public class FileDialog : Dialog
     {
         CheckWidget();
 
-        // TODO: Implement file dialog through platform widget interface
-        return null; // Placeholder
+        // Get parent window handle
+        IntPtr parentHandle = IntPtr.Zero;
+        if (Parent?.PlatformWidget is IPlatformWindow window)
+        {
+            parentHandle = window.GetNativeHandle();
+        }
+
+        // Call platform file dialog
+        var result = PlatformFactory.Instance.ShowFileDialog(
+            parentHandle,
+            Text,
+            _filterPath,
+            _fileName,
+            _filterNames,
+            _filterExtensions,
+            Style,
+            _overwrite);
+
+        // User cancelled
+        if (result.SelectedFiles == null || result.SelectedFiles.Length == 0)
+        {
+            return null;
+        }
+
+        // Update state from result
+        _fileNames = result.SelectedFiles;
+        _fileName = result.SelectedFiles[0];
+
+        if (result.FilterPath != null)
+        {
+            _filterPath = result.FilterPath;
+        }
+
+        _filterIndex = result.FilterIndex;
+
+        // Return the first selected file (or only file)
+        return _fileName;
     }
 }
