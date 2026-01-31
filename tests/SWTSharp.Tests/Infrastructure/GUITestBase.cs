@@ -85,9 +85,18 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
         if (_useIsolatedDisplay)
         {
             // Create fresh Display for isolation (rare, opt-in)
-            // WARNING: On macOS, Display must be created on Thread 1 (main thread) for Cocoa.
-            // This isolated display path bypasses MainThreadDispatcher and may fail on macOS.
-            // Only use isolated displays on Windows/Linux, or ensure tests run via custom runner.
+            // On macOS, Display must be created on Thread 1 (main thread) for Cocoa.
+            // Isolated displays bypass MainThreadDispatcher (which is in TestHost assembly)
+            // and will fail on macOS. Only use isolated displays on Windows/Linux.
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                System.Runtime.InteropServices.OSPlatform.OSX))
+            {
+                throw new PlatformNotSupportedException(
+                    "Isolated displays are not supported on macOS. " +
+                    "Cocoa requires Display creation on Thread 1 (main thread), " +
+                    "which is only guaranteed via the shared DisplayFixture. " +
+                    "Use the default constructor (useIsolatedDisplay: false) instead.");
+            }
             Display = new Display();
         }
         else
