@@ -107,21 +107,37 @@ public class DisplayFixture : IAsyncLifetime
         {
             _disposed = true;
 
-            // Cleanup all shells
-            try
+            // On macOS, shell disposal must happen on Thread 1 (main thread)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) &&
+                SWTSharp.TestHost.MainThreadDispatcher.IsInitialized)
             {
-                var shells = Display.GetShells();
-                foreach (var shell in shells)
+                SWTSharp.TestHost.MainThreadDispatcher.Invoke(() =>
                 {
-                    shell?.Dispose();
-                }
+                    CleanupShells();
+                });
             }
-            catch
+            else
             {
-                // Swallow exceptions during disposal
+                CleanupShells();
             }
         }
 
         return Task.CompletedTask;
+    }
+
+    private void CleanupShells()
+    {
+        try
+        {
+            var shells = Display.GetShells();
+            foreach (var shell in shells)
+            {
+                shell?.Dispose();
+            }
+        }
+        catch
+        {
+            // Swallow exceptions during disposal
+        }
     }
 }

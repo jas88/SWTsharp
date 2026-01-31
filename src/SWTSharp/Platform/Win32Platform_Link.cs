@@ -426,7 +426,11 @@ internal partial class Win32Platform
 
     private Dictionary<IntPtr, Win32Link> _linkWidgets = new Dictionary<IntPtr, Win32Link>();
 
-    // Called from message loop to handle link notifications
+    // Static control notification codes (for fallback)
+    // WM_COMMAND is defined in Win32Platform.cs
+    private const int STN_CLICKED = 0;
+
+    // Called from message loop to handle link notifications (SysLink via WM_NOTIFY)
     internal void HandleLinkNotification(IntPtr handle, IntPtr lParam)
     {
         if (_linkWidgets.TryGetValue(handle, out var linkWidget))
@@ -436,6 +440,30 @@ internal partial class Win32Platform
             {
                 linkWidget.OnLinkClicked(nmlink.item.szID ?? string.Empty);
             }
+        }
+    }
+
+    // Called from message loop to handle Static control clicks (fallback via WM_COMMAND)
+    internal void HandleStaticLinkClick(IntPtr controlHandle)
+    {
+        if (_linkWidgets.TryGetValue(controlHandle, out var linkWidget))
+        {
+            // Static controls don't have link IDs, use empty string
+            linkWidget.OnLinkClicked(string.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Releases the ComCtl32 v6 activation context.
+    /// Called during platform cleanup/disposal.
+    /// </summary>
+    internal static void CleanupLinkControls()
+    {
+        if (_comctl32ActCtx != IntPtr.Zero)
+        {
+            ReleaseActCtx(_comctl32ActCtx);
+            _comctl32ActCtx = IntPtr.Zero;
+            _linkControlsInitialized = false;
         }
     }
 }
