@@ -398,6 +398,21 @@ internal partial class Win32List : IPlatformList
         return _hwnd;
     }
 
+    public int GetTopIndex()
+    {
+        if (_disposed || _hwnd == IntPtr.Zero) return 0;
+        return (int)SendMessage(_hwnd, LB_GETTOPINDEX, IntPtr.Zero, IntPtr.Zero);
+    }
+
+    public void SetTopIndex(int index)
+    {
+        if (_disposed || _hwnd == IntPtr.Zero) return;
+        if (index >= 0)
+        {
+            SendMessage(_hwnd, LB_SETTOPINDEX, new IntPtr(index), IntPtr.Zero);
+        }
+    }
+
     public void Dispose()
     {
         if (!_disposed)

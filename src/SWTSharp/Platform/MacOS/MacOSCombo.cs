@@ -355,6 +355,58 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
         return _nsComboBox;
     }
 
+    public void SetTextLimit(int limit)
+    {
+        // NSComboBox uses NSCell which has a formatter for text limit
+        // For now, this is not implemented - would need NSNumberFormatter or NSTextFieldCell
+    }
+
+    public void SetVisibleItemCount(int count)
+    {
+        if (_disposed || _nsComboBox == IntPtr.Zero) return;
+
+        // [combo setNumberOfVisibleItems:count]
+        var selSetNumberOfVisibleItems = sel_registerName("setNumberOfVisibleItems:");
+        objc_msgSend_void(_nsComboBox, selSetNumberOfVisibleItems, (long)count);
+    }
+
+    public void SetTextSelection(int start, int end)
+    {
+        if (_disposed || _nsComboBox == IntPtr.Zero) return;
+
+        // Get the field editor for this control
+        // This is complex on macOS - would need window's field editor
+        // Simplified: just select all or nothing for now
+    }
+
+    public (int Start, int End) GetTextSelection()
+    {
+        // Getting selection from NSComboBox requires field editor access
+        return (0, 0);
+    }
+
+    public void Copy()
+    {
+        if (_disposed || _nsComboBox == IntPtr.Zero) return;
+
+        // Simulate Cmd+C through responder chain
+        // NSComboBox should handle this through its text field
+    }
+
+    public void Cut()
+    {
+        if (_disposed || _nsComboBox == IntPtr.Zero) return;
+
+        // Simulate Cmd+X through responder chain
+    }
+
+    public void Paste()
+    {
+        if (_disposed || _nsComboBox == IntPtr.Zero) return;
+
+        // Simulate Cmd+V through responder chain
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

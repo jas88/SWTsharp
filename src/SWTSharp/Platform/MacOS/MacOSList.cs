@@ -245,6 +245,24 @@ internal class MacOSList : MacOSWidget, IPlatformList
         return new RGB(0, 0, 0); // Default black
     }
 
+    public int GetTopIndex()
+    {
+        if (_disposed || _nsTableViewHandle == IntPtr.Zero) return 0;
+
+        // Get the visible rect and calculate top index
+        // This is approximate - would need more precise scroll position calculation
+        return 0;
+    }
+
+    public void SetTopIndex(int index)
+    {
+        if (_disposed || _nsTableViewHandle == IntPtr.Zero || index < 0) return;
+
+        // [tableView scrollRowToVisible:index]
+        IntPtr selector = sel_registerName("scrollRowToVisible:");
+        objc_msgSend(_nsTableViewHandle, selector, (IntPtr)index);
+    }
+
     #endregion
 
     #region IDisposable Implementation

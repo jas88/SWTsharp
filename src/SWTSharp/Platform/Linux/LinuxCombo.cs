@@ -203,6 +203,70 @@ internal class LinuxCombo : LinuxWidget, IPlatformCombo
         }
     }
 
+    public void SetTextLimit(int limit)
+    {
+        // For editable combos, set max length on entry
+        IntPtr entry = gtk_bin_get_child(_gtkComboBox);
+        if (entry != IntPtr.Zero)
+        {
+            gtk_entry_set_max_length(entry, limit);
+        }
+    }
+
+    public void SetVisibleItemCount(int count)
+    {
+        // GTK ComboBox doesn't have direct visible item count control
+        // The popup height is determined by the number of items and theme
+    }
+
+    public void SetTextSelection(int start, int end)
+    {
+        IntPtr entry = gtk_bin_get_child(_gtkComboBox);
+        if (entry != IntPtr.Zero)
+        {
+            gtk_editable_select_region(entry, start, end);
+        }
+    }
+
+    public (int Start, int End) GetTextSelection()
+    {
+        IntPtr entry = gtk_bin_get_child(_gtkComboBox);
+        if (entry != IntPtr.Zero)
+        {
+            int start = 0, end = 0;
+            gtk_editable_get_selection_bounds(entry, out start, out end);
+            return (start, end);
+        }
+        return (0, 0);
+    }
+
+    public void Copy()
+    {
+        IntPtr entry = gtk_bin_get_child(_gtkComboBox);
+        if (entry != IntPtr.Zero)
+        {
+            gtk_editable_copy_clipboard(entry);
+        }
+    }
+
+    public void Cut()
+    {
+        IntPtr entry = gtk_bin_get_child(_gtkComboBox);
+        if (entry != IntPtr.Zero)
+        {
+            gtk_editable_cut_clipboard(entry);
+        }
+    }
+
+    public void Paste()
+    {
+        IntPtr entry = gtk_bin_get_child(_gtkComboBox);
+        if (entry != IntPtr.Zero)
+        {
+            gtk_editable_paste_clipboard(entry);
+        }
+    }
+
     #endregion
 
     #region IPlatformWidget Implementation
@@ -352,6 +416,24 @@ internal class LinuxCombo : LinuxWidget, IPlatformCombo
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern IntPtr gtk_entry_get_text(IntPtr entry);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_entry_set_max_length(IntPtr entry, int max);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_editable_select_region(IntPtr editable, int start, int end);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern bool gtk_editable_get_selection_bounds(IntPtr editable, out int start, out int end);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_editable_copy_clipboard(IntPtr editable);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_editable_cut_clipboard(IntPtr editable);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_editable_paste_clipboard(IntPtr editable);
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_container_add(IntPtr container, IntPtr widget);

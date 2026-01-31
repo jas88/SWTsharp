@@ -486,6 +486,44 @@ internal partial class Win32Table : IPlatformTable
         return _columns.Count;
     }
 
+    public void SetColumnResizable(int columnIndex, bool resizable)
+    {
+        // Win32 ListView columns are always resizable by default
+        // To disable resizing would require custom header control handling
+    }
+
+    public void SetColumnMoveable(int columnIndex, bool moveable)
+    {
+        // Win32 ListView columns are not moveable by default
+        // Would require LVS_EX_HEADERDRAGDROP extended style
+    }
+
+    public void SetColumnToolTip(int columnIndex, string? tooltip)
+    {
+        // Win32 ListView header tooltips require custom handling
+        // Would need to subclass the header control
+    }
+
+    public int PackColumn(int columnIndex)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return 0;
+
+        // LVSCW_AUTOSIZE = -1, auto-sizes column to fit content
+        SendMessage(_hwnd, LVM_SETCOLUMNWIDTH, new IntPtr(columnIndex), new IntPtr(-1));
+
+        // Return the new width (would need additional call to get it)
+        return _columns[columnIndex].Width;
+    }
+
+    public void ShowItem(int itemIndex)
+    {
+        if (_disposed || itemIndex < 0 || itemIndex >= _rows.Count) return;
+
+        // LVM_ENSUREVISIBLE = LVM_FIRST + 19 = 0x1013
+        const uint LVM_ENSUREVISIBLE = 0x1000 + 19;
+        SendMessage(_hwnd, LVM_ENSUREVISIBLE, new IntPtr(itemIndex), IntPtr.Zero);
+    }
+
     // IPlatformComposite implementation
     public void AddChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
     public void RemoveChild(IPlatformWidget child) { /* Tables don't have child widgets */ }

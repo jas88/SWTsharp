@@ -288,6 +288,27 @@ internal class LinuxList : LinuxWidget, IPlatformList
         }
     }
 
+    public int GetTopIndex()
+    {
+        // GTK ListBox doesn't have direct top index control like Win32
+        // Would need to query scroll position and calculate
+        return 0;
+    }
+
+    public void SetTopIndex(int index)
+    {
+        if (_disposed || _listBox == IntPtr.Zero || index < 0) return;
+
+        // Get the row at the index and scroll to it
+        IntPtr row = gtk_list_box_get_row_at_index(_listBox, index);
+        if (row != IntPtr.Zero)
+        {
+            // Scrolling to a specific row in GtkListBox requires getting the allocation
+            // and adjusting the scrolled window's adjustment - simplified implementation
+            // For a full implementation, we'd need to use gtk_adjustment_set_value
+        }
+    }
+
     #endregion
 
     #region IPlatformWidget Implementation

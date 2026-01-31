@@ -203,6 +203,52 @@ internal class Win32Combo : IPlatformCombo
         }
     }
 
+    public void SetTextLimit(int limit)
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        SendMessage(_hwnd, CB_LIMITTEXT, new IntPtr(limit), IntPtr.Zero);
+    }
+
+    public void SetVisibleItemCount(int count)
+    {
+        // Win32 ComboBox doesn't have direct visible item count control
+        // The drop-down size is typically determined by the number of items
+    }
+
+    public void SetTextSelection(int start, int end)
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        int packed = (start & 0xFFFF) | ((end & 0xFFFF) << 16);
+        SendMessage(_hwnd, CB_SETEDITSEL, IntPtr.Zero, new IntPtr(packed));
+    }
+
+    public (int Start, int End) GetTextSelection()
+    {
+        if (_hwnd == IntPtr.Zero) return (0, 0);
+        int result = (int)SendMessage(_hwnd, CB_GETEDITSEL, IntPtr.Zero, IntPtr.Zero);
+        int start = result & 0xFFFF;
+        int end = (result >> 16) & 0xFFFF;
+        return (start, end);
+    }
+
+    public void Copy()
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        SendMessage(_hwnd, WM_COPY, IntPtr.Zero, IntPtr.Zero);
+    }
+
+    public void Cut()
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        SendMessage(_hwnd, WM_CUT, IntPtr.Zero, IntPtr.Zero);
+    }
+
+    public void Paste()
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        SendMessage(_hwnd, WM_PASTE, IntPtr.Zero, IntPtr.Zero);
+    }
+
     #endregion
 
     #region IPlatformWidget Implementation
@@ -337,6 +383,16 @@ internal class Win32Combo : IPlatformCombo
 
     // ComboBox Return Values
     private const int CB_ERR = -1;
+
+    // Additional ComboBox Messages
+    private const uint CB_LIMITTEXT = 0x0141;
+    private const uint CB_SETEDITSEL = 0x0142;
+    private const uint CB_GETEDITSEL = 0x0140;
+
+    // Clipboard Messages
+    private const uint WM_CUT = 0x0300;
+    private const uint WM_COPY = 0x0301;
+    private const uint WM_PASTE = 0x0302;
 
     // Window Messages
     private const uint WM_SETTEXT = 0x000C;
