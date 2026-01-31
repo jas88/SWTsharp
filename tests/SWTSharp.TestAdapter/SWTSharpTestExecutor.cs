@@ -198,7 +198,7 @@ public class SWTSharpTestExecutor : ITestExecutor
                     diagnosticMessageSink: new NullMessageSink());
 
                 // Discover tests
-                var discoveryVisitor = new TestDiscoveryVisitor();
+                using var discoveryVisitor = new TestDiscoveryVisitor();
                 var discoveryOptions = TestFrameworkOptions.ForDiscovery();
                 controller.Find(
                     includeSourceInformation: false,
@@ -228,7 +228,7 @@ public class SWTSharpTestExecutor : ITestExecutor
                 }
 
                 // Run tests
-                var executionVisitor = new TestExecutionVisitor(sourceTests, frameworkHandle, () => _cancelled);
+                using var executionVisitor = new TestExecutionVisitor(sourceTests, frameworkHandle, () => _cancelled);
                 var executionOptions = TestFrameworkOptions.ForExecution();
                 executionOptions.SetValue("xunit.execution.MaxParallelThreads", 1);
 
@@ -349,7 +349,7 @@ public class SWTSharpTestExecutor : ITestExecutor
     /// <summary>
     /// Collects discovered xUnit test cases.
     /// </summary>
-    private class TestDiscoveryVisitor : IMessageSink
+    private class TestDiscoveryVisitor : IMessageSink, IDisposable
     {
         public List<ITestCase> TestCases { get; } = new();
         public ManualResetEvent Finished { get; } = new(false);
@@ -377,7 +377,7 @@ public class SWTSharpTestExecutor : ITestExecutor
     /// <summary>
     /// Handles xUnit test execution messages and reports results via VSTest IFrameworkHandle.
     /// </summary>
-    private class TestExecutionVisitor : IMessageSink
+    private class TestExecutionVisitor : IMessageSink, IDisposable
     {
         private readonly List<TestCase> _testCases;
         private readonly IFrameworkHandle _frameworkHandle;

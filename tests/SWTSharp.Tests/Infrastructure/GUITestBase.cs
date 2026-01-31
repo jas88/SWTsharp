@@ -85,7 +85,9 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
         if (_useIsolatedDisplay)
         {
             // Create fresh Display for isolation (rare, opt-in)
-            // Note: Creating multiple Displays may not work on all platforms
+            // WARNING: On macOS, Display must be created on Thread 1 (main thread) for Cocoa.
+            // This isolated display path bypasses MainThreadDispatcher and may fail on macOS.
+            // Only use isolated displays on Windows/Linux, or ensure tests run via custom runner.
             Display = new Display();
         }
         else
