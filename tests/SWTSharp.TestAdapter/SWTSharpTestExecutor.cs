@@ -481,17 +481,14 @@ public class SWTSharpTestExecutor : ITestExecutor
         {
             lock (_lock)
             {
-                foreach (var testCase in _testCases)
+                foreach (var testCase in _testCases.Where(tc => !_reportedTests.Contains(tc.DisplayName)))
                 {
-                    if (!_reportedTests.Contains(testCase.DisplayName))
+                    _reportedTests.Add(testCase.DisplayName);
+                    _frameworkHandle.RecordResult(new TestResult(testCase)
                     {
-                        _reportedTests.Add(testCase.DisplayName);
-                        _frameworkHandle.RecordResult(new TestResult(testCase)
-                        {
-                            Outcome = TestOutcome.Failed,
-                            ErrorMessage = message
-                        });
-                    }
+                        Outcome = TestOutcome.Failed,
+                        ErrorMessage = message
+                    });
                 }
                 Finished.Set();
             }
