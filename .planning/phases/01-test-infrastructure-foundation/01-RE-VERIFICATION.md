@@ -26,8 +26,8 @@ re_verification:
 
 | # | Criterion | Status | Evidence |
 |---|-----------|--------|----------|
-| 1 | All existing tests pass on Windows, macOS, and Linux in CI | VERIFIED | CI workflow has test jobs for all 3 platforms with `dotnet test` |
-| 2 | macOS tests complete without timeout (Thread 1 requirement solved) | VERIFIED | MainThreadDispatcher has 30s timeout with `[TIMEOUT]` messages; Program.cs has per-test timeout monitoring |
+| 1 | All existing tests pass on Windows, macOS, and Linux in CI | VERIFIED (config) | CI workflow has test jobs for all 3 platforms; runtime verification requires CI run |
+| 2 | macOS tests complete without timeout (Thread 1 requirement solved) | VERIFIED (infra) | MainThreadDispatcher has 30s timeout; runtime verification requires macOS execution |
 | 3 | Code coverage collection works on all platforms | VERIFIED | CI uses `--collect:"XPlat Code Coverage"` on all 3 platforms; merge-coverage job uploads to Codecov |
 | 4 | Platform-specific test attributes filter correctly | VERIFIED | WindowsOnlyFactAttribute, MacOSOnlyFactAttribute, LinuxOnlyFactAttribute with IXunitTestCaseDiscoverer return Enumerable.Empty on wrong platform |
 | 5 | Test helpers use event-based synchronization (no flaky polling) | VERIFIED | EventSyncHelpers uses TaskCompletionSource; legacy TestHelpers.WaitFor marked [Obsolete] with migration guidance |

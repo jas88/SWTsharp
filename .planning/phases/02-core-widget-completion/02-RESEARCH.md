@@ -21,7 +21,7 @@ The established libraries/tools for this domain:
 ### Core
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
-| .NET 9.0 | 9.0 | Multi-platform runtime | Latest LTS with Native AOT support, multi-targeting to netstandard2.0/net8.0/net9.0 |
+| .NET 9.0 | 9.0 | Multi-platform runtime | Current STS with Native AOT support; .NET 8 is LTS; multi-targeting to netstandard2.0/net8.0/net9.0 |
 | SafeHandle | Built-in | Native resource management | Microsoft-recommended pattern for P/Invoke handle cleanup; critical finalizer guarantees |
 | P/Invoke | Built-in | Platform interop | Standard .NET mechanism for calling native Win32/Cocoa/GTK APIs |
 | xUnit | 2.9.3 | Testing framework | From Phase 1; event-based sync via TaskCompletionSource |

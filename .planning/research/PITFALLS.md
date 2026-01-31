@@ -352,21 +352,22 @@ public void Button_Click_FiresEvent()
 [Fact]
 public void GraphicsContext_Dispose_ReleasesHandle()
 {
-    SafeGraphicsHandle? handle = null;
-    var weakRef = new WeakReference(handle);
+    WeakReference? weakRef = null;
 
     void CreateAndDispose() {
         using var display = new Display();
         using var shell = new Shell(display);
-        handle = SafeGraphicsHandle.CreatePlatformGraphicsContext(shell.Handle);
-        // handle goes out of scope, should be collected
+        var handle = SafeGraphicsHandle.CreatePlatformGraphicsContext(shell.Handle);
+        weakRef = new WeakReference(handle);  // Create WeakRef AFTER handle is assigned
+        // handle goes out of scope and is disposed, should be collected
     }
 
     CreateAndDispose();
     GC.Collect();
     GC.WaitForPendingFinalizers();
+    GC.Collect();  // Second collection to ensure weak refs are cleared
 
-    Assert.False(weakRef.IsAlive, "Handle leaked - finalizer did not run");
+    Assert.False(weakRef!.IsAlive, "Handle leaked - finalizer did not run");
 }
 ```
 
@@ -475,7 +476,7 @@ public string? Open()
 - [ ] No SafeHandle leaks detected
 - [ ] CI success rate > 99.5% (max 0.5% flakiness)
 - [ ] Zero high-priority TODOs
-- [ ] All dialogs return non-null results
+- [ ] All dialogs return non-null results when user completes action (null on cancel)
 
 ---
 

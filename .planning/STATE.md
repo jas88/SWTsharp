@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2025-01-29)
 
 **Core value:** API compatibility with Java SWT 4.x
-**Current focus:** Phase 2 - Widget Test Suite (Phase 1 Complete with Gap Closure)
+**Current focus:** Phase 2 Complete - Ready for Phase 3 (Layout & Packaging)
 
 ## Current Position
 
-Phase: 1 of 4 (Test Infrastructure Foundation) - COMPLETE (including gap closure)
-Plan: 4 of 4 in current phase (all complete including gap closure)
-Status: Phase 1 fully complete, ready for Phase 2
-Last activity: 2026-01-30 - Completed 01-04-PLAN.md (gap closure)
+Phase: 2 of 4 (Core Widget Completion) - COMPLETE
+Plan: 6 of 6 in Phase 2
+Status: Phase 2 complete, ready for Phase 3
+Last activity: 2026-01-31 - Completed 02-06-PLAN.md (Graphics/SafeHandle)
 
-Progress: [████░░░░░░] 33% (4/12 total plans)
+Progress: [████████░░] 83% (10/12 total plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: ~4 minutes
-- Total execution time: ~15 minutes
+- Total plans completed: 7
+- Average duration: ~5 minutes
+- Total execution time: ~35 minutes
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 4 | ~15m | ~4m |
+| 02 | 6 | ~50m | ~8m |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 01-02, 01-03, 01-04
-- Trend: Fast execution, consistent ~4min per plan
+- Last 5 plans: 02-03, 02-04, 02-05, 02-06
+- Trend: Consistent execution, complex widgets take longer
 
 *Updated after each plan completion*
 
@@ -51,6 +52,12 @@ Recent decisions affecting current work:
 - [01-03]: GUITestBase strict disposal checking throws on undisposed widgets
 - [01-04]: Mark legacy polling methods [Obsolete] rather than remove for backward compatibility
 - [01-04]: Use IAsyncLifetime for xUnit fixtures needing async setup/teardown
+- [02-05]: TableColumn delegates to IPlatformTable methods rather than separate IPlatformTableColumn
+- [02-05]: TreeItem uses data source pattern - stores state locally, platform queries when rendering
+- [02-05]: Combo text limit enforced in managed layer, clipboard operations native
+- [02-06]: SafeHandle Create() throws InvalidOperationException with guidance to use FromHandle()
+- [02-06]: Canvas.Redraw() triggers paint events synchronously via OnPlatformPaint()
+- [02-06]: MSB3277 suppressed for WebView2 WindowsBase version conflict (benign on non-Windows)
 
 ### Pending Todos
 
@@ -59,12 +66,12 @@ None.
 ### Blockers/Concerns
 
 - macOS Thread 1 requirement addressed with TestHost (Phase 1)
-- 200+ TODOs indicate substantial incomplete work (address in Phase 2)
-- No graphics or layout tests currently exist (address in Phase 2)
-- Pre-existing custom adapter GUID parsing error (does not block standard tests)
+- Pre-existing Table/TreeItem objc_msgSend_fpret entry point issue on ARM macOS
+- Canvas tests exist but require custom test runner on macOS
 
 ## Session Continuity
 
-Last session: 2026-01-30
-Stopped at: Completed 01-04-PLAN.md (Phase 1 gap closure complete)
+Last session: 2026-01-31
+Stopped at: Phase 2 complete (all 6 plans executed)
 Resume file: None
+Next: Phase 3 - Layout Managers & Packaging

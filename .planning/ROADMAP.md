@@ -27,7 +27,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. All existing tests pass on Windows, macOS, and Linux in CI
   2. macOS tests complete without timeout (Thread 1 requirement solved)
   3. Code coverage collection works on all platforms
-  4. Platform-specific test attributes ([WindowsFact], [LinuxFact], [MacOSFact]) filter correctly
+  4. Platform-specific test attributes ([WindowsOnlyFact], [LinuxOnlyFact], [MacOSOnlyFact]) filter correctly
   5. Test helpers use event-based synchronization (no flaky polling)
 **Plans**: 4 plans
 
