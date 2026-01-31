@@ -509,6 +509,10 @@ public class SWTSharpTestExecutor : ITestExecutor
     private class NullMessageSink : IMessageSink, IDisposable
     {
         public bool OnMessage(IMessageSinkMessage message) => true;
+
+        /// <summary>
+        /// No-op disposal. This sink holds no resources requiring cleanup.
+        /// </summary>
         public void Dispose() { }
     }
 }
