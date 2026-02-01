@@ -162,8 +162,22 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformSlider CreateSliderWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxSlider in Phase 5.3
-        throw new NotImplementedException("CreateSliderWidget will be implemented in Phase 5.3");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating slider widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var slider = new Linux.LinuxSlider(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Slider widget created successfully");
+
+        return slider;
     }
 
     public IPlatformScale CreateScaleWidget(IPlatformWidget? parent, int style)
@@ -180,8 +194,22 @@ internal partial class LinuxPlatform : IPlatform
 
     public IPlatformSpinner CreateSpinnerWidget(IPlatformWidget? parent, int style)
     {
-        // TODO: Implement LinuxSpinner in Phase 5.3
-        throw new NotImplementedException("CreateSpinnerWidget will be implemented in Phase 5.3");
+        IntPtr parentHandle = IntPtr.Zero;
+
+        if (parent is Linux.LinuxWidget linuxWidget)
+        {
+            parentHandle = linuxWidget.GetNativeHandle();
+        }
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Creating spinner widget. Parent: 0x{parentHandle:X}, Style: 0x{style:X}");
+
+        var spinner = new Linux.LinuxSpinner(parentHandle, style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[Linux] Spinner widget created successfully");
+
+        return spinner;
     }
 
     public IPlatformComposite CreateTreeWidget(IPlatformWidget? parent, int style)
