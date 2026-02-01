@@ -44,6 +44,12 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
         {
             // Create a GtkFrame to provide border
             IntPtr frame = gtk_frame_new(null);
+            if (frame == IntPtr.Zero)
+            {
+                gtk_widget_destroy(_gtkFixedHandle);
+                _gtkFixedHandle = IntPtr.Zero;
+                throw new InvalidOperationException("Failed to create GTK frame for Composite border");
+            }
             gtk_container_add(frame, _gtkFixedHandle);
 
             // Add frame to parent

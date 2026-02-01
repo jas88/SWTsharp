@@ -51,7 +51,7 @@ internal class LinuxText : IPlatformTextInput
     private void CreateSingleLineText(IntPtr parentHandle, int style)
     {
         // Create GtkEntry
-        _widget = gtk_entry_new();
+        _widget = GtkHelpers.ThrowOnNull(gtk_entry_new(), "GtkEntry");
 
         // Handle password
         if ((style & SWT.PASSWORD) != 0)
@@ -86,7 +86,7 @@ internal class LinuxText : IPlatformTextInput
     private void CreateMultiLineText(IntPtr parentHandle, int style)
     {
         // Create GtkTextView
-        _widget = gtk_text_view_new();
+        _widget = GtkHelpers.ThrowOnNull(gtk_text_view_new(), "GtkTextView");
 
         // Get the text buffer
         _textBuffer = gtk_text_view_get_buffer(_widget);
@@ -104,7 +104,13 @@ internal class LinuxText : IPlatformTextInput
         }
 
         // Create scrolled window for multi-line text
-        _scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        IntPtr scrolled = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        if (scrolled == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_widget);
+            _widget = IntPtr.Zero;
+        }
+        _scrolledWindow = GtkHelpers.ThrowOnNull(scrolled, "GtkScrolledWindow for TextView");
 
         // Set scroll policies
         int hpolicy = GTK_POLICY_AUTOMATIC;

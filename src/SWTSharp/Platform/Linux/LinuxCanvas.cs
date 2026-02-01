@@ -53,6 +53,12 @@ internal class LinuxCanvas : LinuxWidget, IPlatformComposite
         {
             // Create a GtkFrame to provide border
             IntPtr frame = gtk_frame_new(null);
+            if (frame == IntPtr.Zero)
+            {
+                gtk_widget_destroy(_gtkDrawingAreaHandle);
+                _gtkDrawingAreaHandle = IntPtr.Zero;
+                throw new InvalidOperationException("Failed to create GTK frame for Canvas border");
+            }
             gtk_container_add(frame, _gtkDrawingAreaHandle);
 
             // Add frame to parent

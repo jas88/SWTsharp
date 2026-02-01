@@ -181,6 +181,8 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE: 1  # Force software rendering for Mesa/OpenGL
           GDK_BACKEND: x11  # Force X11 backend (not Wayland) for GTK
           MESA_GL_VERSION_OVERRIDE: 3.3  # Override Mesa GL version if needed
+          WEBKIT_DISABLE_COMPOSITING_MODE: 1  # Disable WebKit hardware acceleration to avoid EGL/DRI3 errors
+          WEBKIT_DISABLE_DMABUF_RENDERER: 1  # Disable WebKit DMA-BUF renderer
         run: |
           dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
             --configuration ${{ env.CONFIGURATION }} \
