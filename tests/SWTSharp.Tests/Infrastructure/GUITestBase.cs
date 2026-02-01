@@ -54,7 +54,7 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
     {
         get
         {
-            var folder = Path.Combine(AppContext.BaseDirectory, "TestResults");
+            var folder = Path.Join(AppContext.BaseDirectory, "TestResults");
             if (!Directory.Exists(folder))
             {
                 Directory.CreateDirectory(folder);
@@ -324,7 +324,7 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
         try
         {
             var testName = GetType().Name + "_" + System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var diagnosticsPath = Path.Combine(TestResultsFolder, $"{testName}_diagnostics.txt");
+            var diagnosticsPath = Path.Join(TestResultsFolder, $"{testName}_diagnostics.txt");
 
             var diagnostics = new List<string>
             {
