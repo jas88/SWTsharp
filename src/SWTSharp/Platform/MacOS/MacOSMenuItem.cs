@@ -197,42 +197,92 @@ internal class MacOSMenuItem : MacOSWidget, IPlatformMenuItem
 
         _accelerator = accelerator;
 
-        // Extract key code and modifiers from SWT accelerator format
-        // SWT format: modifier flags in high bits, key code in low bits
-        int keyCode = accelerator & 0xFFFF;
-        int modifiers = accelerator >> 16;
+        // SWT accelerator format: modifier flags OR'd with key code
+        // Special keys have KEYCODE_BIT (0x1000000) set, ASCII chars are in lower bits
+        int keyCode;
+        if ((accelerator & SWT.KEYCODE_BIT) != 0)
+        {
+            // Special key (F1-F12, arrows, etc.) - preserve the full key code
+            keyCode = accelerator & (SWT.KEYCODE_BIT | 0xFF);
+        }
+        else
+        {
+            // ASCII character - mask off any modifier bits in high bytes
+            keyCode = accelerator & 0xFF;
+        }
 
-        // Convert key code to character
-        char keyChar = (char)keyCode;
-        string keyEquivalent = keyChar.ToString().ToLowerInvariant();
+        // Build key equivalent string for macOS
+        string keyEquivalent = GetMacOSKeyEquivalent(keyCode);
 
         // Set key equivalent
         IntPtr nsKeyEquivalent = CreateNSString(keyEquivalent);
         IntPtr selSetKeyEquivalent = sel_registerName("setKeyEquivalent:");
         objc_msgSend_void(_nsMenuItem, selSetKeyEquivalent, nsKeyEquivalent);
 
-        // Build modifier mask
+        // Build modifier mask from SWT modifier flags
         ulong modifierMask = 0;
 
-        // SWT modifier constants (these match typical values)
-        const int SWT_MOD1 = 1 << 18;     // Command on Mac
-        const int SWT_MOD2 = 1 << 17;     // Shift
-        const int SWT_MOD3 = 1 << 19;     // Option/Alt
-        const int SWT_CTRL = 1 << 18;     // Control (same as MOD1 typically)
-        const int SWT_SHIFT = 1 << 17;
-        const int SWT_ALT = 1 << 19;
-        const int SWT_COMMAND = 1 << 20;
-
-        if ((modifiers & SWT_COMMAND) != 0 || (modifiers & SWT_CTRL) != 0 || (modifiers & SWT_MOD1) != 0)
+        if ((accelerator & SWT.COMMAND) != 0)
             modifierMask |= NSEventModifierFlagCommand;
-        if ((modifiers & SWT_SHIFT) != 0 || (modifiers & SWT_MOD2) != 0)
+        if ((accelerator & SWT.SHIFT) != 0)
             modifierMask |= NSEventModifierFlagShift;
-        if ((modifiers & SWT_ALT) != 0 || (modifiers & SWT_MOD3) != 0)
+        if ((accelerator & SWT.ALT) != 0)
             modifierMask |= NSEventModifierFlagOption;
+        if ((accelerator & SWT.CTRL) != 0)
+            modifierMask |= NSEventModifierFlagControl;
 
         // Set modifier mask
         IntPtr selSetKeyEquivalentModifierMask = sel_registerName("setKeyEquivalentModifierMask:");
         objc_msgSend_void(_nsMenuItem, selSetKeyEquivalentModifierMask, modifierMask);
+    }
+
+    /// <summary>
+    /// Converts an SWT key code to a macOS key equivalent string.
+    /// </summary>
+    private static string GetMacOSKeyEquivalent(int keyCode)
+    {
+        // Handle special keys (F1-F12, arrows, etc.)
+        if ((keyCode & SWT.KEYCODE_BIT) != 0)
+        {
+            int specialKey = keyCode & 0xFF;
+            return specialKey switch
+            {
+                1 => "\uF700",  // ARROW_UP - NSUpArrowFunctionKey
+                2 => "\uF701",  // ARROW_DOWN - NSDownArrowFunctionKey
+                3 => "\uF702",  // ARROW_LEFT - NSLeftArrowFunctionKey
+                4 => "\uF703",  // ARROW_RIGHT - NSRightArrowFunctionKey
+                5 => "\uF72C",  // PAGE_UP - NSPageUpFunctionKey
+                6 => "\uF72D",  // PAGE_DOWN - NSPageDownFunctionKey
+                7 => "\uF729",  // HOME - NSHomeFunctionKey
+                8 => "\uF72B",  // END - NSEndFunctionKey
+                9 => "\uF727",  // INSERT - NSInsertFunctionKey
+                10 => "\uF704", // F1 - NSF1FunctionKey
+                11 => "\uF705", // F2 - NSF2FunctionKey
+                12 => "\uF706", // F3 - NSF3FunctionKey
+                13 => "\uF707", // F4 - NSF4FunctionKey
+                14 => "\uF708", // F5 - NSF5FunctionKey
+                15 => "\uF709", // F6 - NSF6FunctionKey
+                16 => "\uF70A", // F7 - NSF7FunctionKey
+                17 => "\uF70B", // F8 - NSF8FunctionKey
+                18 => "\uF70C", // F9 - NSF9FunctionKey
+                19 => "\uF70D", // F10 - NSF10FunctionKey
+                20 => "\uF70E", // F11 - NSF11FunctionKey
+                21 => "\uF70F", // F12 - NSF12FunctionKey
+                _ => string.Empty
+            };
+        }
+
+        // Handle ASCII characters
+        return keyCode switch
+        {
+            SWT.CR => "\r",
+            SWT.BS => "\b",
+            SWT.DEL => "\u007F",
+            SWT.ESC => "\u001B",
+            SWT.TAB => "\t",
+            _ when keyCode >= 32 && keyCode < 127 => ((char)keyCode).ToString().ToLowerInvariant(),
+            _ => string.Empty
+        };
     }
 
     public int GetAccelerator()

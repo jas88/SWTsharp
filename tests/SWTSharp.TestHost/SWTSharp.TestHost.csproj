@@ -10,6 +10,9 @@
     <!-- This is the test host executable that runs tests with Thread 1 control -->
     <AssemblyName>SWTSharp.TestHost</AssemblyName>
 
+    <!-- NOT a test project - this is a custom test runner, exclude from VSTest discovery -->
+    <IsTestProject>false</IsTestProject>
+
     <!-- Disable xUnit's auto-generated entry point -->
     <GenerateProgramFile>false</GenerateProgramFile>
 
