@@ -17,6 +17,9 @@ internal class LinuxTabFolder : IPlatformTabFolder
     private RGB _background = new RGB(240, 240, 240);
     private RGB _foreground = new RGB(0, 0, 0);
 
+    // Keep delegate alive to prevent GC collection during GTK signal callbacks
+    private readonly SwitchPageCallback _switchPageCallback;
+
     // Events required by IPlatformComposite
     #pragma warning disable CS0067
     public event EventHandler<IPlatformWidget>? ChildAdded;
@@ -31,6 +34,7 @@ internal class LinuxTabFolder : IPlatformTabFolder
     public LinuxTabFolder(IntPtr parentHandle, int style)
     {
         _style = style;
+        _switchPageCallback = OnSwitchPage;
 
         // Create GtkNotebook for tab control
         _gtkNotebook = gtk_notebook_new();
@@ -63,7 +67,7 @@ internal class LinuxTabFolder : IPlatformTabFolder
         }
 
         // Connect switch-page signal for selection changes
-        g_signal_connect_data(_gtkNotebook, "switch-page", OnSwitchPage, IntPtr.Zero, IntPtr.Zero, 0);
+        g_signal_connect_data(_gtkNotebook, "switch-page", _switchPageCallback, IntPtr.Zero, IntPtr.Zero, 0);
 
         // Show the widget
         gtk_widget_show(_gtkNotebook);

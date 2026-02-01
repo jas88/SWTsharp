@@ -333,6 +333,9 @@ internal class LinuxExpandItem : IPlatformExpandItem
     private IPlatformWidget? _control;
     private bool _disposed;
 
+    // Keep delegate alive to prevent GC collection during GTK signal callbacks
+    private readonly ActivateCallback _activateCallback;
+
     #pragma warning disable CS0067
     public event EventHandler<int>? Click;
     public event EventHandler<int>? FocusGained;
@@ -344,6 +347,7 @@ internal class LinuxExpandItem : IPlatformExpandItem
     public LinuxExpandItem(LinuxExpandBar expandBar, IntPtr parentBox, int style, int index)
     {
         _expandBar = expandBar;
+        _activateCallback = OnActivated;
 
         // Create GtkExpander
         _expander = gtk_expander_new("");
@@ -358,7 +362,7 @@ internal class LinuxExpandItem : IPlatformExpandItem
         gtk_box_pack_start(parentBox, _expander, false, false, 0);
 
         // Connect activate signal for expand/collapse events
-        g_signal_connect_data(_expander, "activate", OnActivated, IntPtr.Zero, IntPtr.Zero, 0);
+        g_signal_connect_data(_expander, "activate", _activateCallback, IntPtr.Zero, IntPtr.Zero, 0);
 
         gtk_widget_show(_expander);
         gtk_widget_show(_contentBox);

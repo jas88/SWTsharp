@@ -17,6 +17,9 @@ internal class LinuxCombo : LinuxWidget, IPlatformCombo
     private RGB _foreground = new RGB(0, 0, 0);
     private int _selectionIndex = -1;
 
+    // Keep delegate alive to prevent GC collection during GTK signal callbacks
+    private readonly ChangedCallback _changedCallback;
+
     // Events required by IPlatformSelectionEvents
     public event EventHandler<int>? SelectionChanged;
     #pragma warning disable CS0067
@@ -33,6 +36,7 @@ internal class LinuxCombo : LinuxWidget, IPlatformCombo
     public LinuxCombo(IntPtr parentHandle, int style)
     {
         _style = style;
+        _changedCallback = OnChangedCallback;
 
         // Create GtkComboBoxText (simple text-based combo)
         if ((style & SWT.READ_ONLY) != 0)
@@ -60,7 +64,7 @@ internal class LinuxCombo : LinuxWidget, IPlatformCombo
         }
 
         // Connect changed signal for selection changes
-        g_signal_connect_data(_gtkComboBox, "changed", OnChangedCallback, IntPtr.Zero, IntPtr.Zero, 0);
+        g_signal_connect_data(_gtkComboBox, "changed", _changedCallback, IntPtr.Zero, IntPtr.Zero, 0);
 
         // Show the widget
         gtk_widget_show(_gtkComboBox);
