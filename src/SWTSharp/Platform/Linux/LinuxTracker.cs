@@ -9,6 +9,10 @@ namespace SWTSharp.Platform.Linux;
 /// </summary>
 internal class LinuxTracker : IPlatformTracker
 {
+    private const string GtkLib = "libgtk-3.so.0";
+    private const string GdkLib = "libgdk-3.so.0";
+    private const string CairoLib = "libcairo.so.2";
+
     private Rectangle[] _rectangles = Array.Empty<Rectangle>();
     private bool _stippled;
     private int _cursorType;
@@ -262,67 +266,67 @@ internal class LinuxTracker : IPlatformTracker
     }
 
     // GTK/GDK/Cairo API declarations
-    [DllImport("gtk-3")]
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_widget_get_window(IntPtr widget);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_get_default_root_window();
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_cairo_create(IntPtr window);
 
-    [DllImport("cairo")]
+    [DllImport(CairoLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void cairo_set_operator(IntPtr cr, int op);
 
-    [DllImport("cairo")]
+    [DllImport(CairoLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void cairo_set_line_width(IntPtr cr, double width);
 
-    [DllImport("cairo")]
+    [DllImport(CairoLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void cairo_set_dash(IntPtr cr, double[] dashes, int num_dashes, double offset);
 
-    [DllImport("cairo")]
+    [DllImport(CairoLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void cairo_set_source_rgb(IntPtr cr, double r, double g, double b);
 
-    [DllImport("cairo")]
+    [DllImport(CairoLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void cairo_rectangle(IntPtr cr, double x, double y, double width, double height);
 
-    [DllImport("cairo")]
+    [DllImport(CairoLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void cairo_stroke(IntPtr cr);
 
-    [DllImport("cairo")]
+    [DllImport(CairoLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void cairo_destroy(IntPtr cr);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_display_get_default();
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_display_get_device_manager(IntPtr display);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_device_manager_get_client_pointer(IntPtr deviceManager);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern int gdk_device_grab(IntPtr device, IntPtr window, int grab_ownership, bool owner_events, int event_mask, IntPtr cursor, uint time);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gdk_device_ungrab(IntPtr device, uint time);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gdk_device_get_position(IntPtr device, IntPtr screen, out int x, out int y);
 
-    [DllImport("gtk-3")]
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool gtk_events_pending();
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_event_get();
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern int gdk_event_get_event_type(IntPtr eventPtr);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern uint gdk_event_get_keyval(IntPtr eventPtr);
 
-    [DllImport("gdk-3")]
+    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gdk_event_free(IntPtr eventPtr);
 
     private const int CAIRO_OPERATOR_DIFFERENCE = 16;

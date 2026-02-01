@@ -75,6 +75,8 @@ public sealed class WindowsFactDiscoverer : IXunitTestCaseDiscoverer
         }
 
         // On Windows - return the test case normally
+        // CA2000: XunitTestCase ownership transfers to xUnit framework which disposes it
+#pragma warning disable CA2000
         return new[]
         {
             new XunitTestCase(
@@ -83,6 +85,7 @@ public sealed class WindowsFactDiscoverer : IXunitTestCaseDiscoverer
                 discoveryOptions.MethodDisplayOptionsOrDefault(),
                 testMethod)
         };
+#pragma warning restore CA2000
     }
 }
 
@@ -111,6 +114,8 @@ public sealed class MacOSFactDiscoverer : IXunitTestCaseDiscoverer
         }
 
         // On macOS - return the test case normally
+        // CA2000: XunitTestCase ownership transfers to xUnit framework which disposes it
+#pragma warning disable CA2000
         return new[]
         {
             new XunitTestCase(
@@ -119,6 +124,7 @@ public sealed class MacOSFactDiscoverer : IXunitTestCaseDiscoverer
                 discoveryOptions.MethodDisplayOptionsOrDefault(),
                 testMethod)
         };
+#pragma warning restore CA2000
     }
 }
 
@@ -147,6 +153,8 @@ public sealed class LinuxFactDiscoverer : IXunitTestCaseDiscoverer
         }
 
         // On Linux - return the test case normally
+        // CA2000: XunitTestCase ownership transfers to xUnit framework which disposes it
+#pragma warning disable CA2000
         return new[]
         {
             new XunitTestCase(
@@ -155,5 +163,6 @@ public sealed class LinuxFactDiscoverer : IXunitTestCaseDiscoverer
                 discoveryOptions.MethodDisplayOptionsOrDefault(),
                 testMethod)
         };
+#pragma warning restore CA2000
     }
 }

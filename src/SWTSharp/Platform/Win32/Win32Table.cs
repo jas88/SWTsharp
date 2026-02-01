@@ -28,6 +28,8 @@ internal partial class Win32Table : IPlatformTable
         public string Text { get; set; } = "";
         public int Width { get; set; } = 100;
         public int Alignment { get; set; } = SWT.LEFT;
+        public bool Resizable { get; set; } = true;
+        public bool Moveable { get; set; } = false;
     }
 
     private sealed class RowData
@@ -56,6 +58,7 @@ internal partial class Win32Table : IPlatformTable
 
     // ListView Extended Styles
     private const uint LVS_EX_GRIDLINES = 0x00000001;
+    private const uint LVS_EX_HEADERDRAGDROP = 0x00000010;
     private const uint LVS_EX_FULLROWSELECT = 0x00000020;
 
     // ListView Messages
@@ -73,8 +76,23 @@ internal partial class Win32Table : IPlatformTable
     private const uint LVM_SETEXTENDEDLISTVIEWSTYLE = LVM_FIRST + 54;
     private const uint LVM_GETEXTENDEDLISTVIEWSTYLE = LVM_FIRST + 55;
     private const uint LVM_SETCOLUMN = LVM_FIRST + 26;
+    private const uint LVM_GETCOLUMNWIDTH = LVM_FIRST + 29;
+    private const uint LVM_GETHEADER = LVM_FIRST + 31;
     private const uint LVM_GETSELECTEDCOUNT = LVM_FIRST + 50;
     private const uint LVM_GETNEXTITEM = LVM_FIRST + 12;
+
+    // Column width values
+    private const int LVSCW_AUTOSIZE = -1;
+    private const int LVSCW_AUTOSIZE_USEHEADER = -2;
+
+    // Header control messages
+    private const uint HDM_FIRST = 0x1200;
+    private const uint HDM_GETITEM = HDM_FIRST + 11;
+    private const uint HDM_SETITEM = HDM_FIRST + 12;
+
+    // Header item mask and format flags
+    private const uint HDI_FORMAT = 0x0004;
+    private const uint HDF_FIXEDWIDTH = 0x0100;
 
     // LVCOLUMN flags
     private const uint LVCF_FMT = 0x0001;
@@ -128,6 +146,23 @@ internal partial class Win32Table : IPlatformTable
         public int top;
         public int right;
         public int bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct HDITEM
+    {
+        public uint mask;
+        public int cxy;
+        public string? pszText;
+        public IntPtr hbm;
+        public int cchTextMax;
+        public uint fmt;
+        public IntPtr lParam;
+        public int iImage;
+        public int iOrder;
+        public uint type;
+        public IntPtr pvFilter;
+        public uint state;
     }
 
     // Events
@@ -185,9 +220,12 @@ internal partial class Win32Table : IPlatformTable
     }
 
     // Column Management
-    public int AddColumn(string text, int width, int alignment)
+    public int AddColumn(string text, int width, int alignment, int index = -1)
     {
         if (_disposed) return -1;
+
+        // If index is -1 or out of range, append to end
+        int insertIndex = (index < 0 || index > _columns.Count) ? _columns.Count : index;
 
         uint fmt = alignment switch
         {
@@ -203,19 +241,54 @@ internal partial class Win32Table : IPlatformTable
             cx = width > 0 ? width : 100,
             pszText = text ?? "",
             cchTextMax = (text ?? "").Length,
-            iSubItem = _columns.Count
+            iSubItem = insertIndex
         };
 
-        int result = (int)SendMessage(_hwnd, LVM_INSERTCOLUMN, new IntPtr(_columns.Count), ref column);
+        int result = (int)SendMessage(_hwnd, LVM_INSERTCOLUMN, new IntPtr(insertIndex), ref column);
 
         if (result != -1)
         {
-            _columns.Add(new ColumnInfo
+            var columnInfo = new ColumnInfo
             {
                 Text = text ?? "",
                 Width = width > 0 ? width : 100,
                 Alignment = alignment
-            });
+            };
+
+            if (insertIndex >= _columns.Count)
+            {
+                _columns.Add(columnInfo);
+            }
+            else
+            {
+                _columns.Insert(insertIndex, columnInfo);
+
+                // Update column indices in existing row data
+                foreach (var row in _rows)
+                {
+                    var newText = new Dictionary<int, string>();
+                    var newImages = new Dictionary<int, IPlatformImage?>();
+
+                    foreach (var kvp in row.ColumnText)
+                    {
+                        if (kvp.Key < insertIndex)
+                            newText[kvp.Key] = kvp.Value;
+                        else
+                            newText[kvp.Key + 1] = kvp.Value;
+                    }
+
+                    foreach (var kvp in row.ColumnImages)
+                    {
+                        if (kvp.Key < insertIndex)
+                            newImages[kvp.Key] = kvp.Value;
+                        else
+                            newImages[kvp.Key + 1] = kvp.Value;
+                    }
+
+                    row.ColumnText = newText;
+                    row.ColumnImages = newImages;
+                }
+            }
         }
 
         return result;
@@ -299,6 +372,74 @@ internal partial class Win32Table : IPlatformTable
         };
 
         SendMessage(_hwnd, LVM_SETCOLUMN, new IntPtr(columnIndex), ref column);
+    }
+
+    public void SetColumnResizable(int columnIndex, bool resizable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        _columns[columnIndex].Resizable = resizable;
+
+        // Get the header control
+        IntPtr headerHandle = SendMessage(_hwnd, LVM_GETHEADER, IntPtr.Zero, IntPtr.Zero);
+        if (headerHandle == IntPtr.Zero) return;
+
+        // Get current header item format
+        var hdItem = new HDITEM { mask = HDI_FORMAT };
+        SendMessage(headerHandle, HDM_GETITEM, new IntPtr(columnIndex), ref hdItem);
+
+        // Set or clear the fixed width flag
+        if (resizable)
+        {
+            hdItem.fmt &= ~HDF_FIXEDWIDTH;
+        }
+        else
+        {
+            hdItem.fmt |= HDF_FIXEDWIDTH;
+        }
+
+        // Update the header item
+        SendMessage(headerHandle, HDM_SETITEM, new IntPtr(columnIndex), ref hdItem);
+    }
+
+    public void SetColumnMoveable(int columnIndex, bool moveable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        _columns[columnIndex].Moveable = moveable;
+
+        // LVS_EX_HEADERDRAGDROP is a table-wide setting, not per-column
+        // We need to check if ANY column is moveable
+        bool anyMoveable = _columns.Any(c => c.Moveable);
+
+        uint exStyle = (uint)SendMessage(_hwnd, LVM_GETEXTENDEDLISTVIEWSTYLE, IntPtr.Zero, IntPtr.Zero).ToInt32();
+
+        if (anyMoveable)
+        {
+            exStyle |= LVS_EX_HEADERDRAGDROP;
+        }
+        else
+        {
+            exStyle &= ~LVS_EX_HEADERDRAGDROP;
+        }
+
+        SendMessage(_hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, IntPtr.Zero, new IntPtr(exStyle));
+    }
+
+    public int PackColumn(int columnIndex)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return 0;
+
+        // Auto-size column to fit content
+        SendMessage(_hwnd, LVM_SETCOLUMNWIDTH, new IntPtr(columnIndex), new IntPtr(LVSCW_AUTOSIZE));
+
+        // Query the actual width after auto-sizing
+        int actualWidth = SendMessage(_hwnd, LVM_GETCOLUMNWIDTH, new IntPtr(columnIndex), IntPtr.Zero).ToInt32();
+
+        // Update cached width
+        _columns[columnIndex].Width = actualWidth;
+
+        return actualWidth;
     }
 
     // Row Management
@@ -486,33 +627,10 @@ internal partial class Win32Table : IPlatformTable
         return _columns.Count;
     }
 
-    public void SetColumnResizable(int columnIndex, bool resizable)
-    {
-        // Win32 ListView columns are always resizable by default
-        // To disable resizing would require custom header control handling
-    }
-
-    public void SetColumnMoveable(int columnIndex, bool moveable)
-    {
-        // Win32 ListView columns are not moveable by default
-        // Would require LVS_EX_HEADERDRAGDROP extended style
-    }
-
     public void SetColumnToolTip(int columnIndex, string? tooltip)
     {
         // Win32 ListView header tooltips require custom handling
         // Would need to subclass the header control
-    }
-
-    public int PackColumn(int columnIndex)
-    {
-        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return 0;
-
-        // LVSCW_AUTOSIZE = -1, auto-sizes column to fit content
-        SendMessage(_hwnd, LVM_SETCOLUMNWIDTH, new IntPtr(columnIndex), new IntPtr(-1));
-
-        // Return the new width (would need additional call to get it)
-        return _columns[columnIndex].Width;
     }
 
     public void ShowItem(int itemIndex)
@@ -627,6 +745,9 @@ internal partial class Win32Table : IPlatformTable
 
     [DllImport(User32, CharSet = CharSet.Unicode)]
     private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, ref LVITEM lParam);
+
+    [DllImport(User32, CharSet = CharSet.Unicode)]
+    private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, ref HDITEM lParam);
 
     [DllImport(User32)]
     private static extern uint GetWindowLong(IntPtr hWnd, int nIndex);

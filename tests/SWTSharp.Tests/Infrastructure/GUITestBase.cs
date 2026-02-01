@@ -1,8 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+
+// CA1031: Generic catch clauses are intentional for diagnostic capture before re-throwing
+// CS8604: Path.Combine arguments are relative paths, not absolute - false positive
+#pragma warning disable CA1031
 
 namespace SWTSharp.Tests.Infrastructure;
 
@@ -48,7 +54,7 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
     {
         get
         {
-            var folder = Path.Combine(AppContext.BaseDirectory, "TestResults");
+            var folder = Path.Join(AppContext.BaseDirectory, "TestResults");
             if (!Directory.Exists(folder))
             {
                 Directory.CreateDirectory(folder);
@@ -211,22 +217,19 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
     {
         var undisposedWidgets = new List<string>();
 
-        foreach (var shell in _trackedShells)
+        foreach (var shell in _trackedShells.Where(s => !s.IsDisposed))
         {
-            if (!shell.IsDisposed)
-            {
-                undisposedWidgets.Add($"Shell: {shell}");
+            undisposedWidgets.Add($"Shell: {shell}");
 
-                // Check children recursively
-                try
-                {
-                    var children = GetUndisposedChildren(shell);
-                    undisposedWidgets.AddRange(children);
-                }
-                catch
-                {
-                    // Shell may be in inconsistent state
-                }
+            // Check children recursively
+            try
+            {
+                var children = GetUndisposedChildren(shell);
+                undisposedWidgets.AddRange(children);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Shell may have been disposed during iteration - ignore
             }
         }
 
@@ -255,23 +258,24 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
                 children = composite.Children;
             });
         }
-        catch
+        catch (ObjectDisposedException)
+        {
+            return result;
+        }
+        catch (InvalidOperationException)
         {
             return result;
         }
 
         if (children == null) return result;
 
-        foreach (var child in children)
+        foreach (var child in children.Where(c => !c.IsDisposed))
         {
-            if (!child.IsDisposed)
-            {
-                result.Add($"  {child.GetType().Name}: {child}");
+            result.Add($"  {child.GetType().Name}: {child}");
 
-                if (child is Composite childComposite)
-                {
-                    result.AddRange(GetUndisposedChildren(childComposite));
-                }
+            if (child is Composite childComposite)
+            {
+                result.AddRange(GetUndisposedChildren(childComposite));
             }
         }
 
@@ -320,7 +324,7 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
         try
         {
             var testName = GetType().Name + "_" + System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var diagnosticsPath = Path.Combine(TestResultsFolder, $"{testName}_diagnostics.txt");
+            var diagnosticsPath = Path.Join(TestResultsFolder, $"{testName}_diagnostics.txt");
 
             var diagnostics = new List<string>
             {
@@ -353,7 +357,11 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
 
             File.WriteAllLines(diagnosticsPath, diagnostics);
         }
-        catch
+        catch (IOException)
+        {
+            // Don't let diagnostic capture failures mask the original error
+        }
+        catch (UnauthorizedAccessException)
         {
             // Don't let diagnostic capture failures mask the original error
         }
@@ -376,7 +384,11 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
                 children = composite.Children;
             });
         }
-        catch
+        catch (ObjectDisposedException)
+        {
+            return result;
+        }
+        catch (InvalidOperationException)
         {
             return result;
         }
@@ -412,7 +424,11 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
                         shell.Dispose();
                     }
                 }
-                catch
+                catch (ObjectDisposedException)
+                {
+                    // Swallow disposal exceptions during cleanup
+                }
+                catch (InvalidOperationException)
                 {
                     // Swallow disposal exceptions during cleanup
                 }

@@ -20,6 +20,7 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     #pragma warning restore CS0169
     private readonly List<IntPtr> _columns = new();
     private readonly List<RowData> _rows = new();
+    private readonly HashSet<int> _moveableColumns = new(); // Track per-column moveable state
     private bool _headerVisible = true;
     private bool _linesVisible = false;
     private bool _disposed;
@@ -163,9 +164,12 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     }
 
     // Column Management
-    public int AddColumn(string text, int width, int alignment)
+    public int AddColumn(string text, int width, int alignment, int index = -1)
     {
         if (_disposed) return -1;
+
+        // Determine insertion index
+        int insertIndex = (index < 0 || index > _columns.Count) ? _columns.Count : index;
 
         // Create NSTableColumn
         IntPtr column = objc_msgSend(_nsTableColumnClass, sel_registerName("alloc"));
@@ -180,9 +184,9 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         IntPtr selHeaderCell = sel_registerName("headerCell");
         IntPtr selSetStringValue = sel_registerName("setStringValue:");
 
-        objc_msgSend_fpret(column, selSetWidth, width > 0 ? (double)width : 100.0);
-        objc_msgSend_fpret(column, selSetMinWidth, 20.0);
-        objc_msgSend_fpret(column, selSetMaxWidth, 10000.0);
+        objc_msgSend_double(column, selSetWidth, width > 0 ? (double)width : 100.0);
+        objc_msgSend_double(column, selSetMinWidth, 20.0);
+        objc_msgSend_double(column, selSetMaxWidth, 10000.0);
 
         // Set header text
         IntPtr headerCell = objc_msgSend(column, selHeaderCell);
@@ -202,14 +206,40 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         };
         objc_msgSend(dataCell, selSetAlignment, new IntPtr(nsAlignment));
 
-        // Add column to table
+        // Add column to table (always appends)
         objc_msgSend(_tableView, _selAddTableColumn, column);
-        _columns.Add(column);
+
+        // Track column in our list
+        if (insertIndex >= _columns.Count)
+        {
+            _columns.Add(column);
+        }
+        else
+        {
+            _columns.Insert(insertIndex, column);
+
+            // Move column from end to correct position in NSTableView
+            // moveColumn:toColumn: moves the column at fromIndex to toIndex
+            int fromIndex = _columns.Count - 1; // Column was appended, so it's at the end
+            objc_msgSend(_tableView, _selMoveColumn, new IntPtr(fromIndex), new IntPtr(insertIndex));
+
+            // Shift _moveableColumns indices >= insertIndex up by 1
+            var shifted = new HashSet<int>();
+            foreach (int idx in _moveableColumns)
+            {
+                shifted.Add(idx >= insertIndex ? idx + 1 : idx);
+            }
+            _moveableColumns.Clear();
+            foreach (int idx in shifted)
+            {
+                _moveableColumns.Add(idx);
+            }
+        }
 
         // Reload data to show new column
         objc_msgSend(_tableView, _selReloadData);
 
-        return _columns.Count - 1;
+        return insertIndex;
     }
 
     public void RemoveColumn(int columnIndex)
@@ -219,6 +249,24 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         IntPtr column = _columns[columnIndex];
         objc_msgSend(_tableView, _selRemoveTableColumn, column);
         _columns.RemoveAt(columnIndex);
+
+        // Update _moveableColumns: remove this index and shift indices > columnIndex down by 1
+        _moveableColumns.Remove(columnIndex);
+        var shifted = new HashSet<int>();
+        foreach (int idx in _moveableColumns)
+        {
+            shifted.Add(idx > columnIndex ? idx - 1 : idx);
+        }
+        _moveableColumns.Clear();
+        foreach (int idx in shifted)
+        {
+            _moveableColumns.Add(idx);
+        }
+
+        // Re-evaluate allowsColumnReordering - disable if no columns are moveable
+        bool anyMoveable = _moveableColumns.Count > 0;
+        IntPtr selSetAllowsColumnReordering = sel_registerName("setAllowsColumnReordering:");
+        objc_msgSend_void(_tableView, selSetAllowsColumnReordering, anyMoveable);
 
         // Update row data
         foreach (var row in _rows)
@@ -267,7 +315,7 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
         IntPtr column = _columns[columnIndex];
         IntPtr selSetWidth = sel_registerName("setWidth:");
-        objc_msgSend_fpret(column, selSetWidth, Math.Max(0, width));
+        objc_msgSend_double(column, selSetWidth, Math.Max(0, width));
     }
 
     public void SetColumnAlignment(int columnIndex, int alignment)
@@ -287,6 +335,52 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         };
         objc_msgSend(dataCell, selSetAlignment, new IntPtr(nsAlignment));
         objc_msgSend(_tableView, _selReloadData);
+    }
+
+    public void SetColumnResizable(int columnIndex, bool resizable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        IntPtr column = _columns[columnIndex];
+        IntPtr selSetResizingMask = sel_registerName("setResizingMask:");
+
+        // NSTableColumnNoResizing = 0, NSTableColumnAutoresizingMask = 1, NSTableColumnUserResizingMask = 2
+        int mask = resizable ? (1 | 2) : 0; // Autoresize + User resize, or none
+        objc_msgSend(column, selSetResizingMask, new IntPtr(mask));
+    }
+
+    public void SetColumnMoveable(int columnIndex, bool moveable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        // Track per-column moveable state
+        if (moveable)
+            _moveableColumns.Add(columnIndex);
+        else
+            _moveableColumns.Remove(columnIndex);
+
+        // NSTableView only has table-wide allowsColumnReordering.
+        // Enable reordering if ANY column is moveable.
+        bool anyMoveable = _moveableColumns.Count > 0;
+        IntPtr selSetAllowsColumnReordering = sel_registerName("setAllowsColumnReordering:");
+        objc_msgSend_void(_tableView, selSetAllowsColumnReordering, anyMoveable);
+    }
+
+    public int PackColumn(int columnIndex)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return 0;
+
+        IntPtr column = _columns[columnIndex];
+
+        // Get column width using sizeToFit if available, otherwise estimate
+        IntPtr selSizeToFit = sel_registerName("sizeToFit");
+        objc_msgSend(column, selSizeToFit);
+
+        // Get the new width
+        IntPtr selWidth = sel_registerName("width");
+        double width = objc_msgSend_double_ret(column, selWidth);
+
+        return (int)Math.Max(width, 50);
     }
 
     // Row Management
@@ -449,43 +543,10 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         return _columns.Count;
     }
 
-    public void SetColumnResizable(int columnIndex, bool resizable)
-    {
-        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
-
-        IntPtr column = _columns[columnIndex];
-        IntPtr selSetResizingMask = sel_registerName("setResizingMask:");
-        // NSTableColumnNoResizing = 0, NSTableColumnAutoresizingMask = 1, NSTableColumnUserResizingMask = 2
-        int mask = resizable ? 2 : 0;
-        objc_msgSend(column, selSetResizingMask, new IntPtr(mask));
-    }
-
-    public void SetColumnMoveable(int columnIndex, bool moveable)
-    {
-        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
-
-        // NSTableView has allowsColumnReordering property
-        IntPtr selSetAllowsColumnReordering = sel_registerName("setAllowsColumnReordering:");
-        objc_msgSend(_tableView, selSetAllowsColumnReordering, moveable);
-    }
-
     public void SetColumnToolTip(int columnIndex, string? tooltip)
     {
         // NSTableColumn doesn't have direct tooltip support
         // Would require custom header cell implementation
-    }
-
-    public int PackColumn(int columnIndex)
-    {
-        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return 0;
-
-        IntPtr column = _columns[columnIndex];
-        IntPtr selSizeToFit = sel_registerName("sizeToFit");
-        objc_msgSend(column, selSizeToFit);
-
-        IntPtr selWidth = sel_registerName("width");
-        double width = objc_msgSend_fpret_ret(column, selWidth);
-        return (int)width;
     }
 
     public void ShowItem(int itemIndex)
@@ -723,8 +784,9 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, string arg1);
 
-    [DllImport("/usr/lib/libobjc.dylib")]
-    private static extern void objc_msgSend_fpret(IntPtr receiver, IntPtr selector, double arg1);
+    // For methods that take a double/CGFloat argument (not returning float - that would need fpret on x64)
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
 
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_fpret")]
     private static extern double objc_msgSend_fpret_ret(IntPtr receiver, IntPtr selector);
@@ -774,4 +836,10 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, bool arg1);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);
 }

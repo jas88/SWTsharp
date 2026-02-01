@@ -37,6 +37,7 @@ public class TreeItem : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
+                // Update platform directly if available, otherwise tree reloads from data
                 PlatformTreeItem?.SetText(_text);
             }
         }

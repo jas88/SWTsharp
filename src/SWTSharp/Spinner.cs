@@ -143,6 +143,7 @@ public class Spinner : Composite
 
     /// <summary>
     /// Gets or sets the maximum number of characters that the text field can hold.
+    /// A value of 0 removes the limit (unlimited).
     /// </summary>
     public int TextLimit
     {

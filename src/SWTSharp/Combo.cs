@@ -363,7 +363,7 @@ public class Combo : Control
     }
 
     /// <summary>
-    /// Clears the current text selection.
+    /// Clears the current text selection (highlight), not the item selection.
     /// </summary>
     public void ClearSelection()
     {

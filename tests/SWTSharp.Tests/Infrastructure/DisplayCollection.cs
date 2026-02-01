@@ -27,7 +27,6 @@ public class DisplayCollection : ICollectionFixture<DisplayFixture>
 /// </remarks>
 public class DisplayFixture : IAsyncLifetime
 {
-    private Thread _uiThread = null!;
     private bool _disposed;
 
     /// <summary>
@@ -72,7 +71,6 @@ public class DisplayFixture : IAsyncLifetime
             SWTSharp.TestHost.MainThreadDispatcher.Invoke(() =>
             {
                 Display = Display.Default;
-                _uiThread = Thread.CurrentThread;
                 Console.WriteLine($"DisplayFixture: Display created on Thread {Thread.CurrentThread.ManagedThreadId}");
             });
 
@@ -82,8 +80,15 @@ public class DisplayFixture : IAsyncLifetime
         }
         else
         {
+            // For Windows/Linux: Use the shared Display singleton.
+            // Unlike macOS, there's no strict thread requirement for Win32/GTK in test contexts.
             Display = Display.Default;
-            _uiThread = Thread.CurrentThread;
+
+            // Reset Display's thread to current thread so IsValidThread() returns true.
+            // This is necessary because xUnit may run fixture initialization on a different
+            // thread than where Display was first created (Display is a singleton).
+            Display.SetThreadForTesting();
+            Console.WriteLine($"DisplayFixture: Reset Display thread to {Thread.CurrentThread.ManagedThreadId}");
         }
 
         var displayThread = Display.GetType().GetField("_thread", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(Display) as Thread;
@@ -102,23 +107,37 @@ public class DisplayFixture : IAsyncLifetime
         {
             _disposed = true;
 
-            // Cleanup all shells directly on current thread
-            // Since DisplayFixture runs on xUnit's thread, and that's where we initialized Display,
-            // we're already on the correct thread for macOS
-            try
+            // On macOS, shell disposal must happen on Thread 1 (main thread)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) &&
+                SWTSharp.TestHost.MainThreadDispatcher.IsInitialized)
             {
-                var shells = Display.GetShells();
-                foreach (var shell in shells)
+                SWTSharp.TestHost.MainThreadDispatcher.Invoke(() =>
                 {
-                    shell?.Dispose();
-                }
+                    CleanupShells();
+                });
             }
-            catch
+            else
             {
-                // Swallow exceptions during disposal
+                CleanupShells();
             }
         }
 
         return Task.CompletedTask;
+    }
+
+    private void CleanupShells()
+    {
+        try
+        {
+            var shells = Display.GetShells();
+            foreach (var shell in shells)
+            {
+                shell?.Dispose();
+            }
+        }
+        catch
+        {
+            // Swallow exceptions during disposal
+        }
     }
 }

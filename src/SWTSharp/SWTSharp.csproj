@@ -77,6 +77,8 @@
     <!-- Suppress trim warnings for platform-specific reflection code used for native interop -->
     <!-- IL2075: GetType() usage for reflection in platform code (safe - limited to known types) -->
     <NoWarn>$(NoWarn);IL2075</NoWarn>
+    <!-- MSB3277: WindowsBase version conflict from WebView2 WPF components - benign on non-Windows -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -85,7 +87,7 @@
 
   <!-- WebView2 support for Browser widget on .NET 8+ (Windows runtime only) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0'">
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3650.58" />
   </ItemGroup>
 
 </Project>

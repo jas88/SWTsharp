@@ -1,6 +1,5 @@
 using SWTSharp.Graphics;
 using SWTSharp.Platform;
-using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp;
 
@@ -383,7 +382,7 @@ public class ToolItem : Widget
         // Use IPlatformToolItem interface to update image
         if (_platformToolItem != null && _image != null)
         {
-            var imageAdapter = new MacOSImage(_image);
+            var imageAdapter = Platform.PlatformFactory.Instance.CreateImageAdapter(_image);
             _platformToolItem.SetImage(imageAdapter);
         }
     }

@@ -445,6 +445,7 @@ public class List : Control
 
     /// <summary>
     /// Sets the zero-relative index of the item which is currently at the top of the list.
+    /// This scrolls the list so the specified item is at the top of the visible area.
     /// </summary>
     public void SetTopIndex(int index)
     {

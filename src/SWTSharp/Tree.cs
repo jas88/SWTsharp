@@ -217,7 +217,8 @@ public class Tree : Composite
         {
             foreach (var item in items)
             {
-                if (item != null && !_selection.Contains(item))
+                // Filter items by ownership (must belong to this tree) and disposal state
+                if (item != null && !item.IsDisposed && item.ParentTree == this && !_selection.Contains(item))
                 {
                     if (!_multiSelect && _selection.Count > 0)
                     {

@@ -167,6 +167,49 @@ internal class MacOSList : MacOSWidget, IPlatformList
         }
     }
 
+    public int GetTopIndex()
+    {
+        if (_disposed || _nsTableViewHandle == IntPtr.Zero || _nsScrollViewHandle == IntPtr.Zero)
+            return 0;
+
+        // Get visible rect of the table view
+        IntPtr visibleRectSelector = sel_registerName("visibleRect");
+        objc_msgSend_stret(out CGRect visibleRect, _nsTableViewHandle, visibleRectSelector);
+
+        // Get the row at the top of the visible rect
+        // rowAtPoint: returns the row at the given point
+        IntPtr rowAtPointSelector = sel_registerName("rowAtPoint:");
+        var point = new CGPoint(0, visibleRect.y);
+        int row = (int)objc_msgSend_point(_nsTableViewHandle, rowAtPointSelector, point).ToInt64();
+
+        return row >= 0 ? row : 0;
+    }
+
+    public void SetTopIndex(int index)
+    {
+        if (_disposed || _nsTableViewHandle == IntPtr.Zero) return;
+        if (index < 0 || index >= _items.Count) return;
+
+        // scrollRowToVisible: scrolls so the row is visible (may not be at top)
+        // For precise top positioning, we need to scroll to the row's rect
+        IntPtr rectOfRowSelector = sel_registerName("rectOfRow:");
+        objc_msgSend_stret_int(out CGRect rowRect, _nsTableViewHandle, rectOfRowSelector, index);
+
+        // Scroll the clip view to position the row at the top
+        IntPtr contentViewSelector = sel_registerName("contentView");
+        IntPtr clipView = objc_msgSend(_nsScrollViewHandle, contentViewSelector);
+        if (clipView != IntPtr.Zero)
+        {
+            IntPtr scrollToPointSelector = sel_registerName("scrollToPoint:");
+            var scrollPoint = new CGPoint(0, rowRect.y);
+            objc_msgSend_point_void(clipView, scrollToPointSelector, scrollPoint);
+
+            // Notify scroll view that it needs to update
+            IntPtr reflectSelector = sel_registerName("reflectScrolledClipView:");
+            objc_msgSend(_nsScrollViewHandle, reflectSelector, clipView);
+        }
+    }
+
     #endregion
 
     #region IPlatformWidget Implementation
@@ -243,24 +286,6 @@ internal class MacOSList : MacOSWidget, IPlatformList
     public RGB GetForeground()
     {
         return new RGB(0, 0, 0); // Default black
-    }
-
-    public int GetTopIndex()
-    {
-        if (_disposed || _nsTableViewHandle == IntPtr.Zero) return 0;
-
-        // Get the visible rect and calculate top index
-        // This is approximate - would need more precise scroll position calculation
-        return 0;
-    }
-
-    public void SetTopIndex(int index)
-    {
-        if (_disposed || _nsTableViewHandle == IntPtr.Zero || index < 0) return;
-
-        // [tableView scrollRowToVisible:index]
-        IntPtr selector = sel_registerName("scrollRowToVisible:");
-        objc_msgSend(_nsTableViewHandle, selector, (IntPtr)index);
     }
 
     #endregion
@@ -450,6 +475,19 @@ internal class MacOSList : MacOSWidget, IPlatformList
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CGPoint
+    {
+        public double x;
+        public double y;
+
+        public CGPoint(double x, double y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
     [DllImport(ObjCLibrary, EntryPoint = "objc_getClass")]
     private static extern IntPtr objc_getClass(string className);
 
@@ -497,6 +535,31 @@ internal class MacOSList : MacOSWidget, IPlatformList
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_indexSet(IntPtr receiver, IntPtr selector, IntPtr indexSet, bool extending);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_point(IntPtr receiver, IntPtr selector, CGPoint point);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_point_void(IntPtr receiver, IntPtr selector, CGPoint point);
+
+    // Architecture-specific struct return for rectOfRow: (takes int argument)
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern CGRect objc_msgSend_cgrect_int_arm64(IntPtr receiver, IntPtr selector, int row);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_stret")]
+    private static extern void objc_msgSend_stret_int_x64(out CGRect retval, IntPtr receiver, IntPtr selector, int row);
+
+    private static void objc_msgSend_stret_int(out CGRect retval, IntPtr receiver, IntPtr selector, int row)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+        {
+            retval = objc_msgSend_cgrect_int_arm64(receiver, selector, row);
+        }
+        else
+        {
+            objc_msgSend_stret_int_x64(out retval, receiver, selector, row);
+        }
+    }
 
     #endregion
 }

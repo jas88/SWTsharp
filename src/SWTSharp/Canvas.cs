@@ -132,18 +132,12 @@ public class Canvas : Composite
 
     protected override void UpdateVisible()
     {
-        if (PlatformWidget != null)
-        {
-            PlatformWidget.SetVisible(Visible);
-        }
+        PlatformWidget?.SetVisible(Visible);
     }
 
     protected override void UpdateEnabled()
     {
-        if (PlatformWidget != null)
-        {
-            PlatformWidget.SetEnabled(Enabled);
-        }
+        PlatformWidget?.SetEnabled(Enabled);
     }
 
     protected override void UpdateBounds()

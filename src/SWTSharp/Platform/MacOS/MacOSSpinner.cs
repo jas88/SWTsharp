@@ -196,17 +196,12 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
 
     public int TextLimit
     {
-        get
-        {
-            if (_disposed) return 0;
-            return _textLimit;
-        }
+        get => _textLimit;
         set
         {
-            if (_disposed) return;
-            _textLimit = Math.Max(0, value);
-            // NSTextField text limit is controlled via NSFormatter, which is complex.
-            // For now, store the value but text limit enforcement is not implemented.
+            _textLimit = value >= 0 ? value : 0;
+            // NSTextField doesn't have built-in text limit - would need delegate to enforce
+            // For now, we store the value but don't enforce it at the platform level
         }
     }
 

@@ -311,7 +311,7 @@ public class TableColumn : Widget
         if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
         {
             // Add column to platform layer
-            platformTable.AddColumn(_text, _width, _alignment);
+            platformTable.AddColumn(_text, _width, _alignment, index);
         }
     }
 

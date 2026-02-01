@@ -63,6 +63,13 @@ public partial interface IPlatform
 
     // Menu widgets
     IPlatformMenu CreateMenuWidget(int style);
+
+    /// <summary>
+    /// Creates a platform-specific image adapter for the given Image.
+    /// </summary>
+    /// <param name="image">The SWTSharp Image to adapt.</param>
+    /// <returns>A platform-specific IPlatformImage implementation.</returns>
+    IPlatformImage CreateImageAdapter(Graphics.Image image);
 }
 
 /// <summary>

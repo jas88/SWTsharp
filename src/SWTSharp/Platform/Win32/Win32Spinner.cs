@@ -191,8 +191,11 @@ internal class Win32Spinner : IPlatformSpinner
         set
         {
             _textLimit = value >= 0 ? value : 0;
-            if (_editHandle != IntPtr.Zero && _textLimit > 0)
+
+            if (_editHandle != IntPtr.Zero)
             {
+                // EM_SETLIMITTEXT: 0 means no limit (32KB default for single-line)
+                // Non-zero value sets the character limit
                 SendMessage(_editHandle, EM_SETLIMITTEXT, new IntPtr(_textLimit), IntPtr.Zero);
             }
         }
@@ -310,6 +313,9 @@ internal class Win32Spinner : IPlatformSpinner
     private const uint ES_NUMBER = 0x2000;
     private const uint ES_READONLY = 0x0800;
 
+    // Edit Control Messages
+    private const int EM_SETLIMITTEXT = 0x00C5;
+
     // Up-Down Control Styles
     private const uint UDS_ALIGNRIGHT = 0x0004;
     private const uint UDS_SETBUDDYINT = 0x0002;
@@ -322,9 +328,6 @@ internal class Win32Spinner : IPlatformSpinner
     private const int UDM_SETPOS32 = 0x0471;   // WM_USER + 113
     private const int UDM_GETPOS32 = 0x0472;   // WM_USER + 114
     private const int UDM_SETBUDDY = 0x0469;   // WM_USER + 105
-
-    // Edit Control Messages
-    private const int EM_SETLIMITTEXT = 0x00C5;
 
     // SetWindowPos flags
     private const uint SWP_NOZORDER = 0x0004;

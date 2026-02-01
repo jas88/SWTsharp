@@ -1,3 +1,4 @@
+using SWTSharp.Graphics;
 using SWTSharp.Platform.MacOS;
 
 namespace SWTSharp.Platform;
@@ -7,6 +8,14 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class MacOSPlatform
 {
+    /// <summary>
+    /// Creates a platform-specific image adapter for the given Image.
+    /// </summary>
+    public IPlatformImage CreateImageAdapter(Image image)
+    {
+        return new MacOSImage(image);
+    }
+
     /// <summary>
     /// Creates an ExpandBar widget (accordion control with disclosure triangles).
     /// </summary>
