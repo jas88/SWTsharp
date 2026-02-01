@@ -60,6 +60,13 @@ public partial interface IPlatform
     IPlatformTracker CreateTracker(IPlatformWidget? parent, int style);
     IPlatformDateTime CreateDateTimeWidget(IPlatformWidget? parent, int style);
     IPlatformExpandBar CreateExpandBarWidget(IPlatformWidget? parent, int style);
+
+    /// <summary>
+    /// Creates a platform-specific image adapter for the given Image.
+    /// </summary>
+    /// <param name="image">The SWTSharp Image to adapt.</param>
+    /// <returns>A platform-specific IPlatformImage implementation.</returns>
+    IPlatformImage CreateImageAdapter(Graphics.Image image);
 }
 
 /// <summary>

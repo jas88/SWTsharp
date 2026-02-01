@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -211,22 +212,19 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
     {
         var undisposedWidgets = new List<string>();
 
-        foreach (var shell in _trackedShells)
+        foreach (var shell in _trackedShells.Where(s => !s.IsDisposed))
         {
-            if (!shell.IsDisposed)
-            {
-                undisposedWidgets.Add($"Shell: {shell}");
+            undisposedWidgets.Add($"Shell: {shell}");
 
-                // Check children recursively
-                try
-                {
-                    var children = GetUndisposedChildren(shell);
-                    undisposedWidgets.AddRange(children);
-                }
-                catch
-                {
-                    // Shell may be in inconsistent state
-                }
+            // Check children recursively
+            try
+            {
+                var children = GetUndisposedChildren(shell);
+                undisposedWidgets.AddRange(children);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Shell may have been disposed during iteration - ignore
             }
         }
 
@@ -255,23 +253,24 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
                 children = composite.Children;
             });
         }
-        catch
+        catch (ObjectDisposedException)
+        {
+            return result;
+        }
+        catch (InvalidOperationException)
         {
             return result;
         }
 
         if (children == null) return result;
 
-        foreach (var child in children)
+        foreach (var child in children.Where(c => !c.IsDisposed))
         {
-            if (!child.IsDisposed)
-            {
-                result.Add($"  {child.GetType().Name}: {child}");
+            result.Add($"  {child.GetType().Name}: {child}");
 
-                if (child is Composite childComposite)
-                {
-                    result.AddRange(GetUndisposedChildren(childComposite));
-                }
+            if (child is Composite childComposite)
+            {
+                result.AddRange(GetUndisposedChildren(childComposite));
             }
         }
 
@@ -353,7 +352,11 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
 
             File.WriteAllLines(diagnosticsPath, diagnostics);
         }
-        catch
+        catch (IOException)
+        {
+            // Don't let diagnostic capture failures mask the original error
+        }
+        catch (UnauthorizedAccessException)
         {
             // Don't let diagnostic capture failures mask the original error
         }
@@ -376,7 +379,11 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
                 children = composite.Children;
             });
         }
-        catch
+        catch (ObjectDisposedException)
+        {
+            return result;
+        }
+        catch (InvalidOperationException)
         {
             return result;
         }
@@ -412,7 +419,11 @@ public abstract class GUITestBase : IAsyncLifetime, IDisposable
                         shell.Dispose();
                     }
                 }
-                catch
+                catch (ObjectDisposedException)
+                {
+                    // Swallow disposal exceptions during cleanup
+                }
+                catch (InvalidOperationException)
                 {
                     // Swallow disposal exceptions during cleanup
                 }
