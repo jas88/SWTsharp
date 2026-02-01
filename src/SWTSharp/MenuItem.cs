@@ -71,7 +71,7 @@ public class MenuItem : Widget
             CheckWidget();
             _image = value;
             // Update image through platform menu item interface
-            _platformMenuItem?.SetImage(value != null ? new Platform.MacOS.MacOSImage(value) : null);
+            _platformMenuItem?.SetImage(value != null ? Platform.PlatformFactory.Instance.CreateImageAdapter(value) : null);
         }
     }
 
