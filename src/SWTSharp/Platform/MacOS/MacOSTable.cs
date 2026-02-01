@@ -263,6 +263,11 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
             _moveableColumns.Add(idx);
         }
 
+        // Re-evaluate allowsColumnReordering - disable if no columns are moveable
+        bool anyMoveable = _moveableColumns.Count > 0;
+        IntPtr selSetAllowsColumnReordering = sel_registerName("setAllowsColumnReordering:");
+        objc_msgSend_void(_tableView, selSetAllowsColumnReordering, anyMoveable);
+
         // Update row data
         foreach (var row in _rows)
         {
