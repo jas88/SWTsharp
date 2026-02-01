@@ -11,6 +11,12 @@ namespace SWTSharp.TestHost;
 /// </summary>
 public static class MainThreadDispatcher
 {
+    /// <summary>
+    /// Default timeout for Invoke operations (30 seconds).
+    /// Tests that exceed this timeout are considered deadlocked.
+    /// </summary>
+    public const int DefaultTimeoutSeconds = 30;
+
     private static readonly BlockingCollection<Action> _workQueue = new();
     private static Thread? _mainThread;
     private static bool _running = true;
@@ -287,13 +293,30 @@ public static class MainThreadDispatcher
     }
 
     /// <summary>
-    /// Executes an action synchronously on the main thread.
+    /// Executes an action synchronously on the main thread with default timeout.
     /// If already on the main thread, executes immediately.
-    /// Otherwise, blocks until execution completes.
+    /// Otherwise, blocks until execution completes or timeout expires.
     /// On macOS, uses GCD dispatch_async_f to submit to CFRunLoop.
     /// On other platforms, uses custom blocking queue.
     /// </summary>
+    /// <param name="action">The action to execute on the main thread.</param>
+    /// <exception cref="TimeoutException">Thrown if the action does not complete within the timeout period.</exception>
     public static void Invoke(Action action)
+    {
+        Invoke(action, TimeSpan.FromSeconds(DefaultTimeoutSeconds));
+    }
+
+    /// <summary>
+    /// Executes an action synchronously on the main thread with specified timeout.
+    /// If already on the main thread, executes immediately.
+    /// Otherwise, blocks until execution completes or timeout expires.
+    /// On macOS, uses GCD dispatch_async_f to submit to CFRunLoop.
+    /// On other platforms, uses custom blocking queue.
+    /// </summary>
+    /// <param name="action">The action to execute on the main thread.</param>
+    /// <param name="timeout">Maximum time to wait for the action to complete.</param>
+    /// <exception cref="TimeoutException">Thrown if the action does not complete within the timeout period.</exception>
+    public static void Invoke(Action action, TimeSpan timeout)
     {
         if (!_initialized.IsSet)
         {
@@ -344,8 +367,12 @@ public static class MainThreadDispatcher
             Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Dispatching to GCD main queue (handle: 0x{GCHandle.ToIntPtr(handle):X})");
             dispatch_async_f(mainQueue, GCHandle.ToIntPtr(handle), callbackPtr);
 
-            Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Waiting for completion...");
-            completed.Wait();
+            Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Waiting for completion (timeout: {timeout.TotalSeconds}s)...");
+            if (!completed.Wait(timeout))
+            {
+                Console.Error.WriteLine($"[TIMEOUT] MainThreadDispatcher.Invoke: Action deadlocked after {timeout.TotalSeconds}s - possible Thread 1 dispatch issue");
+                throw new TimeoutException($"MainThreadDispatcher.Invoke timed out after {timeout.TotalSeconds} seconds. This may indicate a deadlock in Thread 1 dispatch.");
+            }
             Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Wait completed");
 
             if (exception != null)
@@ -379,8 +406,12 @@ public static class MainThreadDispatcher
                 }
             });
 
-            Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Waiting for completion...");
-            completed.Wait();
+            Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Waiting for completion (timeout: {timeout.TotalSeconds}s)...");
+            if (!completed.Wait(timeout))
+            {
+                Console.Error.WriteLine($"[TIMEOUT] MainThreadDispatcher.Invoke: Action deadlocked after {timeout.TotalSeconds}s - possible Thread 1 dispatch issue");
+                throw new TimeoutException($"MainThreadDispatcher.Invoke timed out after {timeout.TotalSeconds} seconds. This may indicate a deadlock in Thread 1 dispatch.");
+            }
             Console.WriteLine($"[INFO] MainThreadDispatcher.Invoke: Wait completed");
 
             if (exception != null)
@@ -391,11 +422,25 @@ public static class MainThreadDispatcher
     }
 
     /// <summary>
-    /// Executes a function synchronously on the main thread and returns the result.
+    /// Executes a function synchronously on the main thread with default timeout and returns the result.
     /// On macOS, uses GCD dispatch_async_f to submit to CFRunLoop.
     /// On other platforms, uses custom BlockingCollection queue.
     /// </summary>
+    /// <exception cref="TimeoutException">Thrown if the function does not complete within the timeout period.</exception>
     public static T Invoke<T>(Func<T> func)
+    {
+        return Invoke(func, TimeSpan.FromSeconds(DefaultTimeoutSeconds));
+    }
+
+    /// <summary>
+    /// Executes a function synchronously on the main thread with specified timeout and returns the result.
+    /// On macOS, uses GCD dispatch_async_f to submit to CFRunLoop.
+    /// On other platforms, uses custom BlockingCollection queue.
+    /// </summary>
+    /// <param name="func">The function to execute on the main thread.</param>
+    /// <param name="timeout">Maximum time to wait for the function to complete.</param>
+    /// <exception cref="TimeoutException">Thrown if the function does not complete within the timeout period.</exception>
+    public static T Invoke<T>(Func<T> func, TimeSpan timeout)
     {
         if (!_initialized.IsSet)
         {
@@ -440,7 +485,11 @@ public static class MainThreadDispatcher
 
             dispatch_async_f(mainQueue, GCHandle.ToIntPtr(handle), callbackPtr);
 
-            completed.Wait();
+            if (!completed.Wait(timeout))
+            {
+                Console.Error.WriteLine($"[TIMEOUT] MainThreadDispatcher.Invoke<T>: Function deadlocked after {timeout.TotalSeconds}s - possible Thread 1 dispatch issue");
+                throw new TimeoutException($"MainThreadDispatcher.Invoke<T> timed out after {timeout.TotalSeconds} seconds. This may indicate a deadlock in Thread 1 dispatch.");
+            }
 
             if (exception != null)
             {
@@ -472,7 +521,11 @@ public static class MainThreadDispatcher
                 }
             });
 
-            completed.Wait();
+            if (!completed.Wait(timeout))
+            {
+                Console.Error.WriteLine($"[TIMEOUT] MainThreadDispatcher.Invoke<T>: Function deadlocked after {timeout.TotalSeconds}s - possible Thread 1 dispatch issue");
+                throw new TimeoutException($"MainThreadDispatcher.Invoke<T> timed out after {timeout.TotalSeconds} seconds. This may indicate a deadlock in Thread 1 dispatch.");
+            }
 
             if (exception != null)
             {

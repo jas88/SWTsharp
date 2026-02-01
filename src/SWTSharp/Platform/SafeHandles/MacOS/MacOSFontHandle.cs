@@ -74,9 +74,11 @@ public sealed class MacOSFontHandle : SafeFontHandle
     /// </exception>
     internal static MacOSFontHandle Create(string fontName, int fontSize, int fontStyle)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSFont
-        throw new NotImplementedException("MacOS font creation via SafeHandle not yet implemented.");
+        // Fonts are created via platform layer (MacOSPlatformGraphics)
+        // Use FromHandle() to wrap an existing NSFont* obtained from the platform layer
+        throw new InvalidOperationException(
+            "Use MacOSPlatformGraphics.CreateFont() to create fonts, " +
+            "then FromHandle() to wrap the resulting NSFont pointer.");
     }
 
     /// <summary>

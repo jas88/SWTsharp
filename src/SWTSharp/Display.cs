@@ -250,6 +250,20 @@ public class Display : IDisposable
     }
 
     /// <summary>
+    /// Resets the Display's thread to the current thread for testing purposes.
+    /// This allows xUnit collections that share a Display singleton to work correctly
+    /// even when running on different threads.
+    /// </summary>
+    /// <remarks>
+    /// WARNING: This is for testing only. In production code, the Display's thread
+    /// is set at construction time and should not be changed.
+    /// </remarks>
+    internal void SetThreadForTesting()
+    {
+        _thread = Thread.CurrentThread;
+    }
+
+    /// <summary>
     /// Executes an action on the platform's main thread.
     /// On macOS, this uses Grand Central Dispatch to execute on the actual process main thread,
     /// which is required for NSWindow and other AppKit operations.

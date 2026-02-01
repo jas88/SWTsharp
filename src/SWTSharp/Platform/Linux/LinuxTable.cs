@@ -11,13 +11,15 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
 {
     private const string GtkLib = "libgtk-3.so.0";
     private const string GLib = "libglib-2.0.so.0";
+    private const string GObject = "libgobject-2.0.so.0";
 
     private IntPtr _gtkTreeView;
     private IntPtr _gtkListStore;
     private IntPtr _gtkScrolledWindow;
     private readonly List<IntPtr> _columns = new();
+    private readonly List<int> _columnModelIndices = new(); // Maps visual column index to model column index
     private readonly List<string[]> _rowData = new(); // Cache of row data
-    private int _columnCount = 0;
+    private int _columnCount = 0; // Total columns ever created (for unique model indices)
     private bool _headerVisible = true;
     private bool _linesVisible = true;
     private bool _disposed;
@@ -89,14 +91,20 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         return _gtkScrolledWindow; // Return scrolled window for parent-child relationships
     }
 
-    public int AddColumn(string text, int width, int alignment)
+    public int AddColumn(string text, int width, int alignment, int index = -1)
     {
         // Create column with text cell renderer
         IntPtr column = gtk_tree_view_column_new();
         IntPtr renderer = gtk_cell_renderer_text_new();
 
+        // Determine insertion index
+        int insertIndex = (index < 0 || index > _columns.Count) ? _columns.Count : index;
+
+        // Assign a unique model column index (monotonically increasing)
+        int modelColumnIndex = _columnCount++;
+
         gtk_tree_view_column_pack_start(column, renderer, true);
-        gtk_tree_view_column_add_attribute(column, renderer, "text", _columnCount);
+        gtk_tree_view_column_add_attribute(column, renderer, "text", modelColumnIndex);
 
         // Set column title
         gtk_tree_view_column_set_title(column, text ?? "");
@@ -108,20 +116,28 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
             gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
         }
 
-        // Set alignment
+        // Set alignment using gtk_cell_renderer_set_alignment (non-variadic, unlike g_object_set)
         float xalign = alignment == SWT.CENTER ? 0.5f : (alignment == SWT.RIGHT ? 1.0f : 0.0f);
-        g_object_set_float(renderer, "xalign", xalign);
+        gtk_cell_renderer_set_alignment(renderer, xalign, 0.5f);
 
-        // Add column to tree view
-        gtk_tree_view_append_column(_gtkTreeView, column);
-        _columns.Add(column);
-
-        int columnIndex = _columnCount++;
+        // Insert column at position or append
+        if (insertIndex < _columns.Count)
+        {
+            gtk_tree_view_insert_column(_gtkTreeView, column, insertIndex);
+            _columns.Insert(insertIndex, column);
+            _columnModelIndices.Insert(insertIndex, modelColumnIndex);
+        }
+        else
+        {
+            gtk_tree_view_append_column(_gtkTreeView, column);
+            _columns.Add(column);
+            _columnModelIndices.Add(modelColumnIndex);
+        }
 
         // Recreate list store with new column count
         RecreateListStore();
 
-        return columnIndex;
+        return insertIndex;
     }
 
     public void RemoveColumn(int columnIndex)
@@ -131,7 +147,8 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         IntPtr column = _columns[columnIndex];
         gtk_tree_view_remove_column(_gtkTreeView, column);
         _columns.RemoveAt(columnIndex);
-        _columnCount--;
+        _columnModelIndices.RemoveAt(columnIndex);
+        // Note: _columnCount is not decremented - it tracks total columns ever created for unique model indices
 
         // Recreate list store
         RecreateListStore();
@@ -166,10 +183,42 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
             IntPtr renderer = g_list_nth_data(renderers, 0);
             if (renderer != IntPtr.Zero)
             {
-                g_object_set_float(renderer, "xalign", xalign);
+                gtk_cell_renderer_set_alignment(renderer, xalign, 0.5f);
             }
             g_list_free(renderers);
         }
+    }
+
+    public void SetColumnResizable(int columnIndex, bool resizable)
+    {
+        if (columnIndex < 0 || columnIndex >= _columns.Count) return;
+        gtk_tree_view_column_set_resizable(_columns[columnIndex], resizable);
+    }
+
+    public void SetColumnMoveable(int columnIndex, bool moveable)
+    {
+        if (columnIndex < 0 || columnIndex >= _columns.Count) return;
+        gtk_tree_view_column_set_reorderable(_columns[columnIndex], moveable);
+    }
+
+    public int PackColumn(int columnIndex)
+    {
+        if (columnIndex < 0 || columnIndex >= _columns.Count) return 0;
+
+        // GTK auto-sizes columns; tell it to calculate min width based on content
+        // Set sizing to AUTOSIZE temporarily
+        gtk_tree_view_column_set_sizing(_columns[columnIndex], GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+
+        // Get the computed width
+        int width = gtk_tree_view_column_get_width(_columns[columnIndex]);
+
+        // Set minimum width so it doesn't shrink back
+        if (width > 0)
+        {
+            gtk_tree_view_column_set_min_width(_columns[columnIndex], width);
+        }
+
+        return width > 0 ? width : 100;
     }
 
     public int AddItem()
@@ -234,34 +283,40 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
     public void SetItemText(int itemIndex, int columnIndex, string text)
     {
         if (itemIndex < 0 || itemIndex >= _rowData.Count ||
-            columnIndex < 0 || columnIndex >= _columnCount ||
+            columnIndex < 0 || columnIndex >= _columns.Count ||
             _gtkListStore == IntPtr.Zero) return;
 
-        // Update cache
+        // Get the model column index for this visual column
+        int modelColumn = _columnModelIndices[columnIndex];
+
+        // Update cache (indexed by model column for consistency with list store)
         var row = _rowData[itemIndex];
-        if (row.Length <= columnIndex)
+        if (row.Length <= modelColumn)
         {
-            Array.Resize(ref row, columnIndex + 1);
+            Array.Resize(ref row, modelColumn + 1);
             _rowData[itemIndex] = row;
         }
-        row[columnIndex] = text ?? "";
+        row[modelColumn] = text ?? "";
         _rowData[itemIndex] = row;
 
-        // Update list store
+        // Update list store using model column index
         GtkTreeIter iter;
         if (GetIterFromIndex(itemIndex, out iter))
         {
-            gtk_list_store_set_string(_gtkListStore, ref iter, columnIndex, text ?? "");
+            gtk_list_store_set_string(_gtkListStore, ref iter, modelColumn, text ?? "");
         }
     }
 
     public string GetItemText(int itemIndex, int columnIndex)
     {
         if (itemIndex < 0 || itemIndex >= _rowData.Count ||
-            columnIndex < 0 || columnIndex >= _columnCount) return "";
+            columnIndex < 0 || columnIndex >= _columns.Count) return "";
 
-        if (_rowData[itemIndex].Length <= columnIndex) return "";
-        return _rowData[itemIndex][columnIndex] ?? "";
+        // Get the model column index for this visual column
+        int modelColumn = _columnModelIndices[columnIndex];
+
+        if (_rowData[itemIndex].Length <= modelColumn) return "";
+        return _rowData[itemIndex][modelColumn] ?? "";
     }
 
     public void SetItemImage(int itemIndex, int columnIndex, IPlatformImage? image)
@@ -356,7 +411,7 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
 
     public int GetColumnCount()
     {
-        return _columnCount;
+        return _columns.Count;
     }
 
     public void AddChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
@@ -416,6 +471,7 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         _disposed = true;
 
         _columns.Clear();
+        _columnModelIndices.Clear();
         _rowData.Clear();
 
         if (_gtkScrolledWindow != IntPtr.Zero)
@@ -433,7 +489,8 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         // Store existing data
         var oldData = new List<string[]>(_rowData);
 
-        // Create new list store with correct number of columns
+        // Create new list store with enough columns for all model indices
+        // _columnCount tracks the highest model column index ever used + 1
         IntPtr[] types = new IntPtr[Math.Max(1, _columnCount)];
         IntPtr gtype_string = g_type_from_name("gchararray");
         for (int i = 0; i < types.Length; i++)
@@ -452,13 +509,27 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         _gtkListStore = newStore;
         gtk_tree_view_set_model(_gtkTreeView, _gtkListStore);
 
-        // Re-add all rows
+        // Re-add all rows with their data
         foreach (var row in oldData)
         {
-            int index = AddItem();
-            for (int col = 0; col < Math.Min(row.Length, _columnCount); col++)
+            // Add a new row
+            int rowIndex = _rowData.Count;
+            string[] newRow = new string[Math.Max(1, _columnCount)];
+            for (int i = 0; i < newRow.Length; i++)
             {
-                SetItemText(index, col, row[col]);
+                newRow[i] = (i < row.Length) ? (row[i] ?? "") : "";
+            }
+            _rowData.Add(newRow);
+
+            // Insert into list store
+            GtkTreeIter iter;
+            gtk_list_store_insert(_gtkListStore, out iter, rowIndex);
+
+            // Set values for all model columns
+            for (int modelCol = 0; modelCol < _columnCount; modelCol++)
+            {
+                string value = (modelCol < newRow.Length) ? newRow[modelCol] : "";
+                gtk_list_store_set_string(_gtkListStore, ref iter, modelCol, value);
             }
         }
     }
@@ -479,7 +550,9 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
     private const int GTK_POLICY_AUTOMATIC = 1;
     private const int GTK_SELECTION_SINGLE = 1;
     private const int GTK_SELECTION_MULTIPLE = 3;
-    private const int GTK_TREE_VIEW_COLUMN_FIXED = 1;
+    private const int GTK_TREE_VIEW_COLUMN_GROW_ONLY = 0;
+    private const int GTK_TREE_VIEW_COLUMN_AUTOSIZE = 1;
+    private const int GTK_TREE_VIEW_COLUMN_FIXED = 2;
     private const int GTK_TREE_VIEW_GRID_LINES_NONE = 0;
     private const int GTK_TREE_VIEW_GRID_LINES_BOTH = 3;
 
@@ -548,6 +621,21 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern int gtk_tree_view_remove_column(IntPtr tree_view, IntPtr column);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int gtk_tree_view_insert_column(IntPtr tree_view, IntPtr column, int position);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_tree_view_column_set_resizable(IntPtr tree_column, bool resizable);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_tree_view_column_set_reorderable(IntPtr tree_column, bool reorderable);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int gtk_tree_view_column_get_width(IntPtr tree_column);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_tree_view_column_set_min_width(IntPtr tree_column, int min_width);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_list_store_newv(int n_columns, IntPtr[] types);
@@ -620,18 +708,15 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
 
-    [DllImport(GLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    [DllImport(GObject, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     private static extern IntPtr g_type_from_name(string name);
 
-    [DllImport(GLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    private static extern void g_object_set(IntPtr @object, string property_name, float value, IntPtr terminator);
+    // Note: g_object_set is variadic and cannot be P/Invoked directly.
+    // Use gtk_cell_renderer_set_alignment instead for setting cell alignment.
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_cell_renderer_set_alignment(IntPtr cell, float xalign, float yalign);
 
-    private static void g_object_set_float(IntPtr @object, string property_name, float value)
-    {
-        g_object_set(@object, property_name, value, IntPtr.Zero);
-    }
-
-    [DllImport(GLib, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(GObject, CallingConvention = CallingConvention.Cdecl)]
     private static extern void g_object_unref(IntPtr @object);
 
     [DllImport(GLib, CallingConvention = CallingConvention.Cdecl)]

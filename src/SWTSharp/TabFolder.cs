@@ -75,7 +75,11 @@ public class TabFolder : Composite
         get
         {
             CheckWidget();
-            // TODO: Implement platform widget interface call to get tab selection in Phase 5.8
+            // Sync from platform if available
+            if (PlatformWidget is IPlatformTabFolder tabFolderWidget)
+            {
+                _selectionIndex = tabFolderWidget.SelectionIndex;
+            }
             return _selectionIndex;
         }
         set
@@ -92,11 +96,10 @@ public class TabFolder : Composite
                 _selectionIndex = value;
 
                 // Use IPlatformTabFolder interface to set tab selection
-                // TODO: Implement tab selection through platform widget interface in Phase 5.8
-                // if (PlatformWidget is IPlatformTabFolder tabFolderWidget)
-                // {
-                //     tabFolderWidget.SelectionIndex = value;
-                // }
+                if (PlatformWidget is IPlatformTabFolder tabFolderWidget)
+                {
+                    tabFolderWidget.SelectionIndex = value;
+                }
 
                 // Hide old tab's control
                 if (oldIndex >= 0 && oldIndex < _items.Count)

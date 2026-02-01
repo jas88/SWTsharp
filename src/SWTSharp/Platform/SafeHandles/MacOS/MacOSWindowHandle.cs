@@ -72,10 +72,11 @@ public sealed class MacOSWindowHandle : SafeWindowHandle
     /// </exception>
     internal static MacOSWindowHandle Create(int style, string title)
     {
-        // This is a placeholder - actual implementation would require
-        // proper Objective-C interop to create an NSWindow
-        // See MacOSPlatform.CreateWindow for reference
-        throw new NotImplementedException("MacOS window creation via SafeHandle not yet implemented. Use MacOSPlatform.CreateWindow.");
+        // Windows are created via platform layer (MacOSPlatform)
+        // Use FromHandle() to wrap an existing NSWindow* obtained from the platform layer
+        throw new InvalidOperationException(
+            "Use MacOSPlatform.CreateWindow() to create windows, " +
+            "then FromHandle() to wrap the resulting NSWindow pointer.");
     }
 
     /// <summary>

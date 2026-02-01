@@ -148,6 +148,7 @@ public static class TestHelpers
     /// <summary>
     /// Waits for a condition to become true with a timeout.
     /// </summary>
+    [Obsolete("Use EventSyncHelpers.WaitForCondition for async-friendly, non-polling synchronization. This method uses Thread.Sleep polling which is flaky and wastes CPU.")]
     public static bool WaitFor(Func<bool> condition, TimeSpan timeout)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -165,6 +166,7 @@ public static class TestHelpers
     /// <summary>
     /// Waits for a condition to become true with a default timeout of 5 seconds.
     /// </summary>
+    [Obsolete("Use EventSyncHelpers.WaitForCondition for async-friendly, non-polling synchronization. This method uses Thread.Sleep polling which is flaky and wastes CPU.")]
     public static bool WaitFor(Func<bool> condition)
     {
         return WaitFor(condition, TimeSpan.FromSeconds(5));
@@ -173,6 +175,7 @@ public static class TestHelpers
     /// <summary>
     /// Asserts that a condition becomes true within the specified timeout.
     /// </summary>
+    [Obsolete("Use EventSyncHelpers.WaitForCondition for async-friendly, non-polling synchronization.")]
     public static void AssertCondition(Func<bool> condition, TimeSpan timeout, string message)
     {
         Assert.True(WaitFor(condition, timeout), message);
@@ -181,6 +184,7 @@ public static class TestHelpers
     /// <summary>
     /// Asserts that a condition becomes true within 5 seconds.
     /// </summary>
+    [Obsolete("Use EventSyncHelpers.WaitForCondition for async-friendly, non-polling synchronization.")]
     public static void AssertCondition(Func<bool> condition, string message)
     {
         AssertCondition(condition, TimeSpan.FromSeconds(5), message);

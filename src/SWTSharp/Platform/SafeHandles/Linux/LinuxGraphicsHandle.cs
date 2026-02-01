@@ -69,9 +69,11 @@ public sealed class LinuxGraphicsHandle : SafeGraphicsHandle
     /// </exception>
     internal static LinuxGraphicsHandle Create(IntPtr windowHandle)
     {
-        // This is a placeholder - actual implementation would require
-        // proper GTK/Cairo interop to create a cairo context
-        throw new NotImplementedException("Linux graphics context creation via SafeHandle not yet implemented.");
+        // Graphics contexts are created via platform layer (LinuxPlatformGraphics)
+        // Use FromHandle() to wrap an existing cairo_t* obtained from the platform layer
+        throw new InvalidOperationException(
+            "Use LinuxPlatformGraphics.CreateGraphicsContext() to create graphics contexts, " +
+            "then FromHandle() to wrap the resulting cairo_t pointer.");
     }
 
     /// <summary>

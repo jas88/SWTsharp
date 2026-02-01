@@ -308,6 +308,21 @@ internal partial class Win32List : IPlatformList
         }
     }
 
+    public int GetTopIndex()
+    {
+        if (_disposed || _hwnd == IntPtr.Zero) return 0;
+
+        return SendMessage(_hwnd, LB_GETTOPINDEX, IntPtr.Zero, IntPtr.Zero).ToInt32();
+    }
+
+    public void SetTopIndex(int index)
+    {
+        if (_disposed || _hwnd == IntPtr.Zero) return;
+        if (index < 0 || index >= GetItemCount()) return;
+
+        SendMessage(_hwnd, LB_SETTOPINDEX, new IntPtr(index), IntPtr.Zero);
+    }
+
     public void SetBounds(int x, int y, int width, int height)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;

@@ -1,3 +1,6 @@
+using SWTSharp.Graphics;
+using SWTSharp.Platform.Linux;
+
 namespace SWTSharp.Platform;
 
 /// <summary>
@@ -5,6 +8,14 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class LinuxPlatform
 {
+    /// <summary>
+    /// Creates a platform-specific image adapter for the given Image.
+    /// </summary>
+    public IPlatformImage CreateImageAdapter(Image image)
+    {
+        return new LinuxImage(image);
+    }
+
     /// <summary>
     /// Creates an ExpandBar widget (accordion control using GtkExpander).
     /// </summary>

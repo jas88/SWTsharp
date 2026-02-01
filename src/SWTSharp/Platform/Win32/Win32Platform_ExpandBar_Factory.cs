@@ -1,3 +1,6 @@
+using SWTSharp.Graphics;
+using SWTSharp.Platform.Win32;
+
 namespace SWTSharp.Platform;
 
 /// <summary>
@@ -5,6 +8,14 @@ namespace SWTSharp.Platform;
 /// </summary>
 internal partial class Win32Platform
 {
+    /// <summary>
+    /// Creates a platform-specific image adapter for the given Image.
+    /// </summary>
+    public IPlatformImage CreateImageAdapter(Image image)
+    {
+        return new Win32Image(image);
+    }
+
     /// <summary>
     /// Creates an ExpandBar widget (accordion control).
     /// </summary>

@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     tags:
       - 'v*'
   pull_request:
@@ -16,6 +16,7 @@ jobs:
   test-windows:
     name: Test on Windows
     runs-on: windows-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -25,6 +26,14 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
         run: dotnet restore
@@ -32,32 +41,31 @@ jobs:
       - name: Build
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
-      - name: Run tests
+      # Windows GUI tests require the custom runner to properly apply the app.manifest
+      # for Common Controls v6 (SysLink and other visual styles controls)
+      - name: Run tests with custom runner
+        timeout-minutes: 10
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
+        run: |
+          dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj `
+            --configuration ${{ env.CONFIGURATION }} `
+            -- --results-directory ./TestResults
 
       - name: Upload coverage to Codecov
+        if: always()
         uses: codecov/codecov-action@v5
         with:
-          directory: ./tests/SWTSharp.Tests/TestResults
+          directory: ./TestResults
           flags: windows
-          name: windows-coverage
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-results-windows
-          path: '**/test-results.trx'
-          retention-days: 30
-
   test-macos:
     name: Test on macOS (All Tests with CFRunLoop)
-    runs-on: macos-latest
+    runs-on: macos-15
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -67,6 +75,14 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
         run: dotnet restore
@@ -75,37 +91,33 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       # NOTE: GitHub Actions macOS runners have WindowServer running with loginwindow active
-      # Custom test runner uses CFRunLoop on Thread 1 with GCD dispatch for proper GUI support
-      # This enables ALL tests (including GUI tests) to run in CI
-      # WARNING: Tests may hang due to main thread dispatch issues - timeout prevents infinite wait
+      # Platform-specific tests are filtered at discovery time via IXunitTestCaseDiscoverer
+      # Tests that require Thread 1 should use the appropriate platform attributes
 
-      - name: Run all tests (including GUI tests)
+      # macOS GUI tests require Thread 1 for CFRunLoop - use custom test runner
+      - name: Run tests with custom runner
         timeout-minutes: 5  # Prevent infinite hanging on macOS
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
+        run: |
+          dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
+            --configuration ${{ env.CONFIGURATION }} \
+            -- --results-directory ./TestResults
 
       - name: Upload coverage to Codecov
+        if: always()
         uses: codecov/codecov-action@v5
         with:
-          directory: ./tests/SWTSharp.Tests/TestResults
+          directory: ./TestResults
           flags: macos
-          name: macos-coverage
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-results-macos
-          path: '**/test-results.trx'
-          retention-days: 30
-
   test-linux:
     name: Test on Linux with CodeQL, Package & Publish
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       security-events: write
       actions: read
@@ -145,40 +157,46 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
-      - name: Run tests
+      # Linux GUI tests use custom runner like Windows/macOS for consistent behavior
+      # VSTest with GTK can hang during test discovery
+      - name: Run tests with custom runner
+        timeout-minutes: 10
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
           DISPLAY: :99
-        run: dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj --configuration ${{ env.CONFIGURATION }}
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          directory: ./tests/SWTSharp.Tests/TestResults
-          flags: linux
-          name: linux-coverage
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          dotnet run --project tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
+            --configuration ${{ env.CONFIGURATION }} \
+            -- --results-directory ./TestResults
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:csharp"
 
-      - name: Upload test results
+      - name: Upload coverage to Codecov
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: codecov/codecov-action@v5
         with:
-          name: test-results-linux
-          path: '**/test-results.trx'
-          retention-days: 30
+          directory: ./TestResults
+          flags: linux
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Create NuGet package
         run: dotnet pack --configuration ${{ env.CONFIGURATION }} --no-build --output ./artifacts

@@ -100,7 +100,8 @@ public class SWTSharpTestDiscoverer : ITestDiscoverer
             source: source)
         {
             DisplayName = xunitTestCase.DisplayName,
-            Id = Guid.Parse(xunitTestCase.UniqueID)
+            // Generate deterministic GUID from UniqueID (xUnit UniqueID is not always GUID format)
+            Id = GenerateGuidFromString(xunitTestCase.UniqueID)
         };
 
         // Add metadata for executor
@@ -115,6 +116,17 @@ public class SWTSharpTestDiscoverer : ITestDiscoverer
         }
 
         return testCase;
+    }
+
+    /// <summary>
+    /// Generate a deterministic GUID from a string using MD5 hash.
+    /// This ensures the same test always gets the same ID.
+    /// </summary>
+    private static Guid GenerateGuidFromString(string input)
+    {
+        using var md5 = System.Security.Cryptography.MD5.Create();
+        var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+        return new Guid(hash);
     }
 
     private class TestDiscoveryVisitor : IMessageSink

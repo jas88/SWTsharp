@@ -201,8 +201,9 @@ public interface IPlatformTable : IPlatformComposite, IPlatformSelectionEvents
     /// <param name="text">Column header text</param>
     /// <param name="width">Column width</param>
     /// <param name="alignment">Column alignment (SWT.LEFT, SWT.RIGHT, SWT.CENTER)</param>
+    /// <param name="index">Index at which to insert the column, or -1 to append</param>
     /// <returns>Column index</returns>
-    int AddColumn(string text, int width, int alignment);
+    int AddColumn(string text, int width, int alignment, int index = -1);
 
     /// <summary>
     /// Removes a column from the table.
@@ -216,6 +217,27 @@ public interface IPlatformTable : IPlatformComposite, IPlatformSelectionEvents
     void SetColumnText(int columnIndex, string text);
     void SetColumnWidth(int columnIndex, int width);
     void SetColumnAlignment(int columnIndex, int alignment);
+
+    /// <summary>
+    /// Sets whether a column is resizable by the user.
+    /// </summary>
+    /// <param name="columnIndex">Index of the column</param>
+    /// <param name="resizable">True if column can be resized</param>
+    void SetColumnResizable(int columnIndex, bool resizable);
+
+    /// <summary>
+    /// Sets whether a column can be reordered by the user.
+    /// </summary>
+    /// <param name="columnIndex">Index of the column</param>
+    /// <param name="moveable">True if column can be moved</param>
+    void SetColumnMoveable(int columnIndex, bool moveable);
+
+    /// <summary>
+    /// Auto-sizes a column to fit its content.
+    /// </summary>
+    /// <param name="columnIndex">Index of the column to pack</param>
+    /// <returns>The new width after packing</returns>
+    int PackColumn(int columnIndex);
 
     /// <summary>
     /// Adds an item (row) to the table.
@@ -666,6 +688,16 @@ public interface IPlatformList : IPlatformWidget, IPlatformSelectionEvents, IPla
     /// Gets or sets the selected index (single selection mode).
     /// </summary>
     int SelectionIndex { get; set; }
+
+    /// <summary>
+    /// Gets the index of the item currently at the top of the visible area.
+    /// </summary>
+    int GetTopIndex();
+
+    /// <summary>
+    /// Scrolls the list so the item at the given index is at the top of the visible area.
+    /// </summary>
+    void SetTopIndex(int index);
 }
 
 /// <summary>
@@ -785,6 +817,12 @@ public interface IPlatformSpinner : IPlatformWidget, IPlatformValueEvents, IPlat
     /// Gets or sets the number of digits to display.
     /// </summary>
     int Digits { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of characters in the text field.
+    /// A value of 0 removes the limit (unlimited).
+    /// </summary>
+    int TextLimit { get; set; }
 }
 
 /// <summary>
@@ -959,5 +997,125 @@ public interface IPlatformStyledText : IPlatformWidget, IPlatformEventHandling
     /// Occurs when the selection changes.
     /// </summary>
     event EventHandler<int>? SelectionChanged;
+}
+
+/// <summary>
+/// Platform menu widget (menu bar, popup menu, or drop-down menu).
+/// </summary>
+public interface IPlatformMenu : IDisposable
+{
+    /// <summary>
+    /// Gets whether this is a menu bar.
+    /// </summary>
+    bool IsMenuBar { get; }
+
+    /// <summary>
+    /// Gets whether this is a popup menu.
+    /// </summary>
+    bool IsPopupMenu { get; }
+
+    /// <summary>
+    /// Adds a menu item to the menu.
+    /// </summary>
+    /// <param name="style">The menu item style (PUSH, CHECK, RADIO, CASCADE, SEPARATOR)</param>
+    /// <param name="index">The index at which to insert, or -1 to append</param>
+    /// <returns>The created platform menu item</returns>
+    IPlatformMenuItem AddItem(int style, int index);
+
+    /// <summary>
+    /// Removes a menu item from the menu.
+    /// </summary>
+    void RemoveItem(IPlatformMenuItem item);
+
+    /// <summary>
+    /// Sets the menu visible or hidden.
+    /// </summary>
+    void SetVisible(bool visible);
+
+    /// <summary>
+    /// Gets whether the menu is visible.
+    /// </summary>
+    bool GetVisible();
+
+    /// <summary>
+    /// Shows a popup menu at the specified screen coordinates.
+    /// </summary>
+    void ShowPopup(int x, int y);
+
+    /// <summary>
+    /// Attaches this menu bar to a window.
+    /// </summary>
+    void AttachToWindow(IPlatformWindow window);
+}
+
+/// <summary>
+/// Platform menu item widget.
+/// </summary>
+public interface IPlatformMenuItem : IDisposable, IPlatformEventHandling
+{
+    /// <summary>
+    /// Sets the menu item text.
+    /// </summary>
+    void SetText(string text);
+
+    /// <summary>
+    /// Gets the menu item text.
+    /// </summary>
+    string GetText();
+
+    /// <summary>
+    /// Sets whether the menu item is enabled.
+    /// </summary>
+    void SetEnabled(bool enabled);
+
+    /// <summary>
+    /// Gets whether the menu item is enabled.
+    /// </summary>
+    bool GetEnabled();
+
+    /// <summary>
+    /// Sets the selection state (for CHECK and RADIO items).
+    /// </summary>
+    void SetSelection(bool selected);
+
+    /// <summary>
+    /// Gets the selection state (for CHECK and RADIO items).
+    /// </summary>
+    bool GetSelection();
+
+    /// <summary>
+    /// Sets the submenu for CASCADE items.
+    /// </summary>
+    void SetMenu(IPlatformMenu? menu);
+
+    /// <summary>
+    /// Gets the submenu for CASCADE items.
+    /// </summary>
+    IPlatformMenu? GetMenu();
+
+    /// <summary>
+    /// Gets whether this is a separator item.
+    /// </summary>
+    bool IsSeparator { get; }
+
+    /// <summary>
+    /// Gets whether this is a cascade (submenu) item.
+    /// </summary>
+    bool IsCascade { get; }
+
+    /// <summary>
+    /// Gets whether this is a check item.
+    /// </summary>
+    bool IsCheck { get; }
+
+    /// <summary>
+    /// Gets whether this is a radio item.
+    /// </summary>
+    bool IsRadio { get; }
+
+    /// <summary>
+    /// Occurs when the menu item is selected (clicked).
+    /// </summary>
+    event EventHandler? Selected;
 }
 

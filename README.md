@@ -153,8 +153,11 @@ dotnet restore
 # Build library
 dotnet build
 
-# Run tests
+# Run tests (Windows/Linux)
 dotnet test
+
+# Run tests (macOS - requires custom runner for Thread 1)
+dotnet run --project tests/SWTSharp.Tests
 
 # Run sample
 dotnet run --project samples/SWTSharp.Sample

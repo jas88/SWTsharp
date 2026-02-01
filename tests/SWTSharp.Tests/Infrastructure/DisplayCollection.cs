@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace SWTSharp.Tests.Infrastructure;
@@ -14,15 +15,31 @@ public class DisplayCollection : ICollectionFixture<DisplayFixture>
 
 /// <summary>
 /// Shared fixture that creates a single UI thread and Display for all tests.
+/// Implements IAsyncLifetime for proper async initialization/disposal pattern.
 /// </summary>
-public class DisplayFixture : IDisposable
+/// <remarks>
+/// This fixture is designed to work with the [Collection("Display Tests")] and
+/// [Collection("GUI Tests")] patterns where GUI tests run serially and share
+/// a Display instance for performance.
+///
+/// The Display is created once when the first test in the collection runs,
+/// and disposed after the last test completes.
+/// </remarks>
+public class DisplayFixture : IAsyncLifetime
 {
-    private Thread _uiThread = null!;
     private bool _disposed;
 
+    /// <summary>
+    /// Gets the shared Display instance for GUI tests.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if accessed before InitializeAsync or after DisposeAsync.</exception>
     public Display Display { get; private set; } = null!;
 
-    public DisplayFixture()
+    /// <summary>
+    /// Initializes the fixture by creating the shared Display instance.
+    /// Called by xUnit before the first test in the collection runs.
+    /// </summary>
+    public Task InitializeAsync()
     {
         Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}");
 
@@ -54,7 +71,6 @@ public class DisplayFixture : IDisposable
             SWTSharp.TestHost.MainThreadDispatcher.Invoke(() =>
             {
                 Display = Display.Default;
-                _uiThread = Thread.CurrentThread;
                 Console.WriteLine($"DisplayFixture: Display created on Thread {Thread.CurrentThread.ManagedThreadId}");
             });
 
@@ -64,35 +80,64 @@ public class DisplayFixture : IDisposable
         }
         else
         {
+            // For Windows/Linux: Use the shared Display singleton.
+            // Unlike macOS, there's no strict thread requirement for Win32/GTK in test contexts.
             Display = Display.Default;
-            _uiThread = Thread.CurrentThread;
+
+            // Reset Display's thread to current thread so IsValidThread() returns true.
+            // This is necessary because xUnit may run fixture initialization on a different
+            // thread than where Display was first created (Display is a singleton).
+            Display.SetThreadForTesting();
+            Console.WriteLine($"DisplayFixture: Reset Display thread to {Thread.CurrentThread.ManagedThreadId}");
         }
 
         var displayThread = Display.GetType().GetField("_thread", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(Display) as Thread;
         Console.WriteLine($"DisplayFixture: Display thread = {displayThread?.ManagedThreadId ?? -1}");
+
+        return Task.CompletedTask;
     }
 
-    public void Dispose()
+    /// <summary>
+    /// Disposes the fixture by disposing the shared Display instance.
+    /// Called by xUnit after the last test in the collection completes.
+    /// </summary>
+    public Task DisposeAsync()
     {
         if (!_disposed)
         {
             _disposed = true;
 
-            // Cleanup all shells directly on current thread
-            // Since DisplayFixture runs on xUnit's thread, and that's where we initialized Display,
-            // we're already on the correct thread for macOS
-            try
+            // On macOS, shell disposal must happen on Thread 1 (main thread)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) &&
+                SWTSharp.TestHost.MainThreadDispatcher.IsInitialized)
             {
-                var shells = Display.GetShells();
-                foreach (var shell in shells)
+                SWTSharp.TestHost.MainThreadDispatcher.Invoke(() =>
                 {
-                    shell?.Dispose();
-                }
+                    CleanupShells();
+                });
             }
-            catch
+            else
             {
-                // Swallow exceptions during disposal
+                CleanupShells();
             }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void CleanupShells()
+    {
+        try
+        {
+            var shells = Display.GetShells();
+            foreach (var shell in shells)
+            {
+                shell?.Dispose();
+            }
+        }
+        catch
+        {
+            // Swallow exceptions during disposal
         }
     }
 }

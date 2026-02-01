@@ -183,6 +183,24 @@ internal class Win32Spinner : IPlatformSpinner
         }
     }
 
+    private int _textLimit;
+
+    public int TextLimit
+    {
+        get => _textLimit;
+        set
+        {
+            _textLimit = value >= 0 ? value : 0;
+
+            if (_editHandle != IntPtr.Zero)
+            {
+                // EM_SETLIMITTEXT: 0 means no limit (32KB default for single-line)
+                // Non-zero value sets the character limit
+                SendMessage(_editHandle, EM_SETLIMITTEXT, new IntPtr(_textLimit), IntPtr.Zero);
+            }
+        }
+    }
+
     public void SetBounds(int x, int y, int width, int height)
     {
         if (_editHandle == IntPtr.Zero) return;
@@ -294,6 +312,9 @@ internal class Win32Spinner : IPlatformSpinner
     // Edit Control Styles
     private const uint ES_NUMBER = 0x2000;
     private const uint ES_READONLY = 0x0800;
+
+    // Edit Control Messages
+    private const int EM_SETLIMITTEXT = 0x00C5;
 
     // Up-Down Control Styles
     private const uint UDS_ALIGNRIGHT = 0x0004;

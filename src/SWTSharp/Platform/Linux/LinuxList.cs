@@ -288,6 +288,55 @@ internal class LinuxList : LinuxWidget, IPlatformList
         }
     }
 
+    public int GetTopIndex()
+    {
+        if (_disposed || _scrolledWindow == IntPtr.Zero || _listBox == IntPtr.Zero)
+            return 0;
+
+        // Get vertical adjustment to determine scroll position
+        IntPtr vadj = gtk_scrolled_window_get_vadjustment(_scrolledWindow);
+        if (vadj == IntPtr.Zero) return 0;
+
+        double scrollPos = gtk_adjustment_get_value(vadj);
+
+        // Find which row is at the top by checking each row's allocation
+        for (int i = 0; i < _items.Count; i++)
+        {
+            IntPtr row = gtk_list_box_get_row_at_index(_listBox, i);
+            if (row != IntPtr.Zero)
+            {
+                GtkAllocation allocation;
+                gtk_widget_get_allocation(row, out allocation);
+                // If the row's top is at or below scroll position, this is likely the top visible row
+                if (allocation.y >= scrollPos)
+                    return i;
+            }
+        }
+
+        return 0;
+    }
+
+    public void SetTopIndex(int index)
+    {
+        if (_disposed || _scrolledWindow == IntPtr.Zero || _listBox == IntPtr.Zero) return;
+        if (index < 0 || index >= _items.Count) return;
+
+        // Get the row at the index
+        IntPtr row = gtk_list_box_get_row_at_index(_listBox, index);
+        if (row == IntPtr.Zero) return;
+
+        // Get the row's allocation to find its Y position
+        GtkAllocation allocation;
+        gtk_widget_get_allocation(row, out allocation);
+
+        // Scroll to the row's Y position
+        IntPtr vadj = gtk_scrolled_window_get_vadjustment(_scrolledWindow);
+        if (vadj != IntPtr.Zero)
+        {
+            gtk_adjustment_set_value(vadj, allocation.y);
+        }
+    }
+
     #endregion
 
     #region IPlatformWidget Implementation
@@ -438,6 +487,15 @@ internal class LinuxList : LinuxWidget, IPlatformList
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_scrolled_window_set_policy(IntPtr scrolled_window, int hscrollbar_policy, int vscrollbar_policy);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_scrolled_window_get_vadjustment(IntPtr scrolled_window);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern double gtk_adjustment_get_value(IntPtr adjustment);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_adjustment_set_value(IntPtr adjustment, double value);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
     private static extern IntPtr gtk_label_new(string str);

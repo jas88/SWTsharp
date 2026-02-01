@@ -77,6 +77,8 @@
     <!-- Suppress trim warnings for platform-specific reflection code used for native interop -->
     <!-- IL2075: GetType() usage for reflection in platform code (safe - limited to known types) -->
     <NoWarn>$(NoWarn);IL2075</NoWarn>
+    <!-- MSB3277: WindowsBase version conflict from WebView2 WPF components - benign on non-Windows -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
