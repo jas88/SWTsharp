@@ -126,8 +126,14 @@ public class TableColumn : Widget
             if (_resizable != value)
             {
                 _resizable = value;
-                // Column resizability is a client-side property; platform implementations
-                // control this through native column properties when the column is created
+                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    int colIndex = _parent.GetColumnIndex(this);
+                    if (colIndex >= 0)
+                    {
+                        platformTable.SetColumnResizable(colIndex, _resizable);
+                    }
+                }
             }
         }
     }
@@ -148,8 +154,14 @@ public class TableColumn : Widget
             if (_moveable != value)
             {
                 _moveable = value;
-                // Column moveability is a client-side property; platform implementations
-                // control this through native table view properties
+                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    int colIndex = _parent.GetColumnIndex(this);
+                    if (colIndex >= 0)
+                    {
+                        platformTable.SetColumnMoveable(colIndex, _moveable);
+                    }
+                }
             }
         }
     }
@@ -275,26 +287,29 @@ public class TableColumn : Widget
     public void Pack()
     {
         CheckWidget();
-        // Auto-size column width to fit content
-        // Calculate maximum width needed for header and all cell contents
-        int maxWidth = Math.Max(50, _text.Length * 8); // Estimate header width
 
-        // Scan all items to find the widest cell in this column
         int colIndex = _parent.GetColumnIndex(this);
-        if (colIndex >= 0)
+        if (colIndex >= 0 && _parent?.PlatformWidget is Platform.IPlatformTable platformTable)
         {
-            foreach (var item in _parent.GetItems())
-            {
-                string cellText = item.GetText(colIndex);
-                int cellWidth = cellText.Length * 7 + 10; // Estimate cell width
-                maxWidth = Math.Max(maxWidth, cellWidth);
-            }
+            // Use platform's native auto-sizing
+            _width = platformTable.PackColumn(colIndex);
         }
-
-        _width = maxWidth;
-        if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable && colIndex >= 0)
+        else
         {
-            platformTable.SetColumnWidth(colIndex, _width);
+            // Fallback: estimate width from content
+            int maxWidth = Math.Max(50, _text.Length * 8); // Estimate header width
+
+            if (colIndex >= 0 && _parent != null)
+            {
+                foreach (var item in _parent.GetItems())
+                {
+                    string cellText = item.GetText(colIndex);
+                    int cellWidth = cellText.Length * 7 + 10; // Estimate cell width
+                    maxWidth = Math.Max(maxWidth, cellWidth);
+                }
+            }
+
+            _width = maxWidth;
         }
     }
 
@@ -302,12 +317,9 @@ public class TableColumn : Widget
     {
         // TableColumn is logically part of the parent Table's platform widget
         // The column is added to the platform table during AddColumn
-        // Note: index parameter is for future use when IPlatformTable supports InsertColumn(index, ...)
-        // Currently AddColumn appends to the end; column reordering must be done post-creation
-        _ = index; // Suppress unused parameter warning; reserved for future insertion support
         if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
         {
-            platformTable.AddColumn(_text, _width, _alignment);
+            platformTable.AddColumn(_text, _width, _alignment, index);
         }
     }
 

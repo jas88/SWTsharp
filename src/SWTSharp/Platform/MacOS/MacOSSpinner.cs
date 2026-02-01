@@ -192,6 +192,19 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
         }
     }
 
+    private int _textLimit;
+
+    public int TextLimit
+    {
+        get => _textLimit;
+        set
+        {
+            _textLimit = value >= 0 ? value : 0;
+            // NSTextField doesn't have built-in text limit - would need delegate to enforce
+            // For now, we store the value but don't enforce it at the platform level
+        }
+    }
+
     #endregion
 
     #region IPlatformWidget Implementation

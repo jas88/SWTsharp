@@ -99,15 +99,24 @@ public class Canvas : Composite
     /// Forces the canvas to redraw.
     /// </summary>
     /// <remarks>
-    /// Triggers a paint event with the full canvas bounds.
-    /// Future versions may optimize via platform-native invalidation.
+    /// Invalidates the native widget and triggers a paint event with the full canvas bounds.
     /// </remarks>
     public override void Redraw()
     {
         CheckWidget();
-        // Trigger paint event for the full canvas bounds
-        var bounds = GetBounds();
-        OnPlatformPaint(0, 0, bounds.Width, bounds.Height, null);
+
+        // Invalidate the native widget to trigger a platform repaint
+        if (PlatformWidget is Platform.Win32.Win32Canvas win32Canvas)
+        {
+            win32Canvas.Redraw();
+        }
+        else
+        {
+            // For other platforms or when platform widget doesn't support direct invalidation,
+            // fall back to invoking the paint callback
+            var bounds = GetBounds();
+            OnPlatformPaint(0, 0, bounds.Width, bounds.Height, null);
+        }
     }
 
     /// <summary>
@@ -118,14 +127,23 @@ public class Canvas : Composite
     /// <param name="width">Width of the area to redraw</param>
     /// <param name="height">Height of the area to redraw</param>
     /// <remarks>
-    /// Triggers a paint event for the specified rectangular area.
-    /// Future versions may optimize via platform-native invalidation.
+    /// Invalidates the specified rectangular area of the native widget.
     /// </remarks>
     public void Redraw(int x, int y, int width, int height)
     {
         CheckWidget();
-        // Trigger paint event for the specified area
-        OnPlatformPaint(x, y, width, height, null);
+
+        // Invalidate the specific region of the native widget
+        if (PlatformWidget is Platform.Win32.Win32Canvas win32Canvas)
+        {
+            win32Canvas.Redraw(x, y, width, height);
+        }
+        else
+        {
+            // For other platforms or when platform widget doesn't support direct invalidation,
+            // fall back to invoking the paint callback
+            OnPlatformPaint(x, y, width, height, null);
+        }
     }
 
     protected override void UpdateVisible()

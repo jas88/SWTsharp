@@ -309,8 +309,8 @@ public class TableItem : Widget
             int rowIndex = _parent.GetItemIndex(this);
             if (rowIndex >= 0)
             {
-                // IPlatformImage conversion: Graphics.Image stores IntPtr Handle internally
-                // Platform table implementations accept null when image conversion is not available
+                // TODO: Implement IPlatformImage conversion from Graphics.Image
+                // Currently passes null as image list support is not yet implemented
                 platformTable.SetItemImage(rowIndex, column, null);
             }
         }
@@ -395,8 +395,8 @@ public class TableItem : Widget
             {
                 if (_images[i] != null)
                 {
-                    // IPlatformImage conversion: Graphics.Image stores IntPtr Handle internally
-                    // Platform table implementations accept null when image conversion is not available
+                    // TODO: Implement IPlatformImage conversion from Graphics.Image
+                    // Currently passes null as image list support is not yet implemented
                     platformTable.SetItemImage(rowIndex, i, null);
                 }
             }

@@ -143,6 +143,7 @@ public class Spinner : Composite
 
     /// <summary>
     /// Gets or sets the maximum number of characters that the text field can hold.
+    /// A value of 0 removes the limit (unlimited).
     /// </summary>
     public int TextLimit
     {
@@ -157,8 +158,10 @@ public class Spinner : Composite
             if (_textLimit != value && value >= 0)
             {
                 _textLimit = value;
-                // TODO: Implement text limit setting via platform widget interface
-                // Platform.PlatformFactory.Instance.SetSpinnerTextLimit(Handle, _textLimit);
+                if (PlatformWidget is IPlatformSpinner spinnerWidget)
+                {
+                    spinnerWidget.TextLimit = _textLimit;
+                }
             }
         }
     }

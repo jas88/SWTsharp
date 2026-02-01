@@ -20,6 +20,7 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     #pragma warning restore CS0169
     private readonly List<IntPtr> _columns = new();
     private readonly List<RowData> _rows = new();
+    private readonly HashSet<int> _moveableColumns = new(); // Track per-column moveable state
     private bool _headerVisible = true;
     private bool _linesVisible = false;
     private bool _disposed;
@@ -163,9 +164,12 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     }
 
     // Column Management
-    public int AddColumn(string text, int width, int alignment)
+    public int AddColumn(string text, int width, int alignment, int index = -1)
     {
         if (_disposed) return -1;
+
+        // Determine insertion index
+        int insertIndex = (index < 0 || index > _columns.Count) ? _columns.Count : index;
 
         // Create NSTableColumn
         IntPtr column = objc_msgSend(_nsTableColumnClass, sel_registerName("alloc"));
@@ -204,12 +208,17 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
         // Add column to table
         objc_msgSend(_tableView, _selAddTableColumn, column);
-        _columns.Add(column);
+
+        // Track column
+        if (insertIndex >= _columns.Count)
+            _columns.Add(column);
+        else
+            _columns.Insert(insertIndex, column);
 
         // Reload data to show new column
         objc_msgSend(_tableView, _selReloadData);
 
-        return _columns.Count - 1;
+        return insertIndex;
     }
 
     public void RemoveColumn(int columnIndex)
@@ -287,6 +296,52 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         };
         objc_msgSend(dataCell, selSetAlignment, new IntPtr(nsAlignment));
         objc_msgSend(_tableView, _selReloadData);
+    }
+
+    public void SetColumnResizable(int columnIndex, bool resizable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        IntPtr column = _columns[columnIndex];
+        IntPtr selSetResizingMask = sel_registerName("setResizingMask:");
+
+        // NSTableColumnNoResizing = 0, NSTableColumnAutoresizingMask = 1, NSTableColumnUserResizingMask = 2
+        int mask = resizable ? (1 | 2) : 0; // Autoresize + User resize, or none
+        objc_msgSend(column, selSetResizingMask, new IntPtr(mask));
+    }
+
+    public void SetColumnMoveable(int columnIndex, bool moveable)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return;
+
+        // Track per-column moveable state
+        if (moveable)
+            _moveableColumns.Add(columnIndex);
+        else
+            _moveableColumns.Remove(columnIndex);
+
+        // NSTableView only has table-wide allowsColumnReordering.
+        // Enable reordering if ANY column is moveable.
+        bool anyMoveable = _moveableColumns.Count > 0;
+        IntPtr selSetAllowsColumnReordering = sel_registerName("setAllowsColumnReordering:");
+        objc_msgSend_void(_tableView, selSetAllowsColumnReordering, anyMoveable);
+    }
+
+    public int PackColumn(int columnIndex)
+    {
+        if (_disposed || columnIndex < 0 || columnIndex >= _columns.Count) return 0;
+
+        IntPtr column = _columns[columnIndex];
+
+        // Get column width using sizeToFit if available, otherwise estimate
+        IntPtr selSizeToFit = sel_registerName("sizeToFit");
+        objc_msgSend(column, selSizeToFit);
+
+        // Get the new width
+        IntPtr selWidth = sel_registerName("width");
+        double width = objc_msgSend_double_ret(column, selWidth);
+
+        return (int)Math.Max(width, 50);
     }
 
     // Row Management
@@ -724,4 +779,10 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
 
     [DllImport("/usr/lib/libobjc.dylib")]
     private static extern bool objc_msgSend_bool(IntPtr receiver, IntPtr selector);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_void(IntPtr receiver, IntPtr selector, bool arg1);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);
 }
