@@ -294,8 +294,11 @@ internal class LinuxBrowser : IPlatformBrowser
 
     public bool SetText(string html, string? baseUrl = null)
     {
-        if (_disposed || _webView == IntPtr.Zero || html == null)
+        if (_disposed || _webView == IntPtr.Zero)
             return false;
+
+        // WebKit requires non-null content - treat null/empty as blank page
+        html = string.IsNullOrEmpty(html) ? "<html><body></body></html>" : html;
 
 #if NET5_0_OR_GREATER
         if (!_webkitAvailable || _webkit_web_view_load_html == null)

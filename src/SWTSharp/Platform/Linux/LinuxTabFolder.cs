@@ -446,6 +446,13 @@ internal class LinuxTabItem : IPlatformTabItem
 
         if (controlHandle != IntPtr.Zero)
         {
+            // Remove widget from any existing parent first (GTK widgets can only have one parent)
+            IntPtr currentParent = gtk_widget_get_parent(controlHandle);
+            if (currentParent != IntPtr.Zero)
+            {
+                gtk_container_remove(currentParent, controlHandle);
+            }
+
             // Add the control to the content container
             gtk_container_add(_contentContainer, controlHandle);
             gtk_widget_show(controlHandle);
@@ -523,6 +530,12 @@ internal class LinuxTabItem : IPlatformTabItem
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_container_add(IntPtr container, IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_show(IntPtr widget);

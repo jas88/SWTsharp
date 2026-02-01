@@ -204,7 +204,8 @@ internal class LinuxCoolBar : IPlatformCoolBar
             // Remove old child if any
             if (_childWidget != IntPtr.Zero)
             {
-                // GTK will handle removal when we add a new child
+                gtk_container_remove(_handleBox, _childWidget);
+                _childWidget = IntPtr.Zero;
             }
 
             // Extract native GTK handle using reflection
@@ -231,6 +232,13 @@ internal class LinuxCoolBar : IPlatformCoolBar
 
             if (_childWidget != IntPtr.Zero)
             {
+                // Remove widget from any existing parent first (GTK widgets can only have one parent)
+                IntPtr currentParent = gtk_widget_get_parent(_childWidget);
+                if (currentParent != IntPtr.Zero)
+                {
+                    gtk_container_remove(currentParent, _childWidget);
+                }
+
                 gtk_container_add(_handleBox, _childWidget);
                 gtk_widget_show(_childWidget);
             }
@@ -289,6 +297,12 @@ internal class LinuxCoolBar : IPlatformCoolBar
 
         [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
         private static extern void gtk_container_add(IntPtr container, IntPtr widget);
+
+        [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
+        [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
 
         [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
         private static extern void gtk_widget_show(IntPtr widget);

@@ -82,7 +82,16 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
 
     public override IntPtr GetNativeHandle()
     {
-        // Return the frame handle as the main widget handle
+        // Return the internal fixed container for child widget placement
+        // (consistent with LinuxComposite which returns its fixed container)
+        return _gtkFixedHandle;
+    }
+
+    /// <summary>
+    /// Gets the outer frame handle (for operations that need the frame widget).
+    /// </summary>
+    internal IntPtr GetFrameHandle()
+    {
         return _gtkFrameHandle;
     }
 
