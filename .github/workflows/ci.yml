@@ -178,6 +178,9 @@ jobs:
           DISPLAY: :99
           NO_AT_BRIDGE: 1  # Disable AT-SPI accessibility bridge to prevent crash when dbus not running
           GTK_A11Y: none  # Disable GTK accessibility (GTK 4 style, also works for GTK 3)
+          LIBGL_ALWAYS_SOFTWARE: 1  # Force software rendering for Mesa/OpenGL
+          GDK_BACKEND: x11  # Force X11 backend (not Wayland) for GTK
+          MESA_GL_VERSION_OVERRIDE: 3.3  # Override Mesa GL version if needed
         run: |
           dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
             --configuration ${{ env.CONFIGURATION }} \
