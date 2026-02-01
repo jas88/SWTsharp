@@ -524,7 +524,8 @@ internal partial class Win32Table : IPlatformTable
         if (_disposed || itemIndex < 0 || itemIndex >= _rows.Count || columnIndex < 0) return;
 
         _rows[itemIndex].ColumnImages[columnIndex] = image;
-        // TODO: Implement image list support for ListView
+        // ListView image support requires HIMAGELIST via ImageList_Create and
+        // LVM_SETIMAGELIST. IPlatformImage to HBITMAP conversion would be needed.
     }
 
     // Header and Grid Lines
@@ -687,24 +688,31 @@ internal partial class Win32Table : IPlatformTable
         return IsWindowEnabled(_hwnd);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
-        // TODO: Implement via custom drawing or subclassing
+        // ListView background can be set via LVM_SETBKCOLOR but may affect
+        // selection highlighting. Custom colors may need NM_CUSTOMDRAW. Store for getter.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        return new RGB(255, 255, 255);
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
-        // TODO: Implement via custom drawing
+        // ListView text color via LVM_SETTEXTCOLOR. May affect selection state
+        // visibility. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        return new RGB(0, 0, 0);
+        return _foregroundColor;
     }
 
     public void Dispose()

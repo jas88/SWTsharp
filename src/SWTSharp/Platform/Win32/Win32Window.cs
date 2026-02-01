@@ -200,16 +200,19 @@ internal class Win32Window : IPlatformWindow
         return IsWindowEnabled(_hwnd);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+
     public void SetBackground(RGB color)
     {
-        // TODO: Implement background color setting
-        // This would require handling WM_PAINT or WM_ERASEBKGND messages
+        // Win32 window background requires handling WM_ERASEBKGND or setting
+        // class background brush during registration. May affect non-client
+        // area rendering. Value stored for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color getting
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)

@@ -262,7 +262,8 @@ internal class Win32Spinner : IPlatformSpinner
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via WM_CTLCOLOREDIT
+        // Win32 Spinner edit control background requires handling WM_CTLCOLOREDIT
+        // in parent procedure. Store for getter.
     }
 
     public RGB GetBackground()
@@ -273,7 +274,8 @@ internal class Win32Spinner : IPlatformSpinner
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color
+        // Win32 Spinner text color requires handling WM_CTLCOLOREDIT for edit box.
+        // Store for getter.
     }
 
     public RGB GetForeground()

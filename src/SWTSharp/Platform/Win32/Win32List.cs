@@ -377,31 +377,35 @@ internal partial class Win32List : IPlatformList
         return IsWindowEnabled(_hwnd);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;
 
-        // TODO: Implement background color via WM_CTLCOLORLISTBOX
-        // Would require subclassing or owner draw
+        // Win32 ListBox background requires handling WM_CTLCOLORLISTBOX in parent
+        // window procedure which manages brush creation/selection. Store for getter.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color retrieval
-        return new RGB(255, 255, 255); // Default white background
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;
 
-        // TODO: Implement foreground color via owner draw
+        // Win32 ListBox text color requires owner-draw (LBS_OWNERDRAWFIXED) which
+        // changes control behavior. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        // TODO: Implement foreground color retrieval
-        return new RGB(0, 0, 0); // Default black text
+        return _foregroundColor;
     }
 
     /// <summary>

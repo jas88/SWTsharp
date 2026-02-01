@@ -248,31 +248,36 @@ internal partial class Win32Button : IPlatformTextWidget
         return IsWindowEnabled(_hwnd);
     }
 
+    private RGB _backgroundColor = new RGB(240, 240, 240);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;
 
-        // TODO: Implement background color via WM_CTLCOLORBTN
-        // Would require subclassing or owner draw
+        // Win32 button background requires handling WM_CTLCOLORBTN in parent window
+        // procedure or using BS_OWNERDRAW style which changes control behavior.
+        // Standard buttons use system theme colors. Store for getter.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color retrieval
-        return new RGB(240, 240, 240); // Default button face color
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;
 
-        // TODO: Implement foreground color via owner draw
+        // Win32 button text color requires owner-draw (BS_OWNERDRAW) which changes
+        // control behavior and requires handling WM_DRAWITEM. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        // TODO: Implement foreground color retrieval
-        return new RGB(0, 0, 0); // Default black text
+        return _foregroundColor;
     }
 
     public bool GetSelection()

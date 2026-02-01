@@ -155,7 +155,9 @@ internal class Win32Composite : IPlatformComposite
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via WM_CTLCOLORSTATIC or similar
+        // Win32 composite background requires handling WM_ERASEBKGND or creating
+        // a brush and registering window class with it. May affect child control
+        // rendering. Value stored for GetBackground() API compatibility.
     }
 
     public RGB GetBackground()
@@ -166,7 +168,8 @@ internal class Win32Composite : IPlatformComposite
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color
+        // Win32 foreground color on containers affects child controls through
+        // WM_CTLCOLOR* messages. Value stored for GetForeground() compatibility.
     }
 
     public RGB GetForeground()

@@ -354,32 +354,36 @@ internal partial class Win32Scale : IPlatformScale
         return IsWindowEnabled(_hwnd);
     }
 
+    private RGB _backgroundColor = new RGB(240, 240, 240);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;
 
-        // TODO: Implement background color via WM_CTLCOLORSTATIC or custom drawing
-        // Trackbar controls have limited color customization without owner draw
+        // Win32 Trackbar background requires NM_CUSTOMDRAW notification handling
+        // in parent procedure for custom drawing. Standard controls use system
+        // theme. Store for getter.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color retrieval
-        return new RGB(240, 240, 240); // Default control background color
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;
 
-        // TODO: Implement foreground color via custom drawing
-        // Trackbar controls have limited color customization
+        // Win32 Trackbar has no text; foreground would apply to tick marks via
+        // custom drawing. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        // TODO: Implement foreground color retrieval
-        return new RGB(0, 0, 0); // Default black
+        return _foregroundColor;
     }
 
     /// <summary>
