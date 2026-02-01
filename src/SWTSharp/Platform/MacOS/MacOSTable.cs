@@ -206,14 +206,35 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         };
         objc_msgSend(dataCell, selSetAlignment, new IntPtr(nsAlignment));
 
-        // Add column to table
+        // Add column to table (always appends)
         objc_msgSend(_tableView, _selAddTableColumn, column);
 
-        // Track column
+        // Track column in our list
         if (insertIndex >= _columns.Count)
+        {
             _columns.Add(column);
+        }
         else
+        {
             _columns.Insert(insertIndex, column);
+
+            // Move column from end to correct position in NSTableView
+            // moveColumn:toColumn: moves the column at fromIndex to toIndex
+            int fromIndex = _columns.Count - 1; // Column was appended, so it's at the end
+            objc_msgSend(_tableView, _selMoveColumn, new IntPtr(fromIndex), new IntPtr(insertIndex));
+
+            // Shift _moveableColumns indices >= insertIndex up by 1
+            var shifted = new HashSet<int>();
+            foreach (int idx in _moveableColumns)
+            {
+                shifted.Add(idx >= insertIndex ? idx + 1 : idx);
+            }
+            _moveableColumns.Clear();
+            foreach (int idx in shifted)
+            {
+                _moveableColumns.Add(idx);
+            }
+        }
 
         // Reload data to show new column
         objc_msgSend(_tableView, _selReloadData);
@@ -228,6 +249,19 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         IntPtr column = _columns[columnIndex];
         objc_msgSend(_tableView, _selRemoveTableColumn, column);
         _columns.RemoveAt(columnIndex);
+
+        // Update _moveableColumns: remove this index and shift indices > columnIndex down by 1
+        _moveableColumns.Remove(columnIndex);
+        var shifted = new HashSet<int>();
+        foreach (int idx in _moveableColumns)
+        {
+            shifted.Add(idx > columnIndex ? idx - 1 : idx);
+        }
+        _moveableColumns.Clear();
+        foreach (int idx in shifted)
+        {
+            _moveableColumns.Add(idx);
+        }
 
         // Update row data
         foreach (var row in _rows)
