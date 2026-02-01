@@ -6,19 +6,18 @@ namespace SWTSharp.Tests.Widgets;
 
 /// <summary>
 /// Comprehensive unit tests for Slider widget.
-/// Note: Tests are skipped on Linux because CreateSliderWidget is not yet implemented (Phase 5.3).
 /// </summary>
 public class SliderTests : WidgetTestBase
 {
     public SliderTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Slider(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -29,7 +28,7 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Minimum_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -40,7 +39,7 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Maximum_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -51,7 +50,7 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Selection_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -62,7 +61,7 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Increment_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -73,7 +72,7 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_PageIncrement_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -84,7 +83,7 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Thumb_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
@@ -95,7 +94,7 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Selection_ClampedToMinimum()
     {
         RunOnUIThread(() =>
@@ -112,7 +111,7 @@ public class SliderTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Selection_ClampedToMaximum()
     {
         RunOnUIThread(() =>
@@ -129,7 +128,7 @@ public class SliderTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_DefaultValues_ShouldBeCorrect()
     {
         RunOnUIThread(() =>
@@ -145,19 +144,19 @@ public class SliderTests : WidgetTestBase
         });
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Parent_ShouldBeCorrect()
     {
         AssertControlParent(shell => new Slider(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Slider(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_SetSelection_AfterDispose_ShouldThrow()
     {
         AssertThrowsAfterDisposal(
@@ -166,13 +165,13 @@ public class SliderTests : WidgetTestBase
         );
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Slider(shell, SWT.NONE));
     }
 
-    [FactSkipPlatform("linux")]
+    [Fact]
     public void Slider_Visible_ShouldGetAndSet()
     {
         AssertPropertyGetSet(
