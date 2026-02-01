@@ -1565,8 +1565,14 @@ internal partial class MacOSPlatform : IPlatform
     /// <returns>Platform menu implementation</returns>
     public IPlatformMenu CreateMenuWidget(int style)
     {
-        // Menu widget implementation will be completed in a future phase
-        // For now, return a stub that throws NotImplementedException
-        throw new NotImplementedException("macOS menu widget will be implemented in Phase 3");
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating menu widget. Style: 0x{style:X}");
+
+        var menu = new MacOSMenu(style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Menu widget created successfully");
+
+        return menu;
     }
 }
