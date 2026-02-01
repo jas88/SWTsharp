@@ -393,9 +393,18 @@ internal class LinuxTabItem : IPlatformTabItem
 
         // Create a GtkBox as content container for the tab page
         _contentContainer = gtk_box_new(GtkOrientation.GTK_ORIENTATION_VERTICAL, 0);
+        if (_contentContainer == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK Box for tab item content");
+        }
 
         // Create a GtkLabel for the tab label
         _tabLabel = gtk_label_new("");
+        if (_tabLabel == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_contentContainer);
+            throw new InvalidOperationException("Failed to create GTK Label for tab item");
+        }
 
         // Insert or append the page to the notebook
         int pageIndex;
@@ -410,6 +419,8 @@ internal class LinuxTabItem : IPlatformTabItem
 
         if (pageIndex < 0)
         {
+            gtk_widget_destroy(_tabLabel);
+            gtk_widget_destroy(_contentContainer);
             throw new InvalidOperationException("Failed to create GTK tab item");
         }
 
@@ -546,6 +557,9 @@ internal class LinuxTabItem : IPlatformTabItem
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_set_tooltip_text(IntPtr widget, string text);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_widget_destroy(IntPtr widget);
 
     #endregion
 }

@@ -325,8 +325,8 @@ internal class LinuxExpandBar : IPlatformExpandBar
 internal class LinuxExpandItem : IPlatformExpandItem
 {
     private readonly LinuxExpandBar _expandBar;
-    private readonly IntPtr _expander;
-    private readonly IntPtr _contentBox;
+    private IntPtr _expander;
+    private IntPtr _contentBox;
     private string _text = string.Empty;
     private bool _expanded;
     private int _height = 100;
@@ -351,9 +351,19 @@ internal class LinuxExpandItem : IPlatformExpandItem
 
         // Create GtkExpander
         _expander = gtk_expander_new("");
+        if (_expander == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK Expander for ExpandItem");
+        }
 
         // Create content container
         _contentBox = gtk_box_new(GtkOrientation.GTK_ORIENTATION_VERTICAL, 0);
+        if (_contentBox == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_expander);
+            _expander = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK Box for ExpandItem content");
+        }
 
         // Add content box to expander
         gtk_container_add(_expander, _contentBox);
@@ -467,8 +477,17 @@ internal class LinuxExpandItem : IPlatformExpandItem
         if (_disposed) return;
         _disposed = true;
 
-        // GtkExpander and children are destroyed with parent
+        // Destroy expander widget (children are destroyed automatically)
+        if (_expander != IntPtr.Zero)
+        {
+            gtk_widget_destroy(_expander);
+            _expander = IntPtr.Zero;
+        }
+        _contentBox = IntPtr.Zero;
     }
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_widget_destroy(IntPtr widget);
 
     #region GTK P/Invoke
 

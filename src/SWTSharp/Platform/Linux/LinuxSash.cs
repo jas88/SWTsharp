@@ -75,6 +75,12 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
 
         // Create a drawing area for visual representation
         IntPtr drawingArea = gtk_drawing_area_new();
+        if (drawingArea == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_sashHandle);
+            _sashHandle = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK drawing area for sash");
+        }
         gtk_container_add(_sashHandle, drawingArea);
 
         // Set default size based on orientation

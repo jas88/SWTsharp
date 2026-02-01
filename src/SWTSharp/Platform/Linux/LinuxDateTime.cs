@@ -42,32 +42,45 @@ internal class LinuxDateTime : IPlatformDateTime
         {
             // Create GtkCalendar for calendar view
             _calendar = gtk_calendar_new();
+            if (_calendar == IntPtr.Zero)
+            {
+                throw new InvalidOperationException("Failed to create GTK Calendar widget");
+            }
             _widget = _calendar;
         }
         else if ((style & SWT.TIME) != 0)
         {
             // Create horizontal box for time spinners
             _widget = gtk_box_new(0, 5); // GTK_ORIENTATION_HORIZONTAL = 0, spacing = 5
+            if (_widget == IntPtr.Zero)
+            {
+                throw new InvalidOperationException("Failed to create GTK Box for time picker");
+            }
 
             // Time selection requires GtkSpinButton widgets for hour/minute/second.
             // Current implementation uses single entry. Full time picker deferred.
             var entry = gtk_entry_new();
-            gtk_box_pack_start(_widget, entry, true, true, 0);
+            if (entry != IntPtr.Zero)
+            {
+                gtk_box_pack_start(_widget, entry, true, true, 0);
+            }
         }
         else // DATE
         {
             // Create horizontal box for date spinners or entry
             _widget = gtk_box_new(0, 5);
+            if (_widget == IntPtr.Zero)
+            {
+                throw new InvalidOperationException("Failed to create GTK Box for date picker");
+            }
 
             // For DATE mode, we could use GtkCalendar in a popup or spin buttons
             // For simplicity, use entry with calendar button
             var entry = gtk_entry_new();
-            gtk_box_pack_start(_widget, entry, true, true, 0);
-        }
-
-        if (_widget == IntPtr.Zero)
-        {
-            throw new InvalidOperationException("Failed to create GTK DateTime widget");
+            if (entry != IntPtr.Zero)
+            {
+                gtk_box_pack_start(_widget, entry, true, true, 0);
+            }
         }
 
         gtk_widget_show_all(_widget);
