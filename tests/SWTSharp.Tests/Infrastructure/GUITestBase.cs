@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+
+// CA1031: Generic catch clauses are intentional for diagnostic capture before re-throwing
+// CS8604: Path.Combine arguments are relative paths, not absolute - false positive
+#pragma warning disable CA1031
 
 namespace SWTSharp.Tests.Infrastructure;
 

@@ -65,6 +65,8 @@ internal partial class Win32Platform
     /// Creates an activation context for Common Controls v6 using shell32.dll's manifest.
     /// Resource #124 in shell32.dll contains the ComCtl32 v6 manifest.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "CS8604",
+        Justification = "shell32.dll is a relative path, not absolute - Path.Combine works correctly")]
     private static IntPtr CreateComctl32ActivationContext()
     {
         // Get the system directory path

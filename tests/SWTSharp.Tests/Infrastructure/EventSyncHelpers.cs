@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+// CA1031: Generic catch is intentional for async error propagation via TCS
+#pragma warning disable CA1031
+
 namespace SWTSharp.Tests.Infrastructure;
 
 /// <summary>
