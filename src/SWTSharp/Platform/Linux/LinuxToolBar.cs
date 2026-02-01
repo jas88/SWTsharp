@@ -85,8 +85,8 @@ internal class LinuxToolBar : IPlatformToolBar
     {
         if (_gtkToolbarHandle == IntPtr.Zero) return;
 
-        // TODO: Convert IPlatformImage to GtkWidget when image support is added
-        // For now, create a tool button with text only
+        // GtkToolButton image requires GdkPixbuf. IPlatformImage to GdkPixbuf conversion
+        // would use gdk_pixbuf_new_from_data with image pixel data. Currently text-only.
         IntPtr toolButton = gtk_tool_button_new(IntPtr.Zero, text ?? string.Empty);
 
         if (toolButton == IntPtr.Zero)

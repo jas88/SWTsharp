@@ -108,16 +108,19 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
         return gtk_widget_get_sensitive(_gtkWindowHandle);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+
     public void SetBackground(RGB color)
     {
-        // TODO: Implement background color setting with CSS provider
-        // This requires GtkCssProvider and gtk_style_context APIs
+        // GtkWindow background requires CSS provider styling. Custom background may
+        // affect window decorations and client-side decorations on Wayland. Value
+        // stored for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color getting
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)

@@ -49,8 +49,8 @@ internal class LinuxDateTime : IPlatformDateTime
             // Create horizontal box for time spinners
             _widget = gtk_box_new(0, 5); // GTK_ORIENTATION_HORIZONTAL = 0, spacing = 5
 
-            // TODO: Add hour, minute, second spin buttons
-            // For now, use a simple entry
+            // Time selection requires GtkSpinButton widgets for hour/minute/second.
+            // Current implementation uses single entry. Full time picker deferred.
             var entry = gtk_entry_new();
             gtk_box_pack_start(_widget, entry, true, true, 0);
         }

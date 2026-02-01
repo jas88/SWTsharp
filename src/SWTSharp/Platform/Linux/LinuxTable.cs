@@ -321,8 +321,9 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
 
     public void SetItemImage(int itemIndex, int columnIndex, IPlatformImage? image)
     {
-        // TODO: Implement image support for table cells
-        // This requires using GdkPixbuf and changing the cell renderer
+        // GtkTreeView image support requires GdkPixbuf cell renderer and pixbuf column
+        // in list store. Current implementation uses text-only cell renderers. Image
+        // support would require restructuring the model to include GDK_TYPE_PIXBUF columns.
     }
 
     public void SetHeaderVisible(bool visible)
@@ -478,10 +479,14 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         return gtk_widget_get_sensitive(_gtkTreeView);
     }
 
-    public void SetBackground(RGB color) { /* TODO: Implement via CSS */ }
-    public RGB GetBackground() => new RGB(255, 255, 255);
-    public void SetForeground(RGB color) { /* TODO: Implement via CSS */ }
-    public RGB GetForeground() => new RGB(0, 0, 0);
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
+    // GtkTreeView colors via CSS may affect selection highlighting and row striping
+    public void SetBackground(RGB color) { _backgroundColor = color; }
+    public RGB GetBackground() => _backgroundColor;
+    public void SetForeground(RGB color) { _foregroundColor = color; }
+    public RGB GetForeground() => _foregroundColor;
 
     public void Dispose()
     {

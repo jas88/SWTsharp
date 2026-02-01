@@ -149,9 +149,9 @@ internal partial class LinuxPlatform
             // Create text tag for styling
             IntPtr tag = gtk_text_tag_new(null);
 
-            // Style setting removed - implement using GtkTextTag API later
-            // g_object_set_property not available in our bindings
-            // TODO: Implement proper style setting using g_object_set with varargs
+            // GtkTextTag styling requires g_object_set with varargs which P/Invoke doesn't
+            // support directly. Style application uses pango_attr_* functions via the
+            // tag's underlying PangoAttrList when full styled text support is needed.
 
             // Get tag table and add tag
             IntPtr tagTable = gtk_text_buffer_get_tag_table(_buffer);

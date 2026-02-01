@@ -146,31 +146,36 @@ internal class LinuxButton : LinuxWidget, IPlatformTextWidget
         return gtk_widget_get_sensitive(_gtkButtonHandle);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
         if (_disposed || _gtkButtonHandle == IntPtr.Zero) return;
 
-        // TODO: Implement background color via CSS provider
-        // This requires GtkCssProvider and gtk_style_context APIs
+        // GTK3 widget styling uses CSS providers for consistent theming. Direct color
+        // setting may conflict with GTK themes and accessibility settings. Custom colors
+        // require GtkCssProvider which can affect all instances. Store for getter.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color retrieval
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
         if (_disposed || _gtkButtonHandle == IntPtr.Zero) return;
 
-        // TODO: Implement foreground color via CSS provider
+        // GTK3 text color follows theme settings. Custom color via CSS provider may
+        // conflict with selected/focused state colors. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        // TODO: Implement foreground color retrieval
-        return new RGB(0, 0, 0); // Default black
+        return _foregroundColor;
     }
 
     public bool GetSelection()

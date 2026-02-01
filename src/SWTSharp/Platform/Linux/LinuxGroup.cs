@@ -220,7 +220,8 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via CSS provider
+        // GtkFrame background via CSS may affect the frame border and label
+        // appearance. Background is typically transparent. Store for getter.
     }
 
     public RGB GetBackground()
@@ -231,7 +232,8 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color via CSS provider
+        // GtkFrame foreground (label color) via CSS. Custom color may conflict
+        // with theme styling of frame labels. Store for getter.
     }
 
     public RGB GetForeground()

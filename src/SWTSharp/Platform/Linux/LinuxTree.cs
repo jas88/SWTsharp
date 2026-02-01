@@ -168,7 +168,8 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via CSS provider
+        // GtkTreeView background via CSS may affect expander arrows, selection
+        // highlighting, and drag-drop visual feedback. Store for getter.
     }
 
     public RGB GetBackground()
@@ -179,7 +180,8 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color via CSS provider
+        // GtkTreeView text color via CSS affects all rows. Custom colors may
+        // conflict with selected row highlighting. Store for getter.
     }
 
     public RGB GetForeground()

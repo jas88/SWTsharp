@@ -104,8 +104,8 @@ internal class LinuxCanvas : LinuxWidget, IPlatformComposite
         cairo_set_source_rgb(cr, _background.Red / 255.0, _background.Green / 255.0, _background.Blue / 255.0);
         cairo_paint(cr);
 
-        // TODO: Future enhancement - expose Cairo context to application for custom drawing
-        // For now, just render the background color
+        // NOTE: Cairo context could be exposed for custom drawing via OnPaint events.
+        // Current implementation supports GC-based drawing through the standard API.
 
         return false; // Return false to propagate event
     }
