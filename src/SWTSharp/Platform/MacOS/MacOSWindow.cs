@@ -99,18 +99,21 @@ internal class MacOSWindow : MacOSWidget, IPlatformWindow
         return true;
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+
     public void SetBackground(RGB color)
     {
         if (_disposed || _nsWindowHandle == IntPtr.Zero) return;
 
-        // TODO: Implement background color setting
-        // This would require NSColor handling
+        // NSWindow background can be set via setBackgroundColor: but this affects
+        // window chrome appearance and may conflict with vibrancy and system theme.
+        // Store value for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color getting
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)

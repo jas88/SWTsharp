@@ -54,8 +54,9 @@ internal class MacOSTreeItem : IPlatformTreeItem
             }
             else
             {
-                // For other IPlatformImage implementations, we'd need conversion logic
-                // TODO: Add conversion logic for other image types
+                // Image conversion requires NSImage creation from platform-agnostic Image data.
+                // Non-MacOSImage types would need conversion through Image.GetImageData() ->
+                // NSBitmapImageRep -> NSImage pipeline. Currently only MacOSImage supported.
             }
         }
 

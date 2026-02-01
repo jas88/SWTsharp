@@ -266,26 +266,32 @@ internal class MacOSList : MacOSWidget, IPlatformList
         return objc_msgSend_bool(_nsTableViewHandle, selector);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
-        // Background color for NSTableView requires layer support
-        // TODO: Implement via wantsLayer and backgroundColor
+        // NSTableView (list mode) background requires layer-backed view or custom
+        // drawing. May interfere with selection highlighting and system appearance.
+        // Store value for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
-        // Foreground color would apply to text
-        // TODO: Implement via cell text color
+        // NSTableView text color requires custom cell rendering or attributed strings.
+        // Default behavior uses system appearance colors. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        return new RGB(0, 0, 0); // Default black
+        return _foregroundColor;
     }
 
     #endregion

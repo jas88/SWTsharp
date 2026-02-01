@@ -93,6 +93,12 @@ internal partial class MacOSPlatform : IPlatformGraphics
     [DllImport(CoreGraphicsFramework)]
     private static extern void CGImageRelease(IntPtr image);
 
+    [DllImport(CoreGraphicsFramework)]
+    private static extern nuint CGImageGetWidth(IntPtr image);
+
+    [DllImport(CoreGraphicsFramework)]
+    private static extern nuint CGImageGetHeight(IntPtr image);
+
     // Graphics context state tracking
     private sealed class GraphicsState
     {
@@ -637,8 +643,10 @@ internal partial class MacOSPlatform : IPlatformGraphics
         if (imageHandle == IntPtr.Zero)
             return;
 
-        // Get image size first (simplified)
-        var rect = new CGRect(x, y, 100, 100); // TODO: Get actual image size
+        // Get actual image dimensions from CGImage
+        var width = CGImageGetWidth(imageHandle);
+        var height = CGImageGetHeight(imageHandle);
+        var rect = new CGRect(x, y, width, height);
         CGContextDrawImage(gcHandle, rect, imageHandle);
     }
 
@@ -656,10 +664,13 @@ internal partial class MacOSPlatform : IPlatformGraphics
 
     public void CopyArea(IntPtr gcHandle, int srcX, int srcY, int width, int height, int destX, int destY)
     {
-        // This requires creating a temporary image from the source area
-        // Simplified implementation
+        // Copy area requires CGBitmapContextCreateImage to capture source region,
+        // then CGContextDrawImage to render at destination. Current implementation
+        // is a no-op as it requires knowing the context's pixel format and dimensions.
         CGContextSaveGState(gcHandle);
-        // TODO: Implement actual copy using CGBitmapContextCreateImage
+        // CopyArea implementation requires CGBitmapContextCreateImage which needs
+        // bitmap context. For window/view contexts, would need to render to offscreen
+        // bitmap first. This is a complex operation deferred for future enhancement.
         CGContextRestoreGState(gcHandle);
     }
 }

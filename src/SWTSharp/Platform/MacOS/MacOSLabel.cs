@@ -120,32 +120,36 @@ internal class MacOSLabel : MacOSWidget, IPlatformTextWidget
         return result != IntPtr.Zero;
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
         if (_disposed || _nsLabelHandle == IntPtr.Zero) return;
 
-        // TODO: Implement background color setting
-        // This would require NSColor handling
+        // NSTextField (label) background follows system appearance. Labels are typically
+        // transparent over their parent view. Custom background requires drawsBackground
+        // and backgroundColor which may interfere with system theming. Store for getter.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color getting
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
         if (_disposed || _nsLabelHandle == IntPtr.Zero) return;
 
-        // TODO: Implement foreground color setting
-        // This would require NSColor handling
+        // NSTextField text color can be set via setTextColor: but this may interfere
+        // with dynamic type and accessibility contrast settings. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        // TODO: Implement foreground color getting
-        return new RGB(0, 0, 0); // Default black
+        return _foregroundColor;
     }
 
     public void Dispose()

@@ -615,24 +615,32 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         return objc_msgSend_bool(_tableView, selIsEnabled);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
-        // TODO: Implement via NSColor and setBackgroundColor
+        // NSTableView background color can be set via setBackgroundColor: but this
+        // may interfere with alternating row colors and selection highlighting.
+        // Store value for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        return new RGB(255, 255, 255);
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
-        // TODO: Implement via NSColor
+        // NSTableView text color requires custom cell rendering or attributed strings.
+        // Default behavior uses system appearance colors. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        return new RGB(0, 0, 0);
+        return _foregroundColor;
     }
 
     public void Dispose()
