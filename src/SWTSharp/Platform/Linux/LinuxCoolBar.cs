@@ -165,13 +165,14 @@ internal class LinuxCoolBar : IPlatformCoolBar
 
     /// <summary>
     /// Linux implementation of IPlatformCoolItem.
+    /// Uses GtkFrame as container since GtkHandleBox is deprecated in GTK 3.4+.
     /// </summary>
     internal class LinuxCoolItem : IPlatformCoolItem
     {
         private readonly LinuxCoolBar _parent;
         private readonly int _index;
         private readonly int _style;
-        private IntPtr _handleBox;
+        private IntPtr _container;  // GtkFrame (replaces deprecated GtkHandleBox)
         private IntPtr _childWidget;
         private int _preferredWidth = 100;
         private int _preferredHeight = 24;
@@ -185,18 +186,21 @@ internal class LinuxCoolBar : IPlatformCoolBar
             _index = index < 0 ? parent.GetItemCount() : index;
             _style = style;
 
-            // Create GtkHandleBox for rearrangeable item
-            _handleBox = gtk_handle_box_new();
-            if (_handleBox == IntPtr.Zero)
+            // Create GtkFrame as container (GtkHandleBox was deprecated in GTK 3.4)
+            _container = gtk_frame_new(IntPtr.Zero);
+            if (_container == IntPtr.Zero)
             {
-                throw new InvalidOperationException("Failed to create GTK HandleBox for CoolItem");
+                throw new InvalidOperationException("Failed to create GTK Frame for CoolItem");
             }
 
-            gtk_widget_set_size_request(_handleBox, _preferredWidth, _preferredHeight);
-            gtk_widget_show(_handleBox);
+            // Remove frame shadow for cleaner look
+            gtk_frame_set_shadow_type(_container, 0); // GTK_SHADOW_NONE
+
+            gtk_widget_set_size_request(_container, _preferredWidth, _preferredHeight);
+            gtk_widget_show(_container);
 
             // Pack into parent
-            _parent.PackItem(_handleBox, _index);
+            _parent.PackItem(_container, _index);
         }
 
         public void SetControl(IPlatformWidget? control)
@@ -204,7 +208,7 @@ internal class LinuxCoolBar : IPlatformCoolBar
             // Remove old child if any
             if (_childWidget != IntPtr.Zero)
             {
-                gtk_container_remove(_handleBox, _childWidget);
+                gtk_container_remove(_container, _childWidget);
                 _childWidget = IntPtr.Zero;
             }
 
@@ -239,7 +243,7 @@ internal class LinuxCoolBar : IPlatformCoolBar
                     gtk_container_remove(currentParent, _childWidget);
                 }
 
-                gtk_container_add(_handleBox, _childWidget);
+                gtk_container_add(_container, _childWidget);
                 gtk_widget_show(_childWidget);
             }
         }
@@ -255,9 +259,9 @@ internal class LinuxCoolBar : IPlatformCoolBar
             _preferredWidth = width;
             _preferredHeight = height;
 
-            if (_handleBox != IntPtr.Zero)
+            if (_container != IntPtr.Zero)
             {
-                gtk_widget_set_size_request(_handleBox, width, height);
+                gtk_widget_set_size_request(_container, width, height);
             }
         }
 
@@ -266,10 +270,10 @@ internal class LinuxCoolBar : IPlatformCoolBar
             _minimumWidth = width;
             _minimumHeight = height;
 
-            // GTK HandleBox doesn't have direct minimum size, but we can use size request
-            if (_handleBox != IntPtr.Zero && width > 0 && height > 0)
+            // Use size request for minimum size
+            if (_container != IntPtr.Zero && width > 0 && height > 0)
             {
-                gtk_widget_set_size_request(_handleBox,
+                gtk_widget_set_size_request(_container,
                     Math.Max(width, _preferredWidth),
                     Math.Max(height, _preferredHeight));
             }
@@ -280,17 +284,20 @@ internal class LinuxCoolBar : IPlatformCoolBar
             if (_disposed) return;
             _disposed = true;
 
-            if (_handleBox != IntPtr.Zero)
+            if (_container != IntPtr.Zero)
             {
-                gtk_widget_destroy(_handleBox);
-                _handleBox = IntPtr.Zero;
+                gtk_widget_destroy(_container);
+                _container = IntPtr.Zero;
             }
 
             _childWidget = IntPtr.Zero;
         }
 
         [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr gtk_handle_box_new();
+        private static extern IntPtr gtk_frame_new(IntPtr label);
+
+        [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void gtk_frame_set_shadow_type(IntPtr frame, int type);
 
         [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
         private static extern void gtk_widget_set_size_request(IntPtr widget, int width, int height);
