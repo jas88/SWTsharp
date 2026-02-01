@@ -176,6 +176,8 @@ jobs:
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
           DISPLAY: :99
+          NO_AT_BRIDGE: 1  # Disable AT-SPI accessibility bridge to prevent crash when dbus not running
+          GTK_A11Y: none  # Disable GTK accessibility (GTK 4 style, also works for GTK 3)
         run: |
           dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
             --configuration ${{ env.CONFIGURATION }} \
