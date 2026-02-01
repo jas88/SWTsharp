@@ -450,12 +450,9 @@ public class List : Control
     public void SetTopIndex(int index)
     {
         CheckWidget();
-        if (index >= 0 && index < _items.Count)
+        if (index >= 0 && index < _items.Count && PlatformWidget is IPlatformList platformList)
         {
-            if (PlatformWidget is IPlatformList platformList)
-            {
-                platformList.SetTopIndex(index);
-            }
+            platformList.SetTopIndex(index);
         }
     }
 

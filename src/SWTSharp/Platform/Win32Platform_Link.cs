@@ -310,109 +310,81 @@ internal partial class Win32Platform
         EnsureLinkControlsInitialized();
 
         IntPtr parentHandle = parent != null ? ExtractNativeHandle(parent) : IntPtr.Zero;
+        LogLinkCreation(parent, parentHandle, style);
+        ValidateLinkParent(parentHandle);
 
+        // Try SysLink first, fall back to Static if unavailable
+        var sysLinkResult = TryCreateSysLink(parentHandle, style);
+        if (sysLinkResult != null)
+            return sysLinkResult;
+
+        return CreateStaticLinkFallback(parentHandle, style);
+    }
+
+    private void LogLinkCreation(IPlatformWidget? parent, IntPtr parentHandle, int style)
+    {
         if (_enableLogging)
-        {
             Console.WriteLine($"[Win32] Creating link widget. Parent type: {parent?.GetType().Name ?? "null"}, ParentHandle: 0x{parentHandle:X}, Style: 0x{style:X}");
-        }
+    }
 
-        // SysLink requires a valid parent (WS_CHILD style)
+    private void ValidateLinkParent(IntPtr parentHandle)
+    {
         if (parentHandle == IntPtr.Zero)
-        {
             throw new InvalidOperationException("Link widget requires a valid parent window");
-        }
 
-        // Verify the parent handle is still valid
         if (!IsWindow(parentHandle))
-        {
             throw new InvalidOperationException($"Link widget parent handle 0x{parentHandle:X} is not a valid window");
-        }
+    }
 
-        IntPtr handle = IntPtr.Zero;
+    private Win32Link? TryCreateSysLink(IntPtr parentHandle, int style)
+    {
         IntPtr cookie = IntPtr.Zero;
-        bool activated = false;
-
-        // Activate ComCtl32 v6 context for SysLink creation
-        if (_comctl32ActCtx != IntPtr.Zero)
-        {
-            activated = ActivateActCtx(_comctl32ActCtx, out cookie);
-            if (_enableLogging && activated)
-                Console.WriteLine("[Win32] Activated ComCtl32 v6 context for SysLink creation");
-        }
+        bool activated = _comctl32ActCtx != IntPtr.Zero && ActivateActCtx(_comctl32ActCtx, out cookie);
 
         try
         {
-            // Try to create SysLink control (requires ComCtl32 v6)
             uint windowStyle = WS_CHILD | WS_VISIBLE | LWS_TRANSPARENT;
-
             if ((style & SWT.BORDER) != 0)
-            {
                 windowStyle |= 0x00800000; // WS_BORDER
-            }
 
-            handle = CreateWindowEx(
-                0,
-                "SysLink",
-                string.Empty,
-                windowStyle,
-                0, 0, 100, 20,
-                parentHandle,
-                IntPtr.Zero,
-                _hInstance,
-                IntPtr.Zero
-            );
+            IntPtr handle = CreateWindowEx(0, "SysLink", string.Empty, windowStyle,
+                0, 0, 100, 20, parentHandle, IntPtr.Zero, _hInstance, IntPtr.Zero);
 
-            if (handle != IntPtr.Zero)
+            if (handle == IntPtr.Zero)
             {
                 if (_enableLogging)
-                    Console.WriteLine("[Win32] Link widget created successfully using SysLink");
-
-                var linkWidget = new Win32Link(handle, usingSysLink: true);
-                _linkWidgets[handle] = linkWidget;
-                return linkWidget;
+                    Console.WriteLine($"[Win32] SysLink creation failed with error {Marshal.GetLastWin32Error()}, falling back to Static control");
+                return null;
             }
 
-            int error = Marshal.GetLastWin32Error();
             if (_enableLogging)
-                Console.WriteLine($"[Win32] SysLink creation failed with error {error}, falling back to Static control");
+                Console.WriteLine("[Win32] Link widget created successfully using SysLink");
+
+            var linkWidget = new Win32Link(handle, usingSysLink: true);
+            _linkWidgets[handle] = linkWidget;
+            return linkWidget;
         }
         finally
         {
             if (activated)
-            {
                 DeactivateActCtx(0, cookie);
-            }
         }
+    }
 
-        // Fallback: Use a Static control styled as a link
-        // This works without Common Controls v6
+    private Win32Link CreateStaticLinkFallback(IntPtr parentHandle, int style)
+    {
         if (_enableLogging)
             Console.WriteLine("[Win32] Using Static control fallback for Link");
 
-        uint fallbackStyle = WS_CHILD | WS_VISIBLE | SS_NOTIFY; // SS_NOTIFY enables click notifications (defined in Win32Platform_Label.cs)
-
+        uint fallbackStyle = WS_CHILD | WS_VISIBLE | SS_NOTIFY;
         if ((style & SWT.BORDER) != 0)
-        {
             fallbackStyle |= 0x00800000; // WS_BORDER
-        }
 
-        handle = CreateWindowEx(
-            0,
-            "Static",
-            string.Empty,
-            fallbackStyle,
-            0, 0, 100, 20,
-            parentHandle,
-            IntPtr.Zero,
-            _hInstance,
-            IntPtr.Zero
-        );
+        IntPtr handle = CreateWindowEx(0, "Static", string.Empty, fallbackStyle,
+            0, 0, 100, 20, parentHandle, IntPtr.Zero, _hInstance, IntPtr.Zero);
 
         if (handle == IntPtr.Zero)
-        {
-            int error = Marshal.GetLastWin32Error();
-            throw new InvalidOperationException($"Failed to create link control. Error: {error}");
-        }
+            throw new InvalidOperationException($"Failed to create link control. Error: {Marshal.GetLastWin32Error()}");
 
         if (_enableLogging)
             Console.WriteLine("[Win32] Link widget created successfully using Static fallback");
