@@ -11,13 +11,13 @@ public class MenuTests : WidgetTestBase
 {
     public MenuTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Create_ShouldSucceed()
     {
         AssertWidgetCreation(shell => new Menu(shell, SWT.BAR));
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Create_WithStyles_ShouldSucceed()
     {
         AssertWidgetStyles(
@@ -28,7 +28,7 @@ public class MenuTests : WidgetTestBase
         );
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_AddMenuItem_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -44,7 +44,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_AddMultipleMenuItems_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -62,7 +62,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_GetItem_ShouldReturnCorrectItem()
     {
         RunOnUIThread(() =>
@@ -80,7 +80,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Items_ShouldReturnAllItems()
     {
         RunOnUIThread(() =>
@@ -100,7 +100,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Visible_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -120,13 +120,13 @@ public class MenuTests : WidgetTestBase
 
     // Menu does not have Enabled property - it's a Widget, not a Control
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Dispose_ShouldSetIsDisposed()
     {
         AssertWidgetDisposal(shell => new Menu(shell, SWT.BAR));
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Dispose_ShouldDisposeItems()
     {
         RunOnUIThread(() =>
@@ -142,13 +142,13 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Data_ShouldGetAndSet()
     {
         AssertWidgetData(shell => new Menu(shell, SWT.BAR));
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_GetItem_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -162,7 +162,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_InitialItemCount_ShouldBeZero()
     {
         RunOnUIThread(() =>
@@ -176,7 +176,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_Display_ShouldMatchParent()
     {
         RunOnUIThread(() =>
@@ -190,7 +190,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_SubMenu_ShouldWork()
     {
         RunOnUIThread(() =>
@@ -212,7 +212,7 @@ public class MenuTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void Menu_MixedItemTypes_ShouldSucceed()
     {
         RunOnUIThread(() =>
