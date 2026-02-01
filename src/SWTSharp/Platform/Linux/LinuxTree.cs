@@ -83,6 +83,12 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
 
         // Create scrolled window
         IntPtr scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        if (scrolledWindow == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_treeView);
+            _treeView = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK ScrolledWindow for Tree");
+        }
         gtk_scrolled_window_set_policy(scrolledWindow, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
         gtk_container_add(scrolledWindow, _treeView);
 

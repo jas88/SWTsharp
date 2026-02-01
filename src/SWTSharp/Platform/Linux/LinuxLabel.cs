@@ -27,6 +27,11 @@ internal class LinuxLabel : IPlatformTextWidget
     {
         _gtkLabel = CreateGtkLabel(style);
 
+        if (_gtkLabel == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK label widget");
+        }
+
         if (parentHandle != IntPtr.Zero)
         {
             gtk_container_add(parentHandle, _gtkLabel);

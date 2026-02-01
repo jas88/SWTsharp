@@ -44,6 +44,11 @@ internal class LinuxExpandBar : IPlatformExpandBar
         if ((style & SWT.V_SCROLL) != 0)
         {
             var scrolled = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+            if (scrolled == IntPtr.Zero)
+            {
+                gtk_widget_destroy(_gtkBox);
+                throw new InvalidOperationException("Failed to create GTK ScrolledWindow for ExpandBar");
+            }
             gtk_scrolled_window_set_policy(scrolled, GtkPolicyType.GTK_POLICY_NEVER,
                 GtkPolicyType.GTK_POLICY_AUTOMATIC);
             gtk_container_add(scrolled, _gtkBox);

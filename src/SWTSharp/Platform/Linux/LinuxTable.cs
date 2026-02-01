@@ -42,11 +42,21 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
 
         // Create scrolled window container
         _gtkScrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        if (_gtkScrolledWindow == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK ScrolledWindow for Table");
+        }
         gtk_scrolled_window_set_policy(_gtkScrolledWindow,
             GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
         // Create tree view (initially with no columns)
         _gtkTreeView = gtk_tree_view_new();
+        if (_gtkTreeView == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_gtkScrolledWindow);
+            _gtkScrolledWindow = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK TreeView for Table");
+        }
 
         // Create an empty list store (will be recreated when columns are added)
         _gtkListStore = IntPtr.Zero;

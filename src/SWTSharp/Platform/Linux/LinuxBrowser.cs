@@ -163,6 +163,12 @@ internal class LinuxBrowser : IPlatformBrowser
 
         // Create scrolled window container
         _scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        if (_scrolledWindow == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_webView);
+            _webView = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK ScrolledWindow for browser");
+        }
         gtk_scrolled_window_set_policy(_scrolledWindow, 1, 1); // GTK_POLICY_AUTOMATIC
 
         // Add web view to scrolled window
