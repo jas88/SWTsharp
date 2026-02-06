@@ -160,8 +160,10 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
     public void Close()
     {
         if (_disposed || _gtkWindowHandle == IntPtr.Zero) return;
-
+        _disposed = true;
         gtk_widget_destroy(_gtkWindowHandle);
+        _gtkWindowHandle = IntPtr.Zero;
+        _container = IntPtr.Zero;
     }
 
     public bool IsDisposed => _disposed;
@@ -175,7 +177,7 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
             var childHandle = linuxWidget.GetNativeHandle();
 
             // Add child to the container (not directly to window)
-            if (_container != IntPtr.Zero)
+            if (childHandle != IntPtr.Zero && _container != IntPtr.Zero)
             {
                 gtk_container_add(_container, childHandle);
                 gtk_widget_show(childHandle);
@@ -197,7 +199,7 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
             var childHandle = linuxWidget.GetNativeHandle();
 
             // Remove from container
-            if (_container != IntPtr.Zero)
+            if (childHandle != IntPtr.Zero && _container != IntPtr.Zero)
             {
                 gtk_container_remove(_container, childHandle);
             }

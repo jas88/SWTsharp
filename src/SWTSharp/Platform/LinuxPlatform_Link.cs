@@ -142,6 +142,9 @@ internal partial class LinuxPlatform
 
         // Create GtkLabel with markup support
         IntPtr label = gtk_label_new(string.Empty);
+        if (label == IntPtr.Zero)
+            throw new InvalidOperationException("Failed to create GTK label for Link");
+
         gtk_label_set_use_markup(label, true);
 
         // Make it selectable for link clicking

@@ -47,15 +47,16 @@ Plans:
   3. SafeHandle.ReleaseHandle() implemented for all platform handles
   4. All 30+ compiler warnings resolved (no suppressions)
   5. Missing Linux widgets (Slider, Spinner) fully implemented
-**Plans**: TBD
+**Plans**: 7 plans
 
 Plans:
-- [ ] 02-01: Core widgets (Button, Label, Text, Shell, Composite)
-- [ ] 02-02: Container widgets (TabFolder, ToolBar, Menu, Group)
-- [ ] 02-03: Dialog completion (FileDialog, ColorDialog, FontDialog, MessageBox)
-- [ ] 02-04: Linux-specific widgets (Slider, Spinner)
-- [ ] 02-05: Complex widgets (Table, Tree, Combo, List)
-- [ ] 02-06: Graphics and SafeHandle completion
+- [x] 02-01-PLAN.md — Core widgets (Button, Label, Text, Shell, Composite)
+- [x] 02-02-PLAN.md — Container widgets (TabFolder, ToolBar, Menu, Group)
+- [x] 02-03-PLAN.md — Dialog completion (FileDialog, ColorDialog, FontDialog, MessageBox)
+- [x] 02-04-PLAN.md — Linux-specific widgets (Slider, Spinner)
+- [x] 02-05-PLAN.md — Complex widgets (Table, Tree, Combo, List)
+- [x] 02-06-PLAN.md — Graphics and SafeHandle completion
+- [ ] 02-07-PLAN.md — Gap closure: Platform implementation TODOs (73 color/styling TODOs)
 
 ### Phase 3: Missing Critical Packages
 **Goal**: Complete implementations for missing table-stakes packages
@@ -124,11 +125,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Infrastructure Foundation | 4/4 | ✓ Complete | 2026-01-30 |
-| 2. Core Widget Completion | 0/6 | Not started | - |
+| 1. Test Infrastructure Foundation | 4/4 | Complete | 2026-01-30 |
+| 2. Core Widget Completion | 6/7 | Gap closure pending | - |
 | 3. Missing Critical Packages | 0/3 | Not started | - |
 | 4. Polish and Performance | 0/4 | Not started | - |
 
 ---
-*Roadmap version: 1.0*
-*Created: 2025-01-29*
+*Roadmap version: 1.1*
+*Updated: 2026-02-01 - Added gap closure plan 02-07*
