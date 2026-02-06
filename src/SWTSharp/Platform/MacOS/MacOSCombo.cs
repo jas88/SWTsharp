@@ -403,6 +403,9 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
         IntPtr editor = objc_msgSend_IntPtr_IntPtr(window, selFieldEditor, (IntPtr)1, _nsComboBox);
         if (editor == IntPtr.Zero) return;
 
+        if (start < 0) start = 0;
+        if (end < start) end = start;
+
         var selSetSelectedRange = sel_registerName("setSelectedRange:");
         objc_msgSend_range(editor, selSetSelectedRange, new NSRange { location = (ulong)start, length = (ulong)(end - start) });
     }

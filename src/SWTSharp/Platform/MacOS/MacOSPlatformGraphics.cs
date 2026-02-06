@@ -190,10 +190,23 @@ internal partial class MacOSPlatform : IPlatformGraphics
         CGColorSpaceRelease(colorSpace);
 
         // Create CGImage from bitmap context
-        IntPtr image = CGBitmapContextCreateImage(context);
+        IntPtr cgImage = CGBitmapContextCreateImage(context);
         CGContextRelease(context);
 
-        return image;
+        if (cgImage == IntPtr.Zero)
+            return IntPtr.Zero;
+
+        // Wrap CGImage in NSImage so all image handles are consistently NSImage
+        // This ensures DestroyImage (which sends ObjC release) works correctly
+        IntPtr nsImageClass = objc_getClass("NSImage");
+        IntPtr selAlloc = sel_registerName("alloc");
+        IntPtr selInitWithCGImage = sel_registerName("initWithCGImage:size:");
+        IntPtr nsImage = objc_msgSend(nsImageClass, selAlloc);
+        // NSZeroSize (0,0) means use CGImage's intrinsic size
+        nsImage = objc_msgSend_IntPtr_double_double(nsImage, selInitWithCGImage, cgImage, 0.0, 0.0);
+        CGImageRelease(cgImage);
+
+        return nsImage;
     }
 
     public (IntPtr Handle, int Width, int Height) LoadImage(string filename)
@@ -398,6 +411,9 @@ internal partial class MacOSPlatform : IPlatformGraphics
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend_IntPtr_IntPtr_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1, IntPtr arg2, IntPtr arg3);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_double_double(IntPtr receiver, IntPtr selector, IntPtr arg1, double arg2, double arg3);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
     private static extern double objc_msgSend_fpret(IntPtr receiver, IntPtr selector);
