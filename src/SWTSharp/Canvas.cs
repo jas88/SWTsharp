@@ -126,8 +126,12 @@ public class Canvas : Composite
     public void Redraw(int x, int y, int width, int height)
     {
         CheckWidget();
-        // Platform-specific invalidation is handled through the composite's redraw mechanism
-        // The actual paint will occur when the display processes the invalidated region
+        if (PlatformWidget == null) return;
+
+        // Call platform-specific Redraw via reflection
+        // All platform canvas implementations (Win32Canvas, MacOSCanvas, LinuxCanvas) implement Redraw(x,y,w,h)
+        var method = PlatformWidget.GetType().GetMethod("Redraw", new[] { typeof(int), typeof(int), typeof(int), typeof(int) });
+        method?.Invoke(PlatformWidget, new object[] { x, y, width, height });
     }
 
     protected override void UpdateVisible()

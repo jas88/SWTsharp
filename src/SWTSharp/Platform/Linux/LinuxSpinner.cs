@@ -175,9 +175,7 @@ internal class LinuxSpinner : LinuxWidget, IPlatformSpinner
         {
             if (_disposed || _spinButton == IntPtr.Zero) return;
             _textLimit = value >= 0 ? value : 0;
-            // GTK SpinButton inherits from GtkEntry, so we can use max-length
-            // However, this is usually not needed as the spinner auto-manages text
-            // based on the numeric range. We store it but don't strictly enforce.
+            gtk_entry_set_max_length(_spinButton, _textLimit);
         }
     }
 
@@ -400,6 +398,9 @@ internal class LinuxSpinner : LinuxWidget, IPlatformSpinner
     // Entry functions (GtkSpinButton inherits from GtkEntry)
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_entry_get_text(IntPtr entry);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_entry_set_max_length(IntPtr entry, int max);
 
     // Editable functions
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]

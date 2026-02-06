@@ -310,7 +310,7 @@ public class TableItem : Widget
             if (rowIndex >= 0)
             {
                 // Image-to-platform-image conversion requires platform graphics support
-                // Currently passing null as images are displayed via custom cell rendering
+                // Image rendering at the platform level is not yet implemented; passing null
                 platformTable.SetItemImage(rowIndex, column, null);
             }
         }

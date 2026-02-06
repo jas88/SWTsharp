@@ -411,6 +411,11 @@ internal partial class MacOSPlatform
         // Run modal session
         long response = objc_msgSend_long_IntPtr(app, selRunModalForWindow, colorPanel);
 
+        // Stop modal and dismiss panel
+        objc_msgSend(app, selStopModal);
+        IntPtr selOrderOut = sel_registerName("orderOut:");
+        objc_msgSend(colorPanel, selOrderOut, IntPtr.Zero);
+
         // NSColorPanel doesn't have a standard OK/Cancel - it's modeless by design
         // For SWT compatibility, we'll get the current color after the panel closes
         // Users close it by clicking the window close button
@@ -495,6 +500,12 @@ internal partial class MacOSPlatform
         // Run modal session
         long response = objc_msgSend_long_IntPtr(app, selRunModalForWindow, fontPanel);
 
+        // Stop modal and dismiss panel
+        IntPtr selStopModal = sel_registerName("stopModal");
+        objc_msgSend(app, selStopModal);
+        IntPtr selOrderOut = sel_registerName("orderOut:");
+        objc_msgSend(fontPanel, selOrderOut, IntPtr.Zero);
+
         // Get selected font
         IntPtr selectedFont = objc_msgSend(fontManager, selSelectedFont);
 
@@ -554,7 +565,7 @@ internal partial class MacOSPlatform
         {
             // Fall back to system font
             IntPtr selSystemFontOfSize = sel_registerName("systemFontOfSize:");
-            font = objc_msgSend_IntPtr_double(nsFontClass, selSystemFontOfSize, IntPtr.Zero, (double)size);
+            font = objc_msgSend_ret_IntPtr_arg_double(nsFontClass, selSystemFontOfSize, (double)size);
         }
 
         // Apply bold/italic traits if needed
@@ -674,4 +685,8 @@ internal partial class MacOSPlatform
     // Overload for runModalForWindow: and traitsOfFont: which take an IntPtr argument
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern long objc_msgSend_long_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg);
+
+    // Overload for systemFontOfSize: which takes a single double argument and returns IntPtr
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_ret_IntPtr_arg_double(IntPtr receiver, IntPtr selector, double arg);
 }

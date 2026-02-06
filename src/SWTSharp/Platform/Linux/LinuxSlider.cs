@@ -99,6 +99,10 @@ internal class LinuxSlider : LinuxWidget, IPlatformSlider
             if (_minimum != value)
             {
                 _minimum = value;
+                if (_maximum < _minimum)
+                {
+                    _maximum = _minimum;
+                }
                 gtk_range_set_range(_scale, _minimum, _maximum);
                 // Ensure value is still valid
                 if (_value < _minimum)
@@ -118,6 +122,10 @@ internal class LinuxSlider : LinuxWidget, IPlatformSlider
             if (_maximum != value)
             {
                 _maximum = value;
+                if (_minimum > _maximum)
+                {
+                    _minimum = _maximum;
+                }
                 gtk_range_set_range(_scale, _minimum, _maximum);
                 // Ensure value is still valid
                 if (_value > _maximum)

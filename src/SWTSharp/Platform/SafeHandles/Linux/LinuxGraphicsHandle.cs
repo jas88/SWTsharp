@@ -60,6 +60,7 @@ public sealed class LinuxGraphicsHandle : SafeGraphicsHandle
     }
 
     private const string GdkLib = "libgdk-3.so.0";
+    private const string GtkLib = "libgtk-3.so.0";
 
     [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_cairo_create(IntPtr window);
@@ -67,7 +68,7 @@ public sealed class LinuxGraphicsHandle : SafeGraphicsHandle
     [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gdk_window_get_effective_toplevel(IntPtr window);
 
-    [DllImport(GdkLib, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_widget_get_window(IntPtr widget);
 
     /// <summary>

@@ -225,7 +225,8 @@ internal partial class MacOSPlatform : IPlatformGraphics
     {
         if (handle != IntPtr.Zero)
         {
-            CGImageRelease(handle);
+            IntPtr selRelease = sel_registerName("release");
+            objc_msgSend_void(handle, selRelease);
         }
     }
 
@@ -394,6 +395,9 @@ internal partial class MacOSPlatform : IPlatformGraphics
             CGContextSetRGBFillColor(gcHandle, r, g, b, state.Alpha / 255.0);
         }
     }
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_IntPtr_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1, IntPtr arg2, IntPtr arg3);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
     private static extern double objc_msgSend_fpret(IntPtr receiver, IntPtr selector);
@@ -643,11 +647,15 @@ internal partial class MacOSPlatform : IPlatformGraphics
         if (imageHandle == IntPtr.Zero)
             return;
 
-        // Get actual image dimensions from CGImage
-        var width = CGImageGetWidth(imageHandle);
-        var height = CGImageGetHeight(imageHandle);
+        // Convert NSImage to CGImage for Core Graphics drawing
+        IntPtr selCGImageForProposedRect = sel_registerName("CGImageForProposedRect:context:hints:");
+        IntPtr cgImage = objc_msgSend_IntPtr_IntPtr_IntPtr(imageHandle, selCGImageForProposedRect, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        if (cgImage == IntPtr.Zero) return;
+
+        var width = CGImageGetWidth(cgImage);
+        var height = CGImageGetHeight(cgImage);
         var rect = new CGRect(x, y, width, height);
-        CGContextDrawImage(gcHandle, rect, imageHandle);
+        CGContextDrawImage(gcHandle, rect, cgImage);
     }
 
     public void DrawImageScaled(IntPtr gcHandle, IntPtr imageHandle,
@@ -657,9 +665,14 @@ internal partial class MacOSPlatform : IPlatformGraphics
         if (imageHandle == IntPtr.Zero)
             return;
 
+        // Convert NSImage to CGImage for Core Graphics drawing
+        IntPtr selCGImageForProposedRect = sel_registerName("CGImageForProposedRect:context:hints:");
+        IntPtr cgImage = objc_msgSend_IntPtr_IntPtr_IntPtr(imageHandle, selCGImageForProposedRect, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        if (cgImage == IntPtr.Zero) return;
+
         // This is simplified - proper implementation would handle source rectangle
         var destRect = new CGRect(destX, destY, destWidth, destHeight);
-        CGContextDrawImage(gcHandle, destRect, imageHandle);
+        CGContextDrawImage(gcHandle, destRect, cgImage);
     }
 
     public void CopyArea(IntPtr gcHandle, int srcX, int srcY, int width, int height, int destX, int destY)

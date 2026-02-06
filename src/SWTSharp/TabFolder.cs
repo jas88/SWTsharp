@@ -78,7 +78,8 @@ public class TabFolder : Composite
             // Get selection from platform widget if available
             if (PlatformWidget is IPlatformTabFolder tabFolderWidget)
             {
-                return tabFolderWidget.SelectionIndex;
+                _selectionIndex = tabFolderWidget.SelectionIndex;
+                return _selectionIndex;
             }
             return _selectionIndex;
         }

@@ -80,7 +80,13 @@ public sealed class MacOSFontHandle : SafeFontHandle
     private static readonly IntPtr _selStringWithUTF8String = sel_registerName("stringWithUTF8String:");
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_ret_IntPtr(IntPtr receiver, IntPtr selector);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_long(IntPtr receiver, IntPtr selector, IntPtr arg1, long arg2);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern IntPtr objc_msgSend_string(IntPtr receiver, IntPtr selector, string arg1);
@@ -118,6 +124,21 @@ public sealed class MacOSFontHandle : SafeFontHandle
             if (nsName != IntPtr.Zero)
             {
                 font = objc_msgSend_IntPtr_IntPtr_double(_clsNSFont, _selFontWithNameSize, nsName, fontSize);
+            }
+        }
+
+        // Apply italic trait if needed
+        if (font != IntPtr.Zero && (fontStyle & SWT.ITALIC) != 0)
+        {
+            IntPtr fontManagerClass = objc_getClass("NSFontManager");
+            IntPtr selSharedFontManager = sel_registerName("sharedFontManager");
+            IntPtr fontManager = objc_msgSend_ret_IntPtr(fontManagerClass, selSharedFontManager);
+
+            IntPtr selConvertFont = sel_registerName("convertFont:toHaveTrait:");
+            IntPtr italicFont = objc_msgSend_IntPtr_long(fontManager, selConvertFont, font, 0x1); // NSItalicFontMask = 0x1
+            if (italicFont != IntPtr.Zero)
+            {
+                font = italicFont;
             }
         }
 

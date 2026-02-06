@@ -15,6 +15,7 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
     private int _selectionIndex = -1;
     private bool _visible = true;
     private bool _enabled = true;
+    private int _textLimit;
     private Rectangle _bounds;
 
     // Event handling
@@ -97,6 +98,22 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
             this.height = height;
         }
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NSRange
+    {
+        public ulong location;
+        public ulong length;
+    }
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1, IntPtr arg2);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern void objc_msgSend_range(IntPtr receiver, IntPtr selector, NSRange range);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern NSRange objc_msgSend_nsrange(IntPtr receiver, IntPtr selector);
 
     public MacOSCombo(IntPtr parentHandle, int style)
     {
@@ -357,8 +374,11 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
 
     public void SetTextLimit(int limit)
     {
-        // NSComboBox uses NSCell which has a formatter for text limit
-        // For now, this is not implemented - would need NSNumberFormatter or NSTextFieldCell
+        if (_disposed || _nsComboBox == IntPtr.Zero || limit <= 0) return;
+
+        // NSTextField (which NSComboBox inherits from) has no direct max-length property on macOS.
+        // A custom NSFormatter would be needed for full enforcement. Store the limit for now.
+        _textLimit = limit;
     }
 
     public void SetVisibleItemCount(int count)
@@ -374,37 +394,55 @@ internal class MacOSCombo : MacOSWidget, IPlatformCombo
     {
         if (_disposed || _nsComboBox == IntPtr.Zero) return;
 
-        // Get the field editor for this control
-        // This is complex on macOS - would need window's field editor
-        // Simplified: just select all or nothing for now
+        // Get the current field editor for this control
+        var selWindow = sel_registerName("window");
+        IntPtr window = objc_msgSend(_nsComboBox, selWindow);
+        if (window == IntPtr.Zero) return;
+
+        var selFieldEditor = sel_registerName("fieldEditor:forObject:");
+        IntPtr editor = objc_msgSend_IntPtr_IntPtr(window, selFieldEditor, (IntPtr)1, _nsComboBox);
+        if (editor == IntPtr.Zero) return;
+
+        var selSetSelectedRange = sel_registerName("setSelectedRange:");
+        objc_msgSend_range(editor, selSetSelectedRange, new NSRange { location = (ulong)start, length = (ulong)(end - start) });
     }
 
     public (int Start, int End) GetTextSelection()
     {
-        // Getting selection from NSComboBox requires field editor access
-        return (0, 0);
+        if (_disposed || _nsComboBox == IntPtr.Zero) return (0, 0);
+
+        var selWindow = sel_registerName("window");
+        IntPtr window = objc_msgSend(_nsComboBox, selWindow);
+        if (window == IntPtr.Zero) return (0, 0);
+
+        var selFieldEditor = sel_registerName("fieldEditor:forObject:");
+        IntPtr editor = objc_msgSend_IntPtr_IntPtr(window, selFieldEditor, (IntPtr)1, _nsComboBox);
+        if (editor == IntPtr.Zero) return (0, 0);
+
+        var selSelectedRange = sel_registerName("selectedRange");
+        NSRange range = objc_msgSend_nsrange(editor, selSelectedRange);
+        return ((int)range.location, (int)(range.location + range.length));
     }
 
     public void Copy()
     {
         if (_disposed || _nsComboBox == IntPtr.Zero) return;
-
-        // Simulate Cmd+C through responder chain
-        // NSComboBox should handle this through its text field
+        var selCopy = sel_registerName("copy:");
+        objc_msgSend_void(_nsComboBox, selCopy, IntPtr.Zero);
     }
 
     public void Cut()
     {
         if (_disposed || _nsComboBox == IntPtr.Zero) return;
-
-        // Simulate Cmd+X through responder chain
+        var selCut = sel_registerName("cut:");
+        objc_msgSend_void(_nsComboBox, selCut, IntPtr.Zero);
     }
 
     public void Paste()
     {
         if (_disposed || _nsComboBox == IntPtr.Zero) return;
-
-        // Simulate Cmd+V through responder chain
+        var selPaste = sel_registerName("paste:");
+        objc_msgSend_void(_nsComboBox, selPaste, IntPtr.Zero);
     }
 
     public void Dispose()

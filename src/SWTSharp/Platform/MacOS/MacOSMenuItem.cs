@@ -203,7 +203,7 @@ internal class MacOSMenuItem : MacOSWidget, IPlatformMenuItem
         if ((accelerator & SWT.KEYCODE_BIT) != 0)
         {
             // Special key (F1-F12, arrows, etc.) - preserve the full key code
-            keyCode = accelerator & (SWT.KEYCODE_BIT | 0xFF);
+            keyCode = accelerator & (SWT.KEYCODE_BIT | 0xFFFF);
         }
         else
         {

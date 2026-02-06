@@ -465,12 +465,18 @@ internal class LinuxTabItem : IPlatformTabItem
             IntPtr currentParent = gtk_widget_get_parent(controlHandle);
             if (currentParent != IntPtr.Zero)
             {
+                g_object_ref(controlHandle);
                 gtk_container_remove(currentParent, controlHandle);
             }
 
             // Add the control to the content container
             gtk_container_add(_contentContainer, controlHandle);
             gtk_widget_show(controlHandle);
+
+            if (currentParent != IntPtr.Zero)
+            {
+                g_object_unref(controlHandle);
+            }
         }
     }
 
@@ -560,6 +566,12 @@ internal class LinuxTabItem : IPlatformTabItem
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgobject-2.0.so.0")]
+    private static extern IntPtr g_object_ref(IntPtr @object);
+
+    [DllImport("libgobject-2.0.so.0")]
+    private static extern void g_object_unref(IntPtr @object);
 
     #endregion
 }
