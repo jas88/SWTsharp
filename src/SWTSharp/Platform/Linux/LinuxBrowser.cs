@@ -190,6 +190,24 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
         }
 
         gtk_widget_show(_webView);
+
+        // Pump GTK events so WebKitGTK can complete async initialization
+        // (D-Bus setup, web process spawn). Without this, subsequent
+        // webkit_web_view_new() calls may block waiting for events that
+        // never get dispatched.
+        PumpGtkEvents();
+    }
+
+    /// <summary>
+    /// Drains pending GTK events so WebKitGTK's internal async operations
+    /// (D-Bus, web process IPC) can complete without blocking.
+    /// </summary>
+    private static void PumpGtkEvents()
+    {
+        while (gtk_events_pending())
+        {
+            gtk_main_iteration_do(false);
+        }
     }
 
     private void DisableHardwareAcceleration()
@@ -561,6 +579,11 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
         g_idle_add(Marshal.GetFunctionPointerForDelegate(idleCallback), IntPtr.Zero);
 
         _webView = IntPtr.Zero;
+
+        // Pump events so the deferred g_object_unref runs now, before the
+        // caller destroys the parent window (which would otherwise cascade
+        // into the still-parented webview).
+        PumpGtkEvents();
     }
 
     private static string PtrToStringUTF8(IntPtr ptr)
@@ -650,6 +673,12 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_set_size_request(IntPtr widget, int width, int height);
+
+    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool gtk_events_pending();
+
+    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool gtk_main_iteration_do(bool blocking);
 
     // GLib
 
