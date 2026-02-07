@@ -509,12 +509,8 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         _columnModelIndices.Clear();
         _rowData.Clear();
 
-        if (_gtkScrolledWindow != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkScrolledWindow);
-            _gtkScrolledWindow = IntPtr.Zero;
-        }
-
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkScrolledWindow = IntPtr.Zero;
         _gtkTreeView = IntPtr.Zero;
         _gtkListStore = IntPtr.Zero;
     }

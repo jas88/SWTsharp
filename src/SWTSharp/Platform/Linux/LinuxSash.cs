@@ -202,18 +202,18 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
     {
         if (!_disposed)
         {
-            DetachFromParent();
+            _disposed = true;
 
             if (_sashHandle != IntPtr.Zero)
             {
                 // Remove from instance mapping
                 _sashInstances.TryRemove(_sashHandle, out _);
-
-                // Destroy widget
-                gtk_widget_destroy(_sashHandle);
-                _sashHandle = IntPtr.Zero;
             }
-            _disposed = true;
+
+            // Detach from parent; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
+            DetachFromParent();
+            _sashHandle = IntPtr.Zero;
         }
     }
 

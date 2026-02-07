@@ -227,7 +227,10 @@ internal class LinuxDateTime : IPlatformDateTime
     {
         if (!_disposed)
         {
-            // Detach from parent container to prevent double-destroy
+            _disposed = true;
+
+            // Detach from parent container; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
             if (_widget != IntPtr.Zero)
             {
                 var parent = gtk_widget_get_parent(_widget);
@@ -236,11 +239,9 @@ internal class LinuxDateTime : IPlatformDateTime
                     gtk_container_remove(parent, _widget);
                 }
 
-                gtk_widget_destroy(_widget);
                 _widget = IntPtr.Zero;
             }
             _calendar = IntPtr.Zero;
-            _disposed = true;
         }
     }
 

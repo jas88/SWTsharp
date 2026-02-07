@@ -131,7 +131,10 @@ internal class LinuxLabel : IPlatformTextWidget
     {
         if (!_disposed)
         {
-            // Detach from parent container to prevent double-destroy
+            _disposed = true;
+
+            // Detach from parent container; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
             if (_gtkLabel != IntPtr.Zero)
             {
                 var parent = gtk_widget_get_parent(_gtkLabel);
@@ -140,10 +143,8 @@ internal class LinuxLabel : IPlatformTextWidget
                     gtk_container_remove(parent, _gtkLabel);
                 }
 
-                gtk_widget_destroy(_gtkLabel);
                 _gtkLabel = IntPtr.Zero;
             }
-            _disposed = true;
         }
     }
 

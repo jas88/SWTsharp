@@ -135,11 +135,8 @@ internal class LinuxCoolBar : IPlatformCoolBar
         }
         _items.Clear();
 
-        if (_gtkBoxHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkBoxHandle);
-            _gtkBoxHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkBoxHandle = IntPtr.Zero;
     }
 
     #region GTK P/Invoke
@@ -300,12 +297,8 @@ internal class LinuxCoolBar : IPlatformCoolBar
             if (_disposed) return;
             _disposed = true;
 
-            if (_container != IntPtr.Zero)
-            {
-                gtk_widget_destroy(_container);
-                _container = IntPtr.Zero;
-            }
-
+            // Do NOT call gtk_widget_destroy -- parent destruction handles cleanup.
+            _container = IntPtr.Zero;
             _childWidget = IntPtr.Zero;
         }
 

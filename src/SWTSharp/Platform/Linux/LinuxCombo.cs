@@ -367,11 +367,7 @@ internal class LinuxCombo : LinuxWidget, IPlatformCombo
         // Clear items
         _items.Clear();
 
-        // Destroy the widget
-        if (_handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_handle);
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
     }
 
     #endregion

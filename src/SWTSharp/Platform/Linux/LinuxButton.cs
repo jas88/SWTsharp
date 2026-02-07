@@ -17,8 +17,9 @@ internal abstract class LinuxWidget
 
     /// <summary>
     /// Removes this widget from its GTK parent container, if any.
-    /// MUST be called before gtk_widget_destroy to prevent double-destroy
-    /// when the parent is later destroyed and tries to recursively clean up children.
+    /// Child widgets must ONLY detach from their parent -- never call gtk_widget_destroy.
+    /// The top-level LinuxWindow.Dispose() will call gtk_widget_destroy on the GtkWindow,
+    /// which recursively destroys all remaining children.
     /// </summary>
     protected void DetachFromParent()
     {
@@ -244,18 +245,18 @@ internal class LinuxButton : LinuxWidget, IPlatformTextWidget
     {
         if (!_disposed)
         {
-            DetachFromParent();
+            _disposed = true;
 
             if (_gtkButtonHandle != IntPtr.Zero)
             {
                 // Remove from instance mapping
                 _buttonInstances.TryRemove(_gtkButtonHandle, out _);
-
-                // Destroy widget
-                gtk_widget_destroy(_gtkButtonHandle);
-                _gtkButtonHandle = IntPtr.Zero;
             }
-            _disposed = true;
+
+            // Detach from parent; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
+            DetachFromParent();
+            _gtkButtonHandle = IntPtr.Zero;
         }
     }
 

@@ -244,11 +244,8 @@ internal class LinuxSlider : LinuxWidget, IPlatformSlider
             _callbackHandle.Free();
         }
 
-        if (_scale != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_scale);
-            _scale = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _scale = IntPtr.Zero;
     }
 
     private void SetupEventHandlers()

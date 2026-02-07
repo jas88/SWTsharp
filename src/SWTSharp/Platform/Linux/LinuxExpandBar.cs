@@ -259,10 +259,7 @@ internal class LinuxExpandBar : IPlatformExpandBar
         _items.Clear();
         _children.Clear();
 
-        if (_handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_handle);
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
     }
 
     #endregion
@@ -498,12 +495,8 @@ internal class LinuxExpandItem : IPlatformExpandItem
         if (_disposed) return;
         _disposed = true;
 
-        // Destroy expander widget (children are destroyed automatically)
-        if (_expander != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_expander);
-            _expander = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent destruction handles cleanup.
+        _expander = IntPtr.Zero;
         _contentBox = IntPtr.Zero;
     }
 

@@ -280,12 +280,8 @@ internal class LinuxCanvas : LinuxWidget, IPlatformComposite
             _children.Clear();
         }
 
-        // Destroy the widget
-        if (_gtkDrawingAreaHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkDrawingAreaHandle);
-            _gtkDrawingAreaHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkDrawingAreaHandle = IntPtr.Zero;
 
         // Clear delegate reference
         _drawCallback = null;

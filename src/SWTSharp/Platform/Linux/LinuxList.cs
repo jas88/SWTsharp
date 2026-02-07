@@ -434,11 +434,7 @@ internal class LinuxList : LinuxWidget, IPlatformList
         // Clear items
         _items.Clear();
 
-        // Destroy the widget (destroying the scrolled window also destroys the list box)
-        if (_scrolledWindow != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_scrolledWindow);
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
     }
 
     #endregion

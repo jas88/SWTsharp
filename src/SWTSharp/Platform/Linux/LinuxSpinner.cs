@@ -263,11 +263,8 @@ internal class LinuxSpinner : LinuxWidget, IPlatformSpinner
             _textCallbackHandle.Free();
         }
 
-        if (_spinButton != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_spinButton);
-            _spinButton = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _spinButton = IntPtr.Zero;
     }
 
     private void UpdateRange()

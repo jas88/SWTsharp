@@ -270,13 +270,9 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
             _children.Clear();
         }
 
-        // Destroy the widgets (destroying frame will destroy fixed automatically)
-        if (_gtkFrameHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkFrameHandle);
-            _gtkFrameHandle = IntPtr.Zero;
-            _gtkFixedHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkFrameHandle = IntPtr.Zero;
+        _gtkFixedHandle = IntPtr.Zero;
     }
 
     // GTK3 P/Invoke declarations

@@ -276,11 +276,7 @@ internal class LinuxTabFolder : IPlatformTabFolder
         // Clear children list
         _children.Clear();
 
-        // Destroy the widget
-        if (_handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_handle);
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
     }
 
     #endregion

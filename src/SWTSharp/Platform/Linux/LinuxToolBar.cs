@@ -147,12 +147,8 @@ internal class LinuxToolBar : IPlatformToolBar
         // Clear items (widgets will be destroyed automatically when toolbar is destroyed)
         _items.Clear();
 
-        // Destroy the toolbar widget
-        if (_gtkToolbarHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkToolbarHandle);
-            _gtkToolbarHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkToolbarHandle = IntPtr.Zero;
     }
 
     #region GTK P/Invoke

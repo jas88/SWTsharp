@@ -236,12 +236,8 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
             _children.Clear();
         }
 
-        // Destroy the widget
-        if (_gtkFixedHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkFixedHandle);
-            _gtkFixedHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkFixedHandle = IntPtr.Zero;
     }
 
     // GTK3 P/Invoke declarations

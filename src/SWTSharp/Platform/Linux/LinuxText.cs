@@ -453,7 +453,10 @@ internal class LinuxText : IPlatformTextInput
     {
         if (!_disposed)
         {
-            // Detach outermost widget from parent container to prevent double-destroy
+            _disposed = true;
+
+            // Detach outermost widget from parent container; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
             IntPtr outermost = _scrolledWindow != IntPtr.Zero ? _scrolledWindow : _widget;
             if (outermost != IntPtr.Zero)
             {
@@ -464,19 +467,9 @@ internal class LinuxText : IPlatformTextInput
                 }
             }
 
-            if (_scrolledWindow != IntPtr.Zero)
-            {
-                gtk_widget_destroy(_scrolledWindow);
-                _scrolledWindow = IntPtr.Zero;
-            }
-            else if (_widget != IntPtr.Zero)
-            {
-                gtk_widget_destroy(_widget);
-            }
-
+            _scrolledWindow = IntPtr.Zero;
             _widget = IntPtr.Zero;
             _textBuffer = IntPtr.Zero;
-            _disposed = true;
         }
     }
 
