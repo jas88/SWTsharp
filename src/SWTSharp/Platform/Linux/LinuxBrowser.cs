@@ -13,6 +13,7 @@ internal class LinuxBrowser : IPlatformBrowser
 {
     private IntPtr _webView; // WebKitWebView
     private IntPtr _scrolledWindow; // GtkScrolledWindow container
+    private ulong _loadChangedHandlerId;
     private bool _disposed;
     private string _currentUrl = string.Empty;
     private string _currentTitle = string.Empty;
@@ -187,7 +188,7 @@ internal class LinuxBrowser : IPlatformBrowser
         _browserInstances[_webView] = this;
 
         // Connect to load-changed signal for navigation events
-        g_signal_connect_data(
+        _loadChangedHandlerId = g_signal_connect_data(
             _webView,
             "load-changed",
             Marshal.GetFunctionPointerForDelegate(_loadChangedCallback),
@@ -587,7 +588,14 @@ internal class LinuxBrowser : IPlatformBrowser
     {
         if (!_disposed)
         {
-            // Remove from instance mapping
+            _disposed = true;
+
+            if (_webView != IntPtr.Zero && _loadChangedHandlerId > 0)
+            {
+                g_signal_handler_disconnect(_webView, _loadChangedHandlerId);
+                _loadChangedHandlerId = 0;
+            }
+
             if (_webView != IntPtr.Zero)
             {
                 _browserInstances.TryRemove(_webView, out _);
@@ -595,12 +603,16 @@ internal class LinuxBrowser : IPlatformBrowser
 
             if (_scrolledWindow != IntPtr.Zero)
             {
+                IntPtr parent = gtk_widget_get_parent(_scrolledWindow);
+                if (parent != IntPtr.Zero)
+                {
+                    gtk_container_remove(parent, _scrolledWindow);
+                }
                 gtk_widget_destroy(_scrolledWindow);
                 _scrolledWindow = IntPtr.Zero;
             }
 
             _webView = IntPtr.Zero;
-            _disposed = true;
         }
     }
 
@@ -711,7 +723,16 @@ internal class LinuxBrowser : IPlatformBrowser
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
 
-    // GObject signal connection
+    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
+    // GObject signal handling
+    [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void g_signal_handler_disconnect(IntPtr instance, ulong handler_id);
+
     [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     private static extern ulong g_signal_connect_data(
         IntPtr instance,
