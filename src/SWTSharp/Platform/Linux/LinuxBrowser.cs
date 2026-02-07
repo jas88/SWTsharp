@@ -196,21 +196,22 @@ internal class LinuxBrowser : IPlatformBrowser
         EnsureWebKitInitialized();
 
         if (!_webkitAvailable || _webkit_web_view_new == null)
-        {
-            Console.WriteLine("[LinuxBrowser] WebKitGTK library not found — browsers will run in stub mode.");
-            return;
-        }
+            throw new InvalidOperationException(
+                "WebKitGTK is not available. Install libwebkit2gtk-4.1-0 or libwebkit2gtk-4.0-37.");
 
         s_parentWebView = _webkit_web_view_new();
 #else
         s_parentWebView = webkit_web_view_new();
 #endif
 
-        if (s_parentWebView == IntPtr.Zero || !IsValidGtkWidget(s_parentWebView))
+        bool parentIsWidget = IsValidGtkWidget(s_parentWebView);
+        Console.Error.WriteLine($"[LinuxBrowser] Parent webview: 0x{s_parentWebView:X}, IsValidGtkWidget={parentIsWidget}");
+
+        if (s_parentWebView == IntPtr.Zero || !parentIsWidget)
         {
             s_parentWebView = IntPtr.Zero;
-            Console.WriteLine("[LinuxBrowser] Parent WebKitWebView creation failed — browsers will run in stub mode.");
-            return;
+            throw new InvalidOperationException(
+                "webkit_web_view_new() returned a non-GtkWidget handle. WebKitGTK may require a running display.");
         }
 
         // Hold an extra ref — this view must never be destroyed.
@@ -242,12 +243,14 @@ internal class LinuxBrowser : IPlatformBrowser
         EnsureParentWebView();
 
         _webView = CreateRelatedWebView();
-        if (_webView == IntPtr.Zero || !IsValidGtkWidget(_webView))
+        bool relatedIsWidget = IsValidGtkWidget(_webView);
+        Console.Error.WriteLine($"[LinuxBrowser] Related webview: 0x{_webView:X}, IsValidGtkWidget={relatedIsWidget}");
+
+        if (_webView == IntPtr.Zero || !relatedIsWidget)
         {
             _webView = IntPtr.Zero;
-            // WebKit unavailable or broken — create a stub browser (no native widget).
-            Console.WriteLine("[LinuxBrowser] WebKitWebView creation failed or returned invalid widget; running in stub mode.");
-            return;
+            throw new InvalidOperationException(
+                "webkit_web_view_new_with_related_view() returned a non-GtkWidget handle.");
         }
 
         // Create scrolled window container
@@ -256,7 +259,7 @@ internal class LinuxBrowser : IPlatformBrowser
         {
             gtk_widget_destroy(_webView);
             _webView = IntPtr.Zero;
-            return;
+            throw new InvalidOperationException("Failed to create GTK ScrolledWindow for browser");
         }
         gtk_scrolled_window_set_policy(_scrolledWindow, 1, 1); // GTK_POLICY_AUTOMATIC
 
