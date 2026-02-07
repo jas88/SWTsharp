@@ -49,6 +49,8 @@ internal class LinuxBrowser : IPlatformBrowser
     private delegate bool WebkitWebViewCanGoForwardDelegate(IntPtr web_view);
     private delegate void WebkitWebViewReloadDelegate(IntPtr web_view);
     private delegate void WebkitWebViewStopLoadingDelegate(IntPtr web_view);
+    private delegate IntPtr WebkitWebContextGetDefaultDelegate();
+    private delegate void WebkitWebContextSetProcessModelDelegate(IntPtr context, int model);
 
     // Function delegates for WebKit (loaded dynamically)
     private static WebkitWebViewNewDelegate? _webkit_web_view_new;
@@ -62,6 +64,8 @@ internal class LinuxBrowser : IPlatformBrowser
     private static WebkitWebViewCanGoForwardDelegate? _webkit_web_view_can_go_forward;
     private static WebkitWebViewReloadDelegate? _webkit_web_view_reload;
     private static WebkitWebViewStopLoadingDelegate? _webkit_web_view_stop_loading;
+    private static WebkitWebContextGetDefaultDelegate? _webkit_web_context_get_default;
+    private static WebkitWebContextSetProcessModelDelegate? _webkit_web_context_set_process_model;
 #endif
 
     // Event handling
@@ -121,6 +125,21 @@ internal class LinuxBrowser : IPlatformBrowser
                 {
                     _webkitAvailable = true;
                     _loadedLibraryName = libName;
+
+                    // Configure shared web process model to avoid spawning
+                    // a separate web process per WebKitWebView instance
+                    TryLoadDelegate(_webkitLibrary, "webkit_web_context_get_default", out _webkit_web_context_get_default);
+                    TryLoadDelegate(_webkitLibrary, "webkit_web_context_set_process_model", out _webkit_web_context_set_process_model);
+                    if (_webkit_web_context_get_default != null && _webkit_web_context_set_process_model != null)
+                    {
+                        var ctx = _webkit_web_context_get_default();
+                        if (ctx != IntPtr.Zero)
+                        {
+                            // WEBKIT_PROCESS_MODEL_SHARED_SECONDARY_PROCESS = 1
+                            _webkit_web_context_set_process_model(ctx, 1);
+                        }
+                    }
+
                     Console.WriteLine($"[LinuxBrowser] Successfully loaded {libName}");
                     return;
                 }
