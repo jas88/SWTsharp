@@ -632,16 +632,8 @@ internal class LinuxBrowser : IPlatformBrowser
 #endif
             }
 
-            // 4. Remove webview from scrolled window before destroying either,
-            //    to prevent GTK's recursive destroy from touching the webview
-            //    while WebKit is still cleaning up internally
-            if (_webView != IntPtr.Zero && _scrolledWindow != IntPtr.Zero)
-            {
-                gtk_container_remove(_scrolledWindow, _webView);
-            }
-
-            // 5. Remove scrolled window from parent to prevent double-destroy
-            //    when the parent shell is later destroyed
+            // 4. Remove scrolled window from parent to prevent double-destroy
+            //    when the parent shell is later destroyed via gtk_widget_destroy
             if (_scrolledWindow != IntPtr.Zero)
             {
                 IntPtr parent = gtk_widget_get_parent(_scrolledWindow);
@@ -649,16 +641,12 @@ internal class LinuxBrowser : IPlatformBrowser
                 {
                     gtk_container_remove(parent, _scrolledWindow);
                 }
+                // Destroying the scrolled window also destroys its child (the webview)
                 gtk_widget_destroy(_scrolledWindow);
                 _scrolledWindow = IntPtr.Zero;
             }
 
-            // 6. Destroy the webview separately after it's been detached
-            if (_webView != IntPtr.Zero)
-            {
-                gtk_widget_destroy(_webView);
-                _webView = IntPtr.Zero;
-            }
+            _webView = IntPtr.Zero;
         }
     }
 
