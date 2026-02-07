@@ -590,17 +590,39 @@ internal class LinuxBrowser : IPlatformBrowser
         {
             _disposed = true;
 
+            // 1. Disconnect signal handler to prevent async callbacks
             if (_webView != IntPtr.Zero && _loadChangedHandlerId > 0)
             {
                 g_signal_handler_disconnect(_webView, _loadChangedHandlerId);
                 _loadChangedHandlerId = 0;
             }
 
+            // 2. Remove from instance mapping
             if (_webView != IntPtr.Zero)
             {
                 _browserInstances.TryRemove(_webView, out _);
             }
 
+            // 3. Stop any pending loads before destruction
+            if (_webView != IntPtr.Zero)
+            {
+#if NET5_0_OR_GREATER
+                _webkit_web_view_stop_loading?.Invoke(_webView);
+#else
+                webkit_web_view_stop_loading(_webView);
+#endif
+            }
+
+            // 4. Remove webview from scrolled window before destroying either,
+            //    to prevent GTK's recursive destroy from touching the webview
+            //    while WebKit is still cleaning up internally
+            if (_webView != IntPtr.Zero && _scrolledWindow != IntPtr.Zero)
+            {
+                gtk_container_remove(_scrolledWindow, _webView);
+            }
+
+            // 5. Remove scrolled window from parent to prevent double-destroy
+            //    when the parent shell is later destroyed
             if (_scrolledWindow != IntPtr.Zero)
             {
                 IntPtr parent = gtk_widget_get_parent(_scrolledWindow);
@@ -612,7 +634,12 @@ internal class LinuxBrowser : IPlatformBrowser
                 _scrolledWindow = IntPtr.Zero;
             }
 
-            _webView = IntPtr.Zero;
+            // 6. Destroy the webview separately after it's been detached
+            if (_webView != IntPtr.Zero)
+            {
+                gtk_widget_destroy(_webView);
+                _webView = IntPtr.Zero;
+            }
         }
     }
 
