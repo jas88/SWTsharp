@@ -202,6 +202,8 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
     {
         if (!_disposed)
         {
+            DetachFromParent();
+
             if (_sashHandle != IntPtr.Zero)
             {
                 // Remove from instance mapping

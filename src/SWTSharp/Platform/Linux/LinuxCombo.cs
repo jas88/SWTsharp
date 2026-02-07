@@ -362,6 +362,8 @@ internal class LinuxCombo : LinuxWidget, IPlatformCombo
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         // Clear items
         _items.Clear();
 

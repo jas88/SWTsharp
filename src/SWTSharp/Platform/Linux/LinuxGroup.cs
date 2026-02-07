@@ -255,6 +255,8 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         // Dispose children first
         lock (_children)
         {

@@ -258,6 +258,8 @@ internal class LinuxCanvas : LinuxWidget, IPlatformComposite
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         // Disconnect signal handler
         if (_drawSignalId != 0 && _gtkDrawingAreaHandle != IntPtr.Zero)
         {

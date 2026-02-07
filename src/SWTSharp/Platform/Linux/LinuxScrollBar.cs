@@ -227,6 +227,8 @@ internal class LinuxScrollBar : LinuxWidget, IPlatformScrollBar
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         if (_scrollBar != IntPtr.Zero)
         {
             gtk_widget_destroy(_scrollBar);

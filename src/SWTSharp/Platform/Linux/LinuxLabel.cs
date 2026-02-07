@@ -131,8 +131,15 @@ internal class LinuxLabel : IPlatformTextWidget
     {
         if (!_disposed)
         {
+            // Detach from parent container to prevent double-destroy
             if (_gtkLabel != IntPtr.Zero)
             {
+                var parent = gtk_widget_get_parent(_gtkLabel);
+                if (parent != IntPtr.Zero)
+                {
+                    gtk_container_remove(parent, _gtkLabel);
+                }
+
                 gtk_widget_destroy(_gtkLabel);
                 _gtkLabel = IntPtr.Zero;
             }
@@ -247,6 +254,12 @@ internal class LinuxLabel : IPlatformTextWidget
 
     [DllImport("libgtk-3.so.0")]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct GtkAllocation

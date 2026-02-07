@@ -134,6 +134,16 @@ internal class LinuxToolBar : IPlatformToolBar
         if (_disposed) return;
         _disposed = true;
 
+        // Detach from parent container to prevent double-destroy
+        if (_gtkToolbarHandle != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_gtkToolbarHandle);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _gtkToolbarHandle);
+            }
+        }
+
         // Clear items (widgets will be destroyed automatically when toolbar is destroyed)
         _items.Clear();
 
@@ -164,6 +174,12 @@ internal class LinuxToolBar : IPlatformToolBar
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_orientable_set_orientation(IntPtr orientable, GtkOrientation orientation);

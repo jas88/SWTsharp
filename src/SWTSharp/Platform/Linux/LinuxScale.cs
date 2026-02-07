@@ -253,6 +253,8 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         if (_scale != IntPtr.Zero)
         {
             gtk_widget_destroy(_scale);

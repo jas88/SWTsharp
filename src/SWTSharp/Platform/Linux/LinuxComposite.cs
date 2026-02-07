@@ -221,6 +221,8 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         // Dispose children first
         lock (_children)
         {

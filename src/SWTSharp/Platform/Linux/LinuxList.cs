@@ -423,6 +423,8 @@ internal class LinuxList : LinuxWidget, IPlatformList
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         // Remove from instance mapping
         if (_listBox != IntPtr.Zero)
         {

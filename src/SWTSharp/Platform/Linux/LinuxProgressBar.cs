@@ -196,6 +196,8 @@ internal class LinuxProgressBar : LinuxWidget, IPlatformProgressBar
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         if (_progressBar != IntPtr.Zero)
         {
             gtk_widget_destroy(_progressBar);

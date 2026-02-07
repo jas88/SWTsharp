@@ -256,6 +256,16 @@ internal class LinuxTabFolder : IPlatformTabFolder
         if (_disposed) return;
         _disposed = true;
 
+        // Detach from parent container to prevent double-destroy
+        if (_handle != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_handle);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _handle);
+            }
+        }
+
         // Dispose all tab items
         foreach (var item in _items.ToArray())
         {
@@ -353,6 +363,12 @@ internal class LinuxTabFolder : IPlatformTabFolder
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [DllImport("libgobject-2.0.so.0", CharSet = CharSet.Ansi)]
     private static extern ulong g_signal_connect_data(IntPtr instance, string detailedSignal, SwitchPageCallback cHandler, IntPtr data, IntPtr destroyData, int connectFlags);

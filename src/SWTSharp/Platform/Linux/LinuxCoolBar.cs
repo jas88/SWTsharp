@@ -119,6 +119,16 @@ internal class LinuxCoolBar : IPlatformCoolBar
         if (_disposed) return;
         _disposed = true;
 
+        // Detach from parent container to prevent double-destroy
+        if (_gtkBoxHandle != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_gtkBoxHandle);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _gtkBoxHandle);
+            }
+        }
+
         foreach (var item in _items.ToArray())
         {
             item.Dispose();
@@ -154,6 +164,12 @@ internal class LinuxCoolBar : IPlatformCoolBar
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_set_size_request(IntPtr widget, int width, int height);

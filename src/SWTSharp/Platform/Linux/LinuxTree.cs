@@ -202,6 +202,8 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         if (_treeView != IntPtr.Zero)
         {
             gtk_widget_destroy(_treeView);

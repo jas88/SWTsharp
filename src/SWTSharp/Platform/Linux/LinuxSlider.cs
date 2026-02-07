@@ -236,6 +236,8 @@ internal class LinuxSlider : LinuxWidget, IPlatformSlider
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         // Free the GCHandle to allow callback collection
         if (_callbackHandle.IsAllocated)
         {

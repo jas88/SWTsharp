@@ -242,6 +242,16 @@ internal class LinuxExpandBar : IPlatformExpandBar
         if (_disposed) return;
         _disposed = true;
 
+        // Detach from parent container to prevent double-destroy
+        if (_handle != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_handle);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _handle);
+            }
+        }
+
         foreach (var item in _items.ToArray())
         {
             item.Dispose();
@@ -320,6 +330,12 @@ internal class LinuxExpandBar : IPlatformExpandBar
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     #endregion
 }

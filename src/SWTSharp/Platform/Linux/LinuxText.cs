@@ -453,6 +453,17 @@ internal class LinuxText : IPlatformTextInput
     {
         if (!_disposed)
         {
+            // Detach outermost widget from parent container to prevent double-destroy
+            IntPtr outermost = _scrolledWindow != IntPtr.Zero ? _scrolledWindow : _widget;
+            if (outermost != IntPtr.Zero)
+            {
+                var parent = gtk_widget_get_parent(outermost);
+                if (parent != IntPtr.Zero)
+                {
+                    gtk_container_remove(parent, outermost);
+                }
+            }
+
             if (_scrolledWindow != IntPtr.Zero)
             {
                 gtk_widget_destroy(_scrolledWindow);
@@ -612,6 +623,12 @@ internal class LinuxText : IPlatformTextInput
 
     [DllImport("libgtk-3.so.0")]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [DllImport("libglib-2.0.so.0")]
     private static extern void g_free(IntPtr mem);

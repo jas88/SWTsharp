@@ -227,8 +227,15 @@ internal class LinuxDateTime : IPlatformDateTime
     {
         if (!_disposed)
         {
+            // Detach from parent container to prevent double-destroy
             if (_widget != IntPtr.Zero)
             {
+                var parent = gtk_widget_get_parent(_widget);
+                if (parent != IntPtr.Zero)
+                {
+                    gtk_container_remove(parent, _widget);
+                }
+
                 gtk_widget_destroy(_widget);
                 _widget = IntPtr.Zero;
             }
@@ -289,6 +296,9 @@ internal class LinuxDateTime : IPlatformDateTime
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct GtkAllocation

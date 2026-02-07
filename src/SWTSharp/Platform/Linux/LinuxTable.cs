@@ -503,6 +503,8 @@ internal class LinuxTable : LinuxWidget, IPlatformTable
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         _columns.Clear();
         _columnModelIndices.Clear();
         _rowData.Clear();

@@ -198,7 +198,7 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
         {
             var childHandle = linuxWidget.GetNativeHandle();
 
-            // Remove from container
+            // Only call gtk_container_remove if the child's GTK widget still exists
             if (childHandle != IntPtr.Zero && _container != IntPtr.Zero)
             {
                 gtk_container_remove(_container, childHandle);
@@ -220,19 +220,18 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
     {
         if (!_disposed)
         {
-            // Remove all children first
-            foreach (var child in _platformChildren.ToArray())
-            {
-                RemoveChild(child);
-            }
+            _disposed = true;
+
+            // Clear the platform children list - their GTK widgets are already
+            // destroyed by their own Dispose() calls (via Composite.ReleaseWidget)
+            _platformChildren.Clear();
+            _container = IntPtr.Zero;
 
             if (_gtkWindowHandle != IntPtr.Zero)
             {
                 gtk_widget_destroy(_gtkWindowHandle);
                 _gtkWindowHandle = IntPtr.Zero;
             }
-
-            _disposed = true;
         }
     }
 

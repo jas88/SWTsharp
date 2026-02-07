@@ -251,6 +251,8 @@ internal class LinuxSpinner : LinuxWidget, IPlatformSpinner
         if (_disposed) return;
         _disposed = true;
 
+        DetachFromParent();
+
         // Free the GCHandles to allow callback collection
         if (_valueCallbackHandle.IsAllocated)
         {

@@ -16,6 +16,22 @@ internal abstract class LinuxWidget
     public abstract IntPtr GetNativeHandle();
 
     /// <summary>
+    /// Removes this widget from its GTK parent container, if any.
+    /// MUST be called before gtk_widget_destroy to prevent double-destroy
+    /// when the parent is later destroyed and tries to recursively clean up children.
+    /// </summary>
+    protected void DetachFromParent()
+    {
+        var handle = GetNativeHandle();
+        if (handle == IntPtr.Zero) return;
+        var parent = gtk_widget_get_parent_base(handle);
+        if (parent != IntPtr.Zero)
+        {
+            gtk_container_remove_base(parent, handle);
+        }
+    }
+
+    /// <summary>
     /// Validates that a GTK widget handle is non-null, throwing InvalidOperationException if null.
     /// </summary>
     /// <param name="handle">The GTK widget handle to validate.</param>
@@ -30,6 +46,12 @@ internal abstract class LinuxWidget
         }
         return handle;
     }
+
+    [DllImport("libgtk-3.so.0", EntryPoint = "gtk_widget_get_parent", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_parent_base(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", EntryPoint = "gtk_container_remove", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove_base(IntPtr container, IntPtr widget);
 }
 
 /// <summary>
@@ -222,6 +244,8 @@ internal class LinuxButton : LinuxWidget, IPlatformTextWidget
     {
         if (!_disposed)
         {
+            DetachFromParent();
+
             if (_gtkButtonHandle != IntPtr.Zero)
             {
                 // Remove from instance mapping
