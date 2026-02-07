@@ -173,7 +173,6 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Run tests with coverage
-        shell: bash
         env:
           SWTSHARP_DEBUG: 1  # Enable diagnostic logging for platform detection debugging
           DISPLAY: :99
@@ -184,37 +183,13 @@ jobs:
           MESA_GL_VERSION_OVERRIDE: 3.3  # Override Mesa GL version if needed
           WEBKIT_DISABLE_COMPOSITING_MODE: 1  # Disable WebKit hardware acceleration to avoid EGL/DRI3 errors
           WEBKIT_DISABLE_DMABUF_RENDERER: 1  # Disable WebKit DMA-BUF renderer
-          G_DEBUG: ''  # Prevent GTK from treating criticals as fatal
         run: |
-          # Run tests, capturing stderr separately to prevent GTK criticals from crashing the test host
-          # The test host interprets GTK-CRITICAL messages as crashes even when all tests pass
           dotnet test tests/SWTSharp.Tests/SWTSharp.Tests.csproj \
             --configuration ${{ env.CONFIGURATION }} \
             --no-build \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults 2>gtk-stderr.log || true
-
-          # Show GTK warnings for debugging (not fatal)
-          if [ -f gtk-stderr.log ] && [ -s gtk-stderr.log ]; then
-            echo "=== GTK stderr output (informational) ==="
-            cat gtk-stderr.log
-          fi
-
-          # Check the TRX file for actual individual test failures
-          # Note: ResultSummary outcome="Failed" can appear due to test host abort (GTK criticals)
-          # even when all individual tests pass, so we check UnitTestResult elements instead
-          if [ -f ./TestResults/test-results.trx ]; then
-            FAILED_COUNT=$(grep -c '<UnitTestResult.*outcome="Failed"' ./TestResults/test-results.trx || true)
-            if [ "$FAILED_COUNT" -gt 0 ]; then
-              echo "::error::$FAILED_COUNT test(s) actually failed"
-              exit 1
-            fi
-            echo "All individual tests passed (GTK criticals are non-fatal warnings)"
-          else
-            echo "::error::No test results file found"
-            exit 1
-          fi
+            --results-directory ./TestResults
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
