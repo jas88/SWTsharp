@@ -632,18 +632,13 @@ internal class LinuxBrowser : IPlatformBrowser
 #endif
             }
 
-            // 4. Remove scrolled window from parent; do NOT call gtk_widget_destroy.
-            //    The parent window's destruction will recursively clean up children.
-            if (_scrolledWindow != IntPtr.Zero)
-            {
-                IntPtr parent = gtk_widget_get_parent(_scrolledWindow);
-                if (parent != IntPtr.Zero)
-                {
-                    gtk_container_remove(parent, _scrolledWindow);
-                }
-                _scrolledWindow = IntPtr.Zero;
-            }
-
+            // 4. Null the handles. Do NOT call gtk_widget_destroy or gtk_container_remove.
+            //    LinuxBrowser's scrolled window is parented directly in the GtkFixed container.
+            //    When the parent shell is destroyed, gtk_widget_destroy on the GtkWindow
+            //    recursively destroys all descendants including this scrolled window and webview.
+            //    Removing or destroying here would either leak resources (if only removed)
+            //    or cause double-destroy (if destroyed then parent tries to destroy again).
+            _scrolledWindow = IntPtr.Zero;
             _webView = IntPtr.Zero;
         }
     }
