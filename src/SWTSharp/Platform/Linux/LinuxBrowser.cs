@@ -26,7 +26,6 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
 
     // Track whether the very first webview has been created (Bug 522733 workaround)
     private static bool s_firstInstanceCreated;
-    private static int s_instanceCount;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void LoadChangedCallback(IntPtr webView, int loadEvent, IntPtr userData);
@@ -155,45 +154,13 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
             throw new InvalidOperationException(
                 "WebKitGTK is not available. Install libwebkit2gtk-4.1-0 or libwebkit2gtk-4.0-37.");
 
-        s_instanceCount++;
-        int instanceNum = s_instanceCount;
-        Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] Creating webview. Parent: 0x{parentHandle:X}, Library: {_loadedLibraryName}");
-        Console.Error.Flush();
-
         _webView = _webkit_web_view_new();
 #else
-        s_instanceCount++;
-        int instanceNum = s_instanceCount;
-
         _webView = webkit_web_view_new();
 #endif
 
-        Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] webkit_web_view_new() returned 0x{_webView:X}");
-
         if (_webView == IntPtr.Zero)
             throw new InvalidOperationException("Failed to create WebKitWebView.");
-
-        // Check if the returned pointer is actually a valid GtkWidget
-        bool isGtkWidget = IsGtkWidgetType(_webView);
-        Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] GTK_IS_WIDGET check: {isGtkWidget}");
-
-        if (!isGtkWidget)
-        {
-            Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] WARNING: webkit_web_view_new() returned non-null but invalid GtkWidget!");
-            // Check if it's at least a GObject
-            IntPtr gtype = IntPtr.Zero;
-            try
-            {
-                gtype = g_type_from_instance(_webView);
-                string? typeName = Marshal.PtrToStringAnsi(g_type_name(gtype));
-                Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] GObject type: {typeName ?? "NULL"} (GType: 0x{gtype:X})");
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] Could not query GType: {ex.Message}");
-            }
-            Console.Error.Flush();
-        }
 
         // Bug 522733 workaround: permanently ref the first WebKitWebView instance.
         // WebKitGTK >= 2.18 auto-destroys web process on last webview unref;
@@ -202,7 +169,6 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
         {
             s_firstInstanceCreated = true;
             g_object_ref(_webView);
-            Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] First instance — added permanent g_object_ref");
         }
 
         // Disable hardware acceleration (WebKit bug 239429 workaround, matches Java SWT)
@@ -218,41 +184,18 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
             0);
 
         // Add directly to parent container — no GtkScrolledWindow needed
-        if (parentHandle != IntPtr.Zero && isGtkWidget)
+        if (parentHandle != IntPtr.Zero)
         {
             gtk_container_add(parentHandle, _webView);
-            gtk_widget_show(_webView);
         }
-        else if (parentHandle != IntPtr.Zero)
-        {
-            Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] Skipping gtk_container_add — widget is not valid");
-        }
+
+        gtk_widget_show(_webView);
 
         // Pump GTK events so WebKitGTK can complete async initialization
         // (D-Bus setup, web process spawn). Without this, subsequent
         // webkit_web_view_new() calls may block waiting for events that
         // never get dispatched.
         PumpGtkEvents();
-        Console.Error.WriteLine($"[LinuxBrowser #{instanceNum}] Construction complete");
-        Console.Error.Flush();
-    }
-
-    /// <summary>
-    /// Checks if a pointer is a valid GtkWidget using GObject type checking.
-    /// Equivalent to GTK_IS_WIDGET(ptr).
-    /// </summary>
-    private static bool IsGtkWidgetType(IntPtr ptr)
-    {
-        if (ptr == IntPtr.Zero) return false;
-        try
-        {
-            IntPtr gtkWidgetType = gtk_widget_get_type();
-            return g_type_check_instance_is_a(ptr, gtkWidgetType);
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     /// <summary>
@@ -597,9 +540,6 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
 
         if (_webView == IntPtr.Zero) return;
 
-        Console.Error.WriteLine($"[LinuxBrowser] Dispose: webView=0x{_webView:X}, isWidget={IsGtkWidgetType(_webView)}");
-        Console.Error.Flush();
-
         // Disconnect signal handler first
         if (_loadChangedHandlerId != 0)
         {
@@ -735,9 +675,6 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
     private static extern void gtk_widget_set_size_request(IntPtr widget, int width, int height);
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_widget_get_type();
-
-    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern bool gtk_events_pending();
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
@@ -771,12 +708,4 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
     [DllImport("libgobject-2.0.so.0", EntryPoint = "g_object_set", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     private static extern void g_object_set_bool(IntPtr @object, string first_property_name, bool value, IntPtr sentinel);
 
-    [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool g_type_check_instance_is_a(IntPtr instance, IntPtr iface_type);
-
-    [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr g_type_from_instance(IntPtr instance);
-
-    [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr g_type_name(IntPtr type);
 }
