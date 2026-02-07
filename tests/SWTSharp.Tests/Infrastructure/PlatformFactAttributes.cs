@@ -51,51 +51,6 @@ public sealed class LinuxOnlyFactAttribute : FactAttribute
 }
 
 /// <summary>
-/// Fact attribute that discovers tests on all platforms EXCEPT Linux.
-/// Used for tests that crash the test host on Linux (e.g., WebKitGTK subprocess instability).
-/// </summary>
-[XunitTestCaseDiscoverer("SWTSharp.Tests.Infrastructure.SkipOnLinuxFactDiscoverer", "SWTSharp.Tests")]
-public sealed class SkipOnLinuxFactAttribute : FactAttribute
-{
-}
-
-/// <summary>
-/// Discoverer for SkipOnLinuxFactAttribute.
-/// Returns test cases on Windows and macOS, empty enumerable on Linux.
-/// </summary>
-public sealed class SkipOnLinuxFactDiscoverer : IXunitTestCaseDiscoverer
-{
-    private readonly IMessageSink _diagnosticMessageSink;
-
-    public SkipOnLinuxFactDiscoverer(IMessageSink diagnosticMessageSink)
-    {
-        _diagnosticMessageSink = diagnosticMessageSink;
-    }
-
-    public IEnumerable<IXunitTestCase> Discover(
-        ITestFrameworkDiscoveryOptions discoveryOptions,
-        ITestMethod testMethod,
-        IAttributeInfo factAttribute)
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            return Enumerable.Empty<IXunitTestCase>();
-        }
-
-#pragma warning disable CA2000
-        return new[]
-        {
-            new XunitTestCase(
-                _diagnosticMessageSink,
-                discoveryOptions.MethodDisplayOrDefault(),
-                discoveryOptions.MethodDisplayOptionsOrDefault(),
-                testMethod)
-        };
-#pragma warning restore CA2000
-    }
-}
-
-/// <summary>
 /// Discoverer for WindowsOnlyFactAttribute.
 /// Returns test cases only on Windows, empty enumerable on other platforms.
 /// </summary>
