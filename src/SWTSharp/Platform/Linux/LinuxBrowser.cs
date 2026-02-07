@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using SWTSharp.Graphics;
 
@@ -8,38 +9,37 @@ namespace SWTSharp.Platform.Linux;
 /// Linux implementation of browser widget using WebKitGTK.
 /// Supports both WebKit 4.0 (Ubuntu 22.04) and WebKit 4.1 (Ubuntu 24.04).
 ///
-/// Uses a process-lifetime singleton WebKitWebView. On headless CI environments
-/// (Xvfb), WebKitGTK can only reliably create one WebKitWebView per process.
-/// Each LinuxBrowser instance gets its own GtkScrolledWindow and the shared
-/// webview is reparented between them as needed.
+/// Uses WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES with a hidden
+/// "parent" WebKitWebView created at init time. All real browser instances
+/// are created via webkit_web_view_new_with_related_view(parent), sharing
+/// the same web process as the parent view.
 /// </summary>
 internal class LinuxBrowser : IPlatformBrowser
 {
-    private IntPtr _scrolledWindow; // GtkScrolledWindow container (per-instance)
+    private IntPtr _webView;
+    private IntPtr _scrolledWindow;
+    private ulong _loadChangedHandlerId;
     private bool _disposed;
     private string _currentUrl = string.Empty;
     private string _currentTitle = string.Empty;
     private bool _isLoading;
     private Rectangle _requestedBounds;
 
-    // Singleton WebKitWebView — created once, lives for the process.
-    private static IntPtr s_webView;
-    private static ulong s_loadChangedHandlerId;
-    private static bool s_webViewCreated;
+    // Hidden parent webview — created once, never shown, lives for the process.
+    // All real webviews are related views of this parent.
+    private static IntPtr s_parentWebView;
+    private static bool s_initialized;
 
-    // The LinuxBrowser instance that currently owns the singleton webview.
-    // Only the owner receives load-changed callbacks and interacts with the webview.
-    private static LinuxBrowser? s_currentOwner;
+    // Maps webview handles to instances for signal callback routing
+    private static readonly ConcurrentDictionary<IntPtr, LinuxBrowser> _browserInstances = new();
 
     // GSignal callback delegate for load-changed
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void LoadChangedCallback(IntPtr webView, int loadEvent, IntPtr userData);
 
-    // Keep delegate alive to prevent GC
     private static readonly LoadChangedCallback _loadChangedCallback = OnLoadChanged;
 
 #if NET5_0_OR_GREATER
-    // WebKit library handle for dynamic loading (.NET 5+)
     private static IntPtr _webkitLibrary;
     private static bool _webkitInitialized;
     private static bool _webkitAvailable;
@@ -47,6 +47,7 @@ internal class LinuxBrowser : IPlatformBrowser
 
     // Delegate types for WebKit functions
     private delegate IntPtr WebkitWebViewNewDelegate();
+    private delegate IntPtr WebkitWebViewNewWithRelatedViewDelegate(IntPtr web_view);
     private delegate void WebkitWebViewLoadUriDelegate(IntPtr web_view, IntPtr uri);
     private delegate void WebkitWebViewLoadHtmlDelegate(IntPtr web_view, IntPtr content, IntPtr base_uri);
     private delegate IntPtr WebkitWebViewGetUriDelegate(IntPtr web_view);
@@ -60,8 +61,8 @@ internal class LinuxBrowser : IPlatformBrowser
     private delegate IntPtr WebkitWebContextGetDefaultDelegate();
     private delegate void WebkitWebContextSetProcessModelDelegate(IntPtr context, int model);
 
-    // Function delegates for WebKit (loaded dynamically)
     private static WebkitWebViewNewDelegate? _webkit_web_view_new;
+    private static WebkitWebViewNewWithRelatedViewDelegate? _webkit_web_view_new_with_related_view;
     private static WebkitWebViewLoadUriDelegate? _webkit_web_view_load_uri;
     private static WebkitWebViewLoadHtmlDelegate? _webkit_web_view_load_html;
     private static WebkitWebViewGetUriDelegate? _webkit_web_view_get_uri;
@@ -87,7 +88,7 @@ internal class LinuxBrowser : IPlatformBrowser
     public event EventHandler<BrowserNewWindowEventArgs>? NewWindow;
     public event EventHandler<BrowserProcessTerminatedEventArgs>? ProcessTerminated;
 
-#pragma warning disable CS0067 // Event is never used
+#pragma warning disable CS0067
     public event EventHandler<int>? Click;
     public event EventHandler<int>? FocusGained;
     public event EventHandler<int>? FocusLost;
@@ -96,9 +97,6 @@ internal class LinuxBrowser : IPlatformBrowser
 #pragma warning restore CS0067
 
 #if NET5_0_OR_GREATER
-    /// <summary>
-    /// Initializes the WebKit library by trying WebKit 4.1 first (Ubuntu 24.04), then 4.0.
-    /// </summary>
     private static void EnsureWebKitInitialized()
     {
         if (_webkitInitialized)
@@ -107,18 +105,16 @@ internal class LinuxBrowser : IPlatformBrowser
         _webkitInitialized = true;
         _webkitAvailable = false;
 
-        // Try WebKit 4.1 first (Ubuntu 24.04+), then fall back to 4.0
         string[] webkitLibraries = new[]
         {
-            "libwebkit2gtk-4.1.so.0",  // Ubuntu 24.04+
-            "libwebkit2gtk-4.0.so.37", // Ubuntu 22.04 and older
+            "libwebkit2gtk-4.1.so.0",
+            "libwebkit2gtk-4.0.so.37",
         };
 
         foreach (var libName in webkitLibraries)
         {
             if (NativeLibrary.TryLoad(libName, out _webkitLibrary))
             {
-                // Load all function pointers
                 if (TryLoadDelegate(_webkitLibrary, "webkit_web_view_new", out _webkit_web_view_new) &&
                     TryLoadDelegate(_webkitLibrary, "webkit_web_view_load_uri", out _webkit_web_view_load_uri) &&
                     TryLoadDelegate(_webkitLibrary, "webkit_web_view_load_html", out _webkit_web_view_load_html) &&
@@ -134,8 +130,11 @@ internal class LinuxBrowser : IPlatformBrowser
                     _webkitAvailable = true;
                     _loadedLibraryName = libName;
 
-                    // Configure shared web process model to avoid spawning
-                    // a separate web process per WebKitWebView instance
+                    // Load related-view constructor (optional — falls back to webkit_web_view_new)
+                    TryLoadDelegate(_webkitLibrary, "webkit_web_view_new_with_related_view",
+                        out _webkit_web_view_new_with_related_view);
+
+                    // Use multiple secondary processes so related views actually share a process
                     TryLoadDelegate(_webkitLibrary, "webkit_web_context_get_default", out _webkit_web_context_get_default);
                     TryLoadDelegate(_webkitLibrary, "webkit_web_context_set_process_model", out _webkit_web_context_set_process_model);
                     if (_webkit_web_context_get_default != null && _webkit_web_context_set_process_model != null)
@@ -143,8 +142,8 @@ internal class LinuxBrowser : IPlatformBrowser
                         var ctx = _webkit_web_context_get_default();
                         if (ctx != IntPtr.Zero)
                         {
-                            // WEBKIT_PROCESS_MODEL_SHARED_SECONDARY_PROCESS = 1
-                            _webkit_web_context_set_process_model(ctx, 1);
+                            // WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES = 0
+                            _webkit_web_context_set_process_model(ctx, 0);
                         }
                     }
 
@@ -168,100 +167,120 @@ internal class LinuxBrowser : IPlatformBrowser
 #endif
 
     /// <summary>
-    /// Gets or creates the singleton WebKitWebView for the process.
-    /// The webview is created once and never destroyed.
+    /// Checks whether a pointer is a valid GtkWidget using the GTK type system.
+    /// Equivalent to GTK_IS_WIDGET(ptr).
     /// </summary>
-    private static IntPtr EnsureSingletonWebView()
+    private static bool IsValidGtkWidget(IntPtr ptr)
     {
-        if (s_webViewCreated)
-            return s_webView;
+        if (ptr == IntPtr.Zero) return false;
+        try
+        {
+            IntPtr widgetType = gtk_widget_get_type();
+            return g_type_check_instance_is_a(ptr, widgetType);
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
-        s_webViewCreated = true;
+    /// <summary>
+    /// Creates the hidden parent webview. Called once; all real views are related to this.
+    /// </summary>
+    private static void EnsureParentWebView()
+    {
+        if (s_initialized) return;
+        s_initialized = true;
 
 #if NET5_0_OR_GREATER
         EnsureWebKitInitialized();
 
         if (!_webkitAvailable || _webkit_web_view_new == null)
         {
-            throw new InvalidOperationException("WebKitGTK is not available. Please install libwebkit2gtk-4.1-0 or libwebkit2gtk-4.0-37.");
+            Console.WriteLine("[LinuxBrowser] WebKitGTK library not found — browsers will run in stub mode.");
+            return;
         }
 
-        s_webView = _webkit_web_view_new();
+        s_parentWebView = _webkit_web_view_new();
 #else
-        s_webView = webkit_web_view_new();
+        s_parentWebView = webkit_web_view_new();
 #endif
 
-        if (s_webView == IntPtr.Zero)
+        if (s_parentWebView == IntPtr.Zero || !IsValidGtkWidget(s_parentWebView))
         {
-            throw new InvalidOperationException("Failed to create WebKitWebView. WebKitGTK may not be installed.");
+            s_parentWebView = IntPtr.Zero;
+            Console.WriteLine("[LinuxBrowser] Parent WebKitWebView creation failed — browsers will run in stub mode.");
+            return;
         }
 
-        // Hold a floating ref so the webview survives being removed from containers.
-        g_object_ref(s_webView);
+        // Hold an extra ref — this view must never be destroyed.
+        g_object_ref(s_parentWebView);
+    }
 
-        // Connect to load-changed signal once — callbacks route to the current owner.
-        s_loadChangedHandlerId = g_signal_connect_data(
-            s_webView,
-            "load-changed",
-            Marshal.GetFunctionPointerForDelegate(_loadChangedCallback),
-            IntPtr.Zero,
-            IntPtr.Zero,
-            0);
+    /// <summary>
+    /// Creates a new WebKitWebView related to the hidden parent view.
+    /// Returns IntPtr.Zero if the parent is unavailable.
+    /// </summary>
+    private static IntPtr CreateRelatedWebView()
+    {
+        if (s_parentWebView == IntPtr.Zero)
+            return IntPtr.Zero;
 
-        gtk_widget_show(s_webView);
+#if NET5_0_OR_GREATER
+        if (_webkit_web_view_new_with_related_view != null)
+            return _webkit_web_view_new_with_related_view(s_parentWebView);
 
-        return s_webView;
+        // Fallback if related-view API unavailable
+        return _webkit_web_view_new!();
+#else
+        return webkit_web_view_new_with_related_view(s_parentWebView);
+#endif
     }
 
     public LinuxBrowser(IntPtr parentHandle, int style)
     {
-        IntPtr webView = EnsureSingletonWebView();
+        EnsureParentWebView();
 
-        // Create per-instance scrolled window container
+        _webView = CreateRelatedWebView();
+        if (_webView == IntPtr.Zero || !IsValidGtkWidget(_webView))
+        {
+            _webView = IntPtr.Zero;
+            // WebKit unavailable or broken — create a stub browser (no native widget).
+            Console.WriteLine("[LinuxBrowser] WebKitWebView creation failed or returned invalid widget; running in stub mode.");
+            return;
+        }
+
+        // Create scrolled window container
         _scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
         if (_scrolledWindow == IntPtr.Zero)
         {
-            throw new InvalidOperationException("Failed to create GTK ScrolledWindow for browser");
+            gtk_widget_destroy(_webView);
+            _webView = IntPtr.Zero;
+            return;
         }
         gtk_scrolled_window_set_policy(_scrolledWindow, 1, 1); // GTK_POLICY_AUTOMATIC
 
-        // Take ownership: reparent the singleton webview into this instance's scrolled window.
-        TakeOwnership();
+        gtk_container_add(_scrolledWindow, _webView);
 
-        // Add to parent if specified
         if (parentHandle != IntPtr.Zero)
         {
             gtk_container_add(parentHandle, _scrolledWindow);
         }
 
+        gtk_widget_show(_webView);
         gtk_widget_show(_scrolledWindow);
+
+        _browserInstances[_webView] = this;
+
+        _loadChangedHandlerId = g_signal_connect_data(
+            _webView,
+            "load-changed",
+            Marshal.GetFunctionPointerForDelegate(_loadChangedCallback),
+            IntPtr.Zero,
+            IntPtr.Zero,
+            0);
     }
 
-    /// <summary>
-    /// Reparents the singleton webview into this instance's scrolled window
-    /// and sets this instance as the current owner for event routing.
-    /// </summary>
-    private void TakeOwnership()
-    {
-        if (s_webView == IntPtr.Zero || _scrolledWindow == IntPtr.Zero) return;
-
-        // Remove webview from its current parent (if any)
-        IntPtr currentParent = gtk_widget_get_parent(s_webView);
-        if (currentParent != IntPtr.Zero)
-        {
-            gtk_container_remove(currentParent, s_webView);
-        }
-
-        // Add to this instance's scrolled window
-        gtk_container_add(_scrolledWindow, s_webView);
-        gtk_widget_show(s_webView);
-
-        s_currentOwner = this;
-    }
-
-    /// <summary>
-    /// WebKit load event enumeration.
-    /// </summary>
     private enum WebKitLoadEvent
     {
         Started = 0,
@@ -270,22 +289,14 @@ internal class LinuxBrowser : IPlatformBrowser
         Finished = 3
     }
 
-    /// <summary>
-    /// Static callback for WebKit load-changed signal.
-    /// Routes to whichever LinuxBrowser instance currently owns the webview.
-    /// </summary>
     private static void OnLoadChanged(IntPtr webView, int loadEvent, IntPtr userData)
     {
-        var owner = s_currentOwner;
-        if (owner == null || owner._disposed)
+        if (!_browserInstances.TryGetValue(webView, out var browser) || browser._disposed)
             return;
 
-        owner.HandleLoadChanged((WebKitLoadEvent)loadEvent);
+        browser.HandleLoadChanged((WebKitLoadEvent)loadEvent);
     }
 
-    /// <summary>
-    /// Instance method to handle load state changes.
-    /// </summary>
     private void HandleLoadChanged(WebKitLoadEvent loadEvent)
     {
         switch (loadEvent)
@@ -296,7 +307,6 @@ internal class LinuxBrowser : IPlatformBrowser
                 break;
 
             case WebKitLoadEvent.Committed:
-                // Navigation committed - update URL from WebKit
                 UpdateCurrentUrlFromWebKit();
                 Navigated?.Invoke(this, new BrowserNavigatedEventArgs { Url = _currentUrl });
                 break;
@@ -309,21 +319,18 @@ internal class LinuxBrowser : IPlatformBrowser
         }
     }
 
-    /// <summary>
-    /// Updates _currentUrl from WebKit's actual URI.
-    /// </summary>
     private void UpdateCurrentUrlFromWebKit()
     {
-        if (_disposed || s_webView == IntPtr.Zero)
+        if (_disposed || _webView == IntPtr.Zero)
             return;
 
 #if NET5_0_OR_GREATER
         if (!_webkitAvailable || _webkit_web_view_get_uri == null)
             return;
 
-        IntPtr urlPtr = _webkit_web_view_get_uri(s_webView);
+        IntPtr urlPtr = _webkit_web_view_get_uri(_webView);
 #else
-        IntPtr urlPtr = webkit_web_view_get_uri(s_webView);
+        IntPtr urlPtr = webkit_web_view_get_uri(_webView);
 #endif
         if (urlPtr != IntPtr.Zero)
         {
@@ -331,23 +338,9 @@ internal class LinuxBrowser : IPlatformBrowser
         }
     }
 
-    /// <summary>
-    /// Ensures this instance is the current owner before performing webview operations.
-    /// If another instance took ownership, this reclaims it.
-    /// </summary>
-    private bool EnsureOwnership()
-    {
-        if (_disposed || s_webView == IntPtr.Zero) return false;
-        if (s_currentOwner != this)
-        {
-            TakeOwnership();
-        }
-        return true;
-    }
-
     public bool Navigate(string url)
     {
-        if (!EnsureOwnership() || string.IsNullOrWhiteSpace(url))
+        if (_disposed || _webView == IntPtr.Zero || string.IsNullOrWhiteSpace(url))
             return false;
 
 #if NET5_0_OR_GREATER
@@ -359,15 +352,14 @@ internal class LinuxBrowser : IPlatformBrowser
         {
             IntPtr urlPtr = MarshalStringToUTF8(url);
 #if NET5_0_OR_GREATER
-            _webkit_web_view_load_uri(s_webView, urlPtr);
+            _webkit_web_view_load_uri(_webView, urlPtr);
 #else
-            webkit_web_view_load_uri(s_webView, urlPtr);
+            webkit_web_view_load_uri(_webView, urlPtr);
 #endif
             Marshal.FreeHGlobal(urlPtr);
 
             _currentUrl = url;
             _isLoading = true;
-
             return true;
         }
         catch
@@ -378,10 +370,9 @@ internal class LinuxBrowser : IPlatformBrowser
 
     public bool SetText(string html, string? baseUrl = null)
     {
-        if (!EnsureOwnership())
+        if (_disposed || _webView == IntPtr.Zero)
             return false;
 
-        // WebKit requires non-null content - treat null/empty as blank page
         html = string.IsNullOrEmpty(html) ? "<html><body></body></html>" : html;
 
 #if NET5_0_OR_GREATER
@@ -397,9 +388,9 @@ internal class LinuxBrowser : IPlatformBrowser
                 : MarshalStringToUTF8(baseUrl!);
 
 #if NET5_0_OR_GREATER
-            _webkit_web_view_load_html(s_webView, htmlPtr, baseUrlPtr);
+            _webkit_web_view_load_html(_webView, htmlPtr, baseUrlPtr);
 #else
-            webkit_web_view_load_html(s_webView, htmlPtr, baseUrlPtr);
+            webkit_web_view_load_html(_webView, htmlPtr, baseUrlPtr);
 #endif
 
             Marshal.FreeHGlobal(htmlPtr);
@@ -421,7 +412,7 @@ internal class LinuxBrowser : IPlatformBrowser
 
     public string GetTitle()
     {
-        if (_disposed || s_webView == IntPtr.Zero)
+        if (_disposed || _webView == IntPtr.Zero)
             return _currentTitle;
 
 #if NET5_0_OR_GREATER
@@ -432,9 +423,9 @@ internal class LinuxBrowser : IPlatformBrowser
         try
         {
 #if NET5_0_OR_GREATER
-            IntPtr titlePtr = _webkit_web_view_get_title(s_webView);
+            IntPtr titlePtr = _webkit_web_view_get_title(_webView);
 #else
-            IntPtr titlePtr = webkit_web_view_get_title(s_webView);
+            IntPtr titlePtr = webkit_web_view_get_title(_webView);
 #endif
             if (titlePtr != IntPtr.Zero)
             {
@@ -443,7 +434,6 @@ internal class LinuxBrowser : IPlatformBrowser
         }
         catch
         {
-            // Return cached title on error
         }
 
         return _currentTitle;
@@ -451,55 +441,51 @@ internal class LinuxBrowser : IPlatformBrowser
 
     public bool GoBack()
     {
-        if (!EnsureOwnership() || !CanGoBack)
+        if (_disposed || _webView == IntPtr.Zero || !CanGoBack)
             return false;
 
 #if NET5_0_OR_GREATER
-        if (_webkit_web_view_go_back == null)
-            return false;
-        _webkit_web_view_go_back(s_webView);
+        if (_webkit_web_view_go_back == null) return false;
+        _webkit_web_view_go_back(_webView);
 #else
-        webkit_web_view_go_back(s_webView);
+        webkit_web_view_go_back(_webView);
 #endif
         return true;
     }
 
     public bool GoForward()
     {
-        if (!EnsureOwnership() || !CanGoForward)
+        if (_disposed || _webView == IntPtr.Zero || !CanGoForward)
             return false;
 
 #if NET5_0_OR_GREATER
-        if (_webkit_web_view_go_forward == null)
-            return false;
-        _webkit_web_view_go_forward(s_webView);
+        if (_webkit_web_view_go_forward == null) return false;
+        _webkit_web_view_go_forward(_webView);
 #else
-        webkit_web_view_go_forward(s_webView);
+        webkit_web_view_go_forward(_webView);
 #endif
         return true;
     }
 
     public void Refresh()
     {
-        if (!EnsureOwnership())
-            return;
+        if (_disposed || _webView == IntPtr.Zero) return;
 
 #if NET5_0_OR_GREATER
-        _webkit_web_view_reload?.Invoke(s_webView);
+        _webkit_web_view_reload?.Invoke(_webView);
 #else
-        webkit_web_view_reload(s_webView);
+        webkit_web_view_reload(_webView);
 #endif
     }
 
     public void Stop()
     {
-        if (!EnsureOwnership())
-            return;
+        if (_disposed || _webView == IntPtr.Zero) return;
 
 #if NET5_0_OR_GREATER
-        _webkit_web_view_stop_loading?.Invoke(s_webView);
+        _webkit_web_view_stop_loading?.Invoke(_webView);
 #else
-        webkit_web_view_stop_loading(s_webView);
+        webkit_web_view_stop_loading(_webView);
 #endif
         _isLoading = false;
     }
@@ -508,15 +494,12 @@ internal class LinuxBrowser : IPlatformBrowser
     {
         get
         {
-            if (_disposed || s_webView == IntPtr.Zero)
-                return false;
-
+            if (_disposed || _webView == IntPtr.Zero) return false;
 #if NET5_0_OR_GREATER
-            if (!_webkitAvailable || _webkit_web_view_can_go_back == null)
-                return false;
-            return _webkit_web_view_can_go_back(s_webView);
+            if (!_webkitAvailable || _webkit_web_view_can_go_back == null) return false;
+            return _webkit_web_view_can_go_back(_webView);
 #else
-            return webkit_web_view_can_go_back(s_webView);
+            return webkit_web_view_can_go_back(_webView);
 #endif
         }
     }
@@ -525,25 +508,19 @@ internal class LinuxBrowser : IPlatformBrowser
     {
         get
         {
-            if (_disposed || s_webView == IntPtr.Zero)
-                return false;
-
+            if (_disposed || _webView == IntPtr.Zero) return false;
 #if NET5_0_OR_GREATER
-            if (!_webkitAvailable || _webkit_web_view_can_go_forward == null)
-                return false;
-            return _webkit_web_view_can_go_forward(s_webView);
+            if (!_webkitAvailable || _webkit_web_view_can_go_forward == null) return false;
+            return _webkit_web_view_can_go_forward(_webView);
 #else
-            return webkit_web_view_can_go_forward(s_webView);
+            return webkit_web_view_can_go_forward(_webView);
 #endif
         }
     }
 
     public bool IsLoading => _isLoading;
 
-    public string ExecuteScript(string script)
-    {
-        return string.Empty;
-    }
+    public string ExecuteScript(string script) => string.Empty;
 
     public async Task<string?> ExecuteScriptAsync(string script)
     {
@@ -552,100 +529,55 @@ internal class LinuxBrowser : IPlatformBrowser
     }
 
     public bool JavaScriptEnabled { get; set; }
-
-    public void SetUserAgent(string userAgent)
-    {
-    }
-
-    public string GetUserAgent()
-    {
-        return string.Empty;
-    }
-
-    public void ClearCookies()
-    {
-    }
-
-    public void ClearCache()
-    {
-    }
-
-    public Task InitializeAsync()
-    {
-        return Task.CompletedTask;
-    }
-
+    public void SetUserAgent(string userAgent) { }
+    public string GetUserAgent() => string.Empty;
+    public void ClearCookies() { }
+    public void ClearCache() { }
+    public Task InitializeAsync() => Task.CompletedTask;
     public bool IsInitialized => true;
 
     public void SetBounds(int x, int y, int width, int height)
     {
-        if (_disposed || _scrolledWindow == IntPtr.Zero)
-            return;
-
+        if (_disposed || _scrolledWindow == IntPtr.Zero) return;
         _requestedBounds = new Rectangle(x, y, width, height);
         gtk_widget_set_size_request(_scrolledWindow, width, height);
     }
 
     public Rectangle GetBounds()
     {
-        if (_disposed || _scrolledWindow == IntPtr.Zero)
-            return default;
-
+        if (_disposed || _scrolledWindow == IntPtr.Zero) return default;
         return _requestedBounds;
     }
 
     public void SetVisible(bool visible)
     {
-        if (_disposed || _scrolledWindow == IntPtr.Zero)
-            return;
-
-        if (visible)
-            gtk_widget_show(_scrolledWindow);
-        else
-            gtk_widget_hide(_scrolledWindow);
+        if (_disposed || _scrolledWindow == IntPtr.Zero) return;
+        if (visible) gtk_widget_show(_scrolledWindow);
+        else gtk_widget_hide(_scrolledWindow);
     }
 
     public bool GetVisible()
     {
-        if (_disposed || _scrolledWindow == IntPtr.Zero)
-            return false;
-
+        if (_disposed || _scrolledWindow == IntPtr.Zero) return false;
         return gtk_widget_get_visible(_scrolledWindow);
     }
 
     public void SetEnabled(bool enabled)
     {
-        if (_disposed || s_webView == IntPtr.Zero)
-            return;
-
-        gtk_widget_set_sensitive(s_webView, enabled);
+        if (_disposed || _webView == IntPtr.Zero) return;
+        gtk_widget_set_sensitive(_webView, enabled);
     }
 
     public bool GetEnabled()
     {
-        if (_disposed || s_webView == IntPtr.Zero)
-            return false;
-
-        return gtk_widget_get_sensitive(s_webView);
+        if (_disposed || _webView == IntPtr.Zero) return false;
+        return gtk_widget_get_sensitive(_webView);
     }
 
-    public void SetBackground(RGB color)
-    {
-    }
-
-    public RGB GetBackground()
-    {
-        return new RGB(255, 255, 255);
-    }
-
-    public void SetForeground(RGB color)
-    {
-    }
-
-    public RGB GetForeground()
-    {
-        return new RGB(0, 0, 0);
-    }
+    public void SetBackground(RGB color) { }
+    public RGB GetBackground() => new RGB(255, 255, 255);
+    public void SetForeground(RGB color) { }
+    public RGB GetForeground() => new RGB(0, 0, 0);
 
     public void Dispose()
     {
@@ -653,46 +585,42 @@ internal class LinuxBrowser : IPlatformBrowser
         {
             _disposed = true;
 
-            // Stop any pending loads
-            if (s_currentOwner == this && s_webView != IntPtr.Zero)
+            if (_webView != IntPtr.Zero && _loadChangedHandlerId > 0)
             {
-#if NET5_0_OR_GREATER
-                _webkit_web_view_stop_loading?.Invoke(s_webView);
-#else
-                webkit_web_view_stop_loading(s_webView);
-#endif
-                // Reparent webview out of our scrolled window so it survives.
-                // The extra g_object_ref from creation keeps it alive.
-                IntPtr parent = gtk_widget_get_parent(s_webView);
-                if (parent != IntPtr.Zero)
-                {
-                    gtk_container_remove(parent, s_webView);
-                }
-
-                s_currentOwner = null;
+                g_signal_handler_disconnect(_webView, _loadChangedHandlerId);
+                _loadChangedHandlerId = 0;
             }
 
-            // Null our per-instance handle. Do NOT destroy the scrolled window —
-            // parent GtkWindow destruction handles recursive cleanup.
+            if (_webView != IntPtr.Zero)
+            {
+                _browserInstances.TryRemove(_webView, out _);
+            }
+
+            if (_webView != IntPtr.Zero)
+            {
+#if NET5_0_OR_GREATER
+                _webkit_web_view_stop_loading?.Invoke(_webView);
+#else
+                webkit_web_view_stop_loading(_webView);
+#endif
+            }
+
+            // Null the handles. Do NOT call gtk_widget_destroy or gtk_container_remove.
+            // The parent GtkWindow's destruction recursively cleans up all descendants.
             _scrolledWindow = IntPtr.Zero;
+            _webView = IntPtr.Zero;
         }
     }
 
-    // Helper methods for UTF-8 string marshalling
+    // UTF-8 string marshalling helpers
 
     private static string PtrToStringUTF8(IntPtr ptr)
     {
-        if (ptr == IntPtr.Zero)
-            return string.Empty;
-
+        if (ptr == IntPtr.Zero) return string.Empty;
 #if NETSTANDARD2_0
         int length = 0;
-        while (Marshal.ReadByte(ptr, length) != 0)
-            length++;
-
-        if (length == 0)
-            return string.Empty;
-
+        while (Marshal.ReadByte(ptr, length) != 0) length++;
+        if (length == 0) return string.Empty;
         byte[] buffer = new byte[length];
         Marshal.Copy(ptr, buffer, 0, length);
         return System.Text.Encoding.UTF8.GetString(buffer);
@@ -703,9 +631,7 @@ internal class LinuxBrowser : IPlatformBrowser
 
     private static IntPtr MarshalStringToUTF8(string str)
     {
-        if (string.IsNullOrEmpty(str))
-            return IntPtr.Zero;
-
+        if (string.IsNullOrEmpty(str)) return IntPtr.Zero;
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(str + '\0');
         IntPtr ptr = Marshal.AllocHGlobal(bytes.Length);
         Marshal.Copy(bytes, 0, ptr, bytes.Length);
@@ -713,9 +639,11 @@ internal class LinuxBrowser : IPlatformBrowser
     }
 
 #if !NET5_0_OR_GREATER
-    // WebKitGTK P/Invoke declarations for netstandard2.0 (only WebKit 4.0)
     [DllImport("libwebkit2gtk-4.0.so.37", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr webkit_web_view_new();
+
+    [DllImport("libwebkit2gtk-4.0.so.37", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr webkit_web_view_new_with_related_view(IntPtr web_view);
 
     [DllImport("libwebkit2gtk-4.0.so.37", CallingConvention = CallingConvention.Cdecl)]
     private static extern void webkit_web_view_load_uri(IntPtr web_view, IntPtr uri);
@@ -748,7 +676,7 @@ internal class LinuxBrowser : IPlatformBrowser
     private static extern void webkit_web_view_stop_loading(IntPtr web_view);
 #endif
 
-    // GTK P/Invoke declarations
+    // GTK P/Invoke
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_scrolled_window_new(IntPtr hadjustment, IntPtr vadjustment);
@@ -778,22 +706,19 @@ internal class LinuxBrowser : IPlatformBrowser
     private static extern void gtk_widget_set_size_request(IntPtr widget, int width, int height);
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_widget_get_allocation(IntPtr widget, out GtkAllocation allocation);
-
-    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
 
-    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+    // GObject
 
-    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
-
-    // GObject ref counting
     [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr g_object_ref(IntPtr @object);
 
-    // GObject signal handling
+    [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool g_type_check_instance_is_a(IntPtr instance, IntPtr iface_type);
+
+    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_type();
+
     [DllImport("libgobject-2.0.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern void g_signal_handler_disconnect(IntPtr instance, ulong handler_id);
 
