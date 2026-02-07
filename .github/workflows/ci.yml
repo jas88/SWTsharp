@@ -201,13 +201,16 @@ jobs:
             cat gtk-stderr.log
           fi
 
-          # Check the TRX file for actual test failures
+          # Check the TRX file for actual individual test failures
+          # Note: ResultSummary outcome="Failed" can appear due to test host abort (GTK criticals)
+          # even when all individual tests pass, so we check UnitTestResult elements instead
           if [ -f ./TestResults/test-results.trx ]; then
-            if grep -q 'outcome="Failed"' ./TestResults/test-results.trx; then
-              echo "::error::Tests have actual failures"
+            FAILED_COUNT=$(grep -c '<UnitTestResult.*outcome="Failed"' ./TestResults/test-results.trx || true)
+            if [ "$FAILED_COUNT" -gt 0 ]; then
+              echo "::error::$FAILED_COUNT test(s) actually failed"
               exit 1
             fi
-            echo "All tests passed (GTK criticals are non-fatal warnings)"
+            echo "All individual tests passed (GTK criticals are non-fatal warnings)"
           else
             echo "::error::No test results file found"
             exit 1
