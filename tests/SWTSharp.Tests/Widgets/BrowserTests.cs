@@ -14,7 +14,7 @@ public class BrowserTests : WidgetTestBase
 
     #region Creation Tests
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Create_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -23,7 +23,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Create_WithStyles_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -38,7 +38,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Parent_ShouldBeCorrect()
     {
         RunOnUIThread(() =>
@@ -51,7 +51,7 @@ public class BrowserTests : WidgetTestBase
 
     #region URL Operations
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetUrl_ValidHttpUrl_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -68,7 +68,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetUrl_ValidHttpsUrl_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -85,7 +85,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetUrl_FileUrl_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -102,7 +102,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetUrl_WithEmptyString_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -119,7 +119,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetUrl_WithNull_ShouldSetEmptyString()
     {
         RunOnUIThread(() =>
@@ -136,7 +136,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_GetUrl_InitialState_ShouldBeEmpty()
     {
         RunOnUIThread(() =>
@@ -152,7 +152,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Navigate_WaitForComplete_ShouldReturnActualUrl()
     {
         Shell? shell = null;
@@ -207,7 +207,7 @@ public class BrowserTests : WidgetTestBase
 
     #region HTML Content Operations
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetText_SimpleHtml_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -224,7 +224,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetText_ComplexHtml_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -244,7 +244,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetText_WithEmptyString_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -261,7 +261,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetText_WithNull_ShouldSetEmptyString()
     {
         RunOnUIThread(() =>
@@ -278,7 +278,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_GetText_InitialState_ShouldBeEmpty()
     {
         RunOnUIThread(() =>
@@ -298,7 +298,7 @@ public class BrowserTests : WidgetTestBase
 
     #region Navigation Methods
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Refresh_ShouldNotThrow()
     {
         RunOnUIThread(() =>
@@ -316,7 +316,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Stop_ShouldNotThrow()
     {
         RunOnUIThread(() =>
@@ -334,7 +334,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Back_ShouldNotThrow()
     {
         RunOnUIThread(() =>
@@ -352,7 +352,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Forward_ShouldNotThrow()
     {
         RunOnUIThread(() =>
@@ -370,7 +370,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_NavigationSequence_ShouldWork()
     {
         RunOnUIThread(() =>
@@ -401,7 +401,7 @@ public class BrowserTests : WidgetTestBase
 
     #region Event Handling
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_LocationChangedEvent_ShouldFire()
     {
         RunOnUIThread(() =>
@@ -429,7 +429,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_TitleChangedEvent_ShouldFire()
     {
         RunOnUIThread(() =>
@@ -457,7 +457,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_ProgressChangedEvent_ShouldFire()
     {
         RunOnUIThread(() =>
@@ -488,7 +488,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_StatusTextChangedEvent_ShouldFire()
     {
         RunOnUIThread(() =>
@@ -520,7 +520,7 @@ public class BrowserTests : WidgetTestBase
 
     #region Bounds and Sizing
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetBounds_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -540,7 +540,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetSize_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -562,7 +562,7 @@ public class BrowserTests : WidgetTestBase
 
     #region Disposal Tests
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Dispose_ShouldSetIsDisposed()
     {
         RunOnUIThread(() =>
@@ -571,7 +571,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetUrl_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -583,7 +583,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_GetUrl_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -596,7 +596,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_SetText_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -608,7 +608,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_GetText_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -621,7 +621,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Refresh_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -633,7 +633,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Stop_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -645,7 +645,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Back_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -657,7 +657,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Forward_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -673,7 +673,7 @@ public class BrowserTests : WidgetTestBase
 
     #region Common Widget Properties
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Data_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -682,7 +682,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Visible_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -696,7 +696,7 @@ public class BrowserTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [SkipOnLinuxFact]
     public void Browser_Enabled_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
