@@ -271,21 +271,10 @@ internal partial class MacOSPlatform
         return (int)width;
     }
 
-    // Architecture-specific float return handling:
-    // - ARM64: objc_msgSend_fpret doesn't exist, use objc_msgSend
-    // - x86_64: objc_msgSend_fpret required for floating-point returns
+    // objc_msgSend returns double on both ARM64 and x86_64.
+    // objc_msgSend_fpret is only needed for long double on x86_64, not for double.
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
-    private static extern double objc_msgSend_ret_double_arm64(IntPtr receiver, IntPtr selector);
-
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
-    private static extern double objc_msgSend_ret_double_x64(IntPtr receiver, IntPtr selector);
-
-    private static double objc_msgSend_ret_double(IntPtr receiver, IntPtr selector)
-    {
-        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
-            return objc_msgSend_ret_double_arm64(receiver, selector);
-        return objc_msgSend_ret_double_x64(receiver, selector);
-    }
+    private static extern double objc_msgSend_ret_double(IntPtr receiver, IntPtr selector);
 
     // TableItem operations
     // In NSTableView, items are not objects but row indices

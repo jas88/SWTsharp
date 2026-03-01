@@ -497,7 +497,11 @@ internal class LinuxExpandItem : IPlatformExpandItem
 
         if (_expander != IntPtr.Zero)
         {
-            gtk_widget_destroy(_expander);
+            var parent = gtk_widget_get_parent(_expander);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _expander);
+            }
             _expander = IntPtr.Zero;
         }
         _contentBox = IntPtr.Zero;
