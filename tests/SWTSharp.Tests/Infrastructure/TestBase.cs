@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Xunit;
 using NSubstitute;
 using SWTSharp;
@@ -19,6 +20,15 @@ public abstract class TestBase : IDisposable
     {
         // Use shared Display from fixture
         Display = displayFixture.Display;
+
+        // On Windows/Linux, reset Display's thread to the current test thread.
+        // xUnit may run InitializeAsync and tests on different threads; without this,
+        // SyncExec sees a thread mismatch and tries to queue to a non-existent event loop.
+        // macOS uses MainThreadDispatcher instead, so this is not needed there.
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Display.SetThreadForTesting();
+        }
 
         // Create mock platform for testing
         MockPlatform = Substitute.For<IPlatform>();
