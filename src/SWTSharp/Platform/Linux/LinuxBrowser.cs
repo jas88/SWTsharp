@@ -568,12 +568,15 @@ internal class LinuxBrowser : LinuxWidget, IPlatformBrowser
         }
 
         // Schedule deferred unref — prevent delegate from being GC'd
+        GCHandle gcHandle = default;
         IdleCallback idleCallback = (_) =>
         {
             g_object_unref(webViewToUnref);
+            lock (s_idleCallbackHandles) { s_idleCallbackHandles.Remove(gcHandle); }
+            gcHandle.Free();
             return false; // G_SOURCE_REMOVE — run once
         };
-        var gcHandle = GCHandle.Alloc(idleCallback);
+        gcHandle = GCHandle.Alloc(idleCallback);
         lock (s_idleCallbackHandles) { s_idleCallbackHandles.Add(gcHandle); }
 
         g_idle_add(Marshal.GetFunctionPointerForDelegate(idleCallback), IntPtr.Zero);

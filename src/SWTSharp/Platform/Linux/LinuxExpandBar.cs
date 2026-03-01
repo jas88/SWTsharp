@@ -495,8 +495,11 @@ internal class LinuxExpandItem : IPlatformExpandItem
         if (_disposed) return;
         _disposed = true;
 
-        // Do NOT call gtk_widget_destroy -- parent destruction handles cleanup.
-        _expander = IntPtr.Zero;
+        if (_expander != IntPtr.Zero)
+        {
+            gtk_widget_destroy(_expander);
+            _expander = IntPtr.Zero;
+        }
         _contentBox = IntPtr.Zero;
     }
 

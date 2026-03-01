@@ -174,7 +174,7 @@ public class PlatformTestExamples : TestBase
     }
 
     [Fact]
-    public void Example_UsingTestHelpers_EventTesting()
+    public async System.Threading.Tasks.Task Example_UsingTestHelpers_EventTesting()
     {
         var shell = CreateTestShell();
         var button = TestHelpers.CreateTestButton(shell, "Click Me");
@@ -190,9 +190,9 @@ public class PlatformTestExamples : TestBase
         });
 
         // Wait for event to fire
-        TestHelpers.AssertCondition(
+        await EventSyncHelpers.WaitForCondition(
             () => eventFired,
-            "Button selection event should fire"
+            timeout: System.TimeSpan.FromSeconds(5)
         );
     }
 
@@ -205,29 +205,25 @@ public class PlatformTestExamples : TestBase
     }
 
     [Fact]
-    public void Example_UsingTestHelpers_WaitForCondition()
+    public async System.Threading.Tasks.Task Example_UsingTestHelpers_WaitForCondition()
     {
+        var shell = CreateTestShell();
+        bool condition = false;
+
         RunOnUIThread(() =>
         {
-            var shell = CreateTestShell();
-            bool condition = false;
-
             // Simulate async operation
-            RunOnUIThread(() =>
+            System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
             {
-                System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
-                {
-                    condition = true;
-                });
+                condition = true;
             });
-
-            // Wait for condition with timeout
-            TestHelpers.AssertCondition(
-                () => condition,
-                System.TimeSpan.FromSeconds(1),
-                "Condition should become true within 1 second"
-            );
         });
+
+        // Wait for condition with timeout
+        await EventSyncHelpers.WaitForCondition(
+            () => condition,
+            timeout: System.TimeSpan.FromSeconds(1)
+        );
     }
 
     [Fact]

@@ -10,7 +10,7 @@
     <!-- This is the test host executable that runs tests with Thread 1 control -->
     <AssemblyName>SWTSharp.TestHost</AssemblyName>
 
-    <!-- NOT a test project - this is a custom test runner, exclude from VSTest discovery -->
+    <!-- NOT a test project - this is the test host launched by SWTSharp.TestAdapter on macOS -->
     <IsTestProject>false</IsTestProject>
 
     <!-- Disable xUnit's auto-generated entry point -->
@@ -20,7 +20,7 @@
     <StartupObject>SWTSharp.TestHost.Program</StartupObject>
 
     <!-- Disable specific xUnit analyzer rule that requires MarshalByRefObject -->
-    <NoWarn>xUnit3000</NoWarn>
+    <NoWarn>xUnit3000;MSB3277</NoWarn>
     <!-- Application manifest for Windows Common Controls v6 -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>

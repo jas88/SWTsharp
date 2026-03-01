@@ -359,8 +359,21 @@ internal class MacOSSlider : MacOSWidget, IPlatformSlider
         }
     }
 
+    // Architecture-specific float return handling:
+    // - ARM64: objc_msgSend_fpret doesn't exist, use objc_msgSend
+    // - x86_64: objc_msgSend_fpret required for floating-point returns
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern double objc_msgSend_double_arm64(IntPtr receiver, IntPtr selector);
+
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
-    private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);
+    private static extern double objc_msgSend_double_x64(IntPtr receiver, IntPtr selector);
+
+    private static double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector)
+    {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            return objc_msgSend_double_arm64(receiver, selector);
+        return objc_msgSend_double_x64(receiver, selector);
+    }
 
     #endregion
 }

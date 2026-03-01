@@ -796,8 +796,7 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
 
-    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_fpret")]
-    private static extern double objc_msgSend_fpret_ret(IntPtr receiver, IntPtr selector);
+    // objc_msgSend_fpret_ret removed — was dead code; objc_msgSend_double_ret (line 852) is the active declaration
 
     // For setFrame: which takes CGRect as input argument (not returns it)
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
