@@ -108,14 +108,9 @@ public sealed class MacOSFontHandle : SafeFontHandle
         // If no font name specified, use system font
         if (string.IsNullOrEmpty(fontName))
         {
-            if ((fontStyle & SWT.BOLD) != 0)
-            {
-                font = objc_msgSend_IntPtr_double(_clsNSFont, _selBoldSystemFontOfSize, fontSize);
-            }
-            else
-            {
-                font = objc_msgSend_IntPtr_double(_clsNSFont, _selSystemFontOfSize, fontSize);
-            }
+            font = (fontStyle & SWT.BOLD) != 0
+                ? objc_msgSend_IntPtr_double(_clsNSFont, _selBoldSystemFontOfSize, fontSize)
+                : objc_msgSend_IntPtr_double(_clsNSFont, _selSystemFontOfSize, fontSize);
         }
         else
         {

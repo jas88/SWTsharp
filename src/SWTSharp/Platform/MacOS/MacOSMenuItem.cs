@@ -82,14 +82,7 @@ internal class MacOSMenuItem : MacOSWidget, IPlatformMenuItem
         _parentMenu = parentMenu ?? throw new ArgumentNullException(nameof(parentMenu));
         _style = style;
 
-        if (IsSeparator)
-        {
-            _nsMenuItem = CreateSeparatorItem();
-        }
-        else
-        {
-            _nsMenuItem = CreateNSMenuItem();
-        }
+        _nsMenuItem = IsSeparator ? CreateSeparatorItem() : CreateNSMenuItem();
 
         if (_nsMenuItem == IntPtr.Zero)
             throw new InvalidOperationException("Failed to create NSMenuItem");
@@ -199,17 +192,9 @@ internal class MacOSMenuItem : MacOSWidget, IPlatformMenuItem
 
         // SWT accelerator format: modifier flags OR'd with key code
         // Special keys have KEYCODE_BIT (0x1000000) set, ASCII chars are in lower bits
-        int keyCode;
-        if ((accelerator & SWT.KEYCODE_BIT) != 0)
-        {
-            // Special key (F1-F12, arrows, etc.) - preserve the full key code
-            keyCode = accelerator & (SWT.KEYCODE_BIT | 0xFFFF);
-        }
-        else
-        {
-            // ASCII character - mask off any modifier bits in high bytes
-            keyCode = accelerator & 0xFF;
-        }
+        int keyCode = (accelerator & SWT.KEYCODE_BIT) != 0
+            ? accelerator & (SWT.KEYCODE_BIT | 0xFFFF)   // Special key (F1-F12, arrows, etc.)
+            : accelerator & 0xFF;                          // ASCII character
 
         // Build key equivalent string for macOS
         string keyEquivalent = GetMacOSKeyEquivalent(keyCode);

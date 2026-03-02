@@ -277,19 +277,9 @@ public class ToolBar : Composite
         // Use base Composite enabled control for widget-based toolbars
         base.UpdateEnabled();
 
-        // Propagate enabled state to all items
-        lock (_items)
-        {
-            foreach (var item in _items)
-            {
-                // Items inherit enabled state from toolbar when toolbar is disabled
-                // but maintain their own state when toolbar is enabled
-                if (!Enabled)
-                {
-                    // Force disable visually, but item's internal state unchanged
-                }
-            }
-        }
+        // Note: Items inherit enabled state from toolbar when toolbar is disabled
+        // but maintain their own state when toolbar is enabled.
+        // Visual disable propagation is handled at the platform layer.
     }
 
     protected override void ReleaseWidget()

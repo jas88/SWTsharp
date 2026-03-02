@@ -149,7 +149,7 @@ internal class LinuxSpinner : LinuxWidget, IPlatformSpinner
             {
                 _increment = value;
                 // Page increment is typically 10x line increment
-                gtk_spin_button_set_increments(_spinButton, _increment, _increment * 10);
+                gtk_spin_button_set_increments(_spinButton, _increment, (double)_increment * 10);
             }
         }
     }

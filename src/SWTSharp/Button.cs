@@ -1,3 +1,4 @@
+using System.Linq;
 using SWTSharp.Platform;
 using SWTSharp.Events;
 
@@ -155,17 +156,14 @@ public class Button : Control
             // Deselect other radio buttons in the same parent group
             if (Parent is Composite composite)
             {
-                foreach (var sibling in composite.Children)
+                foreach (var radioButton in composite.Children
+                    .OfType<Button>()
+                    .Where(b => b != this && (b.Style & SWT.RADIO) != 0))
                 {
-                    if (sibling is Button radioButton &&
-                        radioButton != this &&
-                        (radioButton.Style & SWT.RADIO) != 0)
+                    radioButton._selection = false;
+                    if (radioButton.PlatformWidget is IPlatformSelectionWidget siblingSelection)
                     {
-                        radioButton._selection = false;
-                        if (radioButton.PlatformWidget is IPlatformSelectionWidget siblingSelection)
-                        {
-                            siblingSelection.SetSelection(false);
-                        }
+                        siblingSelection.SetSelection(false);
                     }
                 }
             }

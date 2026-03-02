@@ -235,16 +235,9 @@ public class TreeItem : Widget
         // TreeItem is a data structure managed by the parent Tree's platform widget
         if (treeWidget is IPlatformTree platformTree)
         {
-            if (parentPlatformItem != null)
-            {
-                // Creating child item under parent item
-                PlatformTreeItem = platformTree.AddChildItem(parentPlatformItem, _text, index);
-            }
-            else
-            {
-                // Creating root item
-                PlatformTreeItem = platformTree.AddItem(_text, index);
-            }
+            PlatformTreeItem = parentPlatformItem != null
+                ? platformTree.AddChildItem(parentPlatformItem, _text, index)
+                : platformTree.AddItem(_text, index);
         }
     }
 

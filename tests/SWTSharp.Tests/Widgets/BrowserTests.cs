@@ -501,7 +501,7 @@ public class BrowserTests : WidgetTestBase
         {
             // Creates its own browser for disposal testing
             using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
+            using var browser = new Browser(shell, SWT.NONE);
 
             Assert.False(browser.IsDisposed);
             browser.Dispose();

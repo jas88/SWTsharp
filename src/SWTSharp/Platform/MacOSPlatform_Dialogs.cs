@@ -166,15 +166,9 @@ internal partial class MacOSPlatform
         IntPtr selObjectAtIndex = sel_registerName("objectAtIndex:");
 
         // Create appropriate panel
-        IntPtr panelClass;
-        if (isSave)
-        {
-            panelClass = objc_getClass("NSSavePanel");
-        }
-        else
-        {
-            panelClass = objc_getClass("NSOpenPanel");
-        }
+        IntPtr panelClass = isSave
+            ? objc_getClass("NSSavePanel")
+            : objc_getClass("NSOpenPanel");
 
         IntPtr panel = objc_msgSend(panelClass, selAlloc);
         panel = objc_msgSend(panel, selInit);
@@ -409,7 +403,7 @@ internal partial class MacOSPlatform
         objc_msgSend(colorPanel, selOrderFront, IntPtr.Zero);
 
         // Run modal session
-        long response = objc_msgSend_long_IntPtr(app, selRunModalForWindow, colorPanel);
+        objc_msgSend_long_IntPtr(app, selRunModalForWindow, colorPanel);
 
         // Stop modal and dismiss panel
         objc_msgSend(app, selStopModal);
@@ -498,7 +492,7 @@ internal partial class MacOSPlatform
         objc_msgSend(fontPanel, selOrderFront, IntPtr.Zero);
 
         // Run modal session
-        long response = objc_msgSend_long_IntPtr(app, selRunModalForWindow, fontPanel);
+        objc_msgSend_long_IntPtr(app, selRunModalForWindow, fontPanel);
 
         // Stop modal and dismiss panel
         IntPtr selStopModal = sel_registerName("stopModal");

@@ -54,10 +54,10 @@ internal class MacOSMenu : MacOSWidget, IPlatformMenu
     private static extern long objc_msgSend_long(IntPtr receiver, IntPtr selector);
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct CGPoint
+    private readonly struct CGPoint
     {
-        public double x;
-        public double y;
+        public readonly double x;
+        public readonly double y;
 
         public CGPoint(double x, double y)
         {

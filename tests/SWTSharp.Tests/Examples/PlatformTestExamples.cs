@@ -207,7 +207,6 @@ public class PlatformTestExamples : TestBase
     [Fact]
     public async System.Threading.Tasks.Task Example_UsingTestHelpers_WaitForCondition()
     {
-        var shell = CreateTestShell();
         bool condition = false;
 
         RunOnUIThread(() =>
