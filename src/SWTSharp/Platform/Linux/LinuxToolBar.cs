@@ -85,8 +85,8 @@ internal class LinuxToolBar : IPlatformToolBar
     {
         if (_gtkToolbarHandle == IntPtr.Zero) return;
 
-        // TODO: Convert IPlatformImage to GtkWidget when image support is added
-        // For now, create a tool button with text only
+        // GtkToolButton image requires GdkPixbuf. IPlatformImage to GdkPixbuf conversion
+        // would use gdk_pixbuf_new_from_data with image pixel data. Currently text-only.
         IntPtr toolButton = gtk_tool_button_new(IntPtr.Zero, text ?? string.Empty);
 
         if (toolButton == IntPtr.Zero)
@@ -134,15 +134,21 @@ internal class LinuxToolBar : IPlatformToolBar
         if (_disposed) return;
         _disposed = true;
 
+        // Detach from parent container to prevent double-destroy
+        if (_gtkToolbarHandle != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_gtkToolbarHandle);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _gtkToolbarHandle);
+            }
+        }
+
         // Clear items (widgets will be destroyed automatically when toolbar is destroyed)
         _items.Clear();
 
-        // Destroy the toolbar widget
-        if (_gtkToolbarHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkToolbarHandle);
-            _gtkToolbarHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkToolbarHandle = IntPtr.Zero;
     }
 
     #region GTK P/Invoke
@@ -164,6 +170,12 @@ internal class LinuxToolBar : IPlatformToolBar
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_orientable_set_orientation(IntPtr orientable, GtkOrientation orientation);

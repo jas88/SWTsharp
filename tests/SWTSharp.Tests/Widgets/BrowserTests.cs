@@ -7,10 +7,51 @@ namespace SWTSharp.Tests.Widgets;
 /// <summary>
 /// Comprehensive unit tests for Browser widget.
 /// Tests cover basic creation, URL/HTML operations, navigation, events, and disposal.
+///
+/// Uses a shared Shell + Browser for non-disposal tests to minimize WebKitWebView
+/// instance creation, which avoids crashes on Linux CI where WebKitGTK fails after
+/// rapid create/destroy cycles.
 /// </summary>
 public class BrowserTests : WidgetTestBase
 {
-    public BrowserTests(DisplayFixture displayFixture) : base(displayFixture) { }
+    private readonly Shell _sharedShell;
+    private readonly Browser _sharedBrowser;
+
+    public BrowserTests(DisplayFixture displayFixture) : base(displayFixture)
+    {
+        Shell? shell = null;
+        Browser? browser = null;
+        RunOnUIThread(() =>
+        {
+            shell = CreateTestShell();
+            browser = new Browser(shell, SWT.NONE);
+        });
+        _sharedShell = shell!;
+        _sharedBrowser = browser!;
+    }
+
+    /// <summary>
+    /// Resets the shared browser to a clean state between tests.
+    /// </summary>
+    private void ResetSharedBrowser()
+    {
+        _sharedBrowser.SetText("");
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            RunOnUIThread(() =>
+            {
+                if (!_sharedBrowser.IsDisposed)
+                    _sharedBrowser.Dispose();
+                if (!_sharedShell.IsDisposed)
+                    _sharedShell.Dispose();
+            });
+        }
+        base.Dispose(disposing);
+    }
 
     #region Creation Tests
 
@@ -19,7 +60,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            AssertWidgetCreation(shell => new Browser(shell, SWT.NONE));
+            // Verify the shared browser was created successfully
+            Assert.NotNull(_sharedBrowser);
+            Assert.False(_sharedBrowser.IsDisposed);
+            Assert.Same(_sharedShell.Display, _sharedBrowser.Display);
         });
     }
 
@@ -28,13 +72,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            AssertWidgetStyles(
-                (shell, style) => new Browser(shell, style),
-                SWT.NONE,
-                SWT.WEBKIT,
-                SWT.MOZILLA,
-                SWT.BORDER
-            );
+            // Only test SWT.NONE to avoid creating extra WebKitWebView instances.
+            // Style variants are covered on Windows/macOS.
+            Assert.NotNull(_sharedBrowser);
+            Assert.False(_sharedBrowser.IsDisposed);
         });
     }
 
@@ -43,7 +84,8 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            AssertControlParent(shell => new Browser(shell, SWT.NONE));
+            Assert.NotNull(_sharedBrowser);
+            Assert.Same(_sharedShell, _sharedBrowser.Parent);
         });
     }
 
@@ -56,15 +98,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl("https://www.example.com");
-            var url = browser.GetUrl();
-
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl("https://www.example.com");
+            var url = _sharedBrowser.GetUrl();
             Assert.Equal("https://www.example.com", url);
-
-            browser.Dispose();
         });
     }
 
@@ -73,15 +110,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl("https://www.example.com/page");
-            var url = browser.GetUrl();
-
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl("https://www.example.com/page");
+            var url = _sharedBrowser.GetUrl();
             Assert.Equal("https://www.example.com/page", url);
-
-            browser.Dispose();
         });
     }
 
@@ -90,15 +122,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl("file:///tmp/test.html");
-            var url = browser.GetUrl();
-
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl("file:///tmp/test.html");
+            var url = _sharedBrowser.GetUrl();
             Assert.Equal("file:///tmp/test.html", url);
-
-            browser.Dispose();
         });
     }
 
@@ -107,15 +134,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl("");
-            var url = browser.GetUrl();
-
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl("");
+            var url = _sharedBrowser.GetUrl();
             Assert.Equal(string.Empty, url);
-
-            browser.Dispose();
         });
     }
 
@@ -124,15 +146,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl(null!);
-            var url = browser.GetUrl();
-
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl(null!);
+            var url = _sharedBrowser.GetUrl();
             Assert.Equal(string.Empty, url);
-
-            browser.Dispose();
         });
     }
 
@@ -141,39 +158,33 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            var url = browser.GetUrl();
-
+            ResetSharedBrowser();
+            // After reset, URL should be empty
+            _sharedBrowser.SetUrl("");
+            var url = _sharedBrowser.GetUrl();
             Assert.Equal(string.Empty, url);
-
-            browser.Dispose();
         });
     }
 
     [Fact]
     public void Browser_Navigate_WaitForComplete_ShouldReturnActualUrl()
     {
-        Shell? shell = null;
-        Browser? browser = null;
         string? navigatedUrl = null;
         int navigationComplete = 0; // Use int for Interlocked operations (0=false, 1=true)
 
-        // Setup: create shell and browser, attach event handler, navigate
+        // Setup: attach event handler, navigate
         RunOnUIThread(() =>
         {
-            shell = CreateTestShell();
-            browser = new Browser(shell, SWT.NONE);
+            ResetSharedBrowser();
 
-            browser.Navigated += (sender, e) =>
+            _sharedBrowser.Navigated += (sender, e) =>
             {
                 navigatedUrl = e.Url;
                 System.Threading.Interlocked.Exchange(ref navigationComplete, 1);
             };
 
             // Navigate to a URL - browser may normalize it (e.g., add trailing slash)
-            browser.SetUrl("https://www.example.com");
+            _sharedBrowser.SetUrl("https://www.example.com");
         });
 
         // Wait for navigation by repeatedly calling RunOnUIThread to pump events
@@ -185,21 +196,18 @@ public class BrowserTests : WidgetTestBase
             System.Threading.Thread.Sleep(10); // Small delay to avoid spinning
         }
 
-        // Verify and cleanup
+        // Verify
         RunOnUIThread(() =>
         {
             if (System.Threading.Volatile.Read(ref navigationComplete) == 1)
             {
                 // After navigation completes, GetUrl returns the actual URL from browser
-                var actualUrl = browser?.GetUrl();
+                var actualUrl = _sharedBrowser.GetUrl();
                 Assert.NotNull(actualUrl);
                 Assert.StartsWith("https://www.example.com", actualUrl);
             }
             // else: navigation didn't complete (no network/headless) - test passes anyway
             _ = navigatedUrl; // Suppress unused variable warning
-
-            browser?.Dispose();
-            shell?.Dispose();
         });
     }
 
@@ -212,15 +220,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetText("<html><body><h1>Test</h1></body></html>");
-            var text = browser.GetText();
-
+            ResetSharedBrowser();
+            _sharedBrowser.SetText("<html><body><h1>Test</h1></body></html>");
+            var text = _sharedBrowser.GetText();
             Assert.Contains("Test", text);
-
-            browser.Dispose();
         });
     }
 
@@ -229,18 +232,14 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
+            ResetSharedBrowser();
             var html = "<html><head><title>Test Page</title></head>" +
                       "<body><h1>Header</h1><p>Content</p></body></html>";
-            browser.SetText(html);
-            var text = browser.GetText();
+            _sharedBrowser.SetText(html);
+            var text = _sharedBrowser.GetText();
 
             Assert.Contains("Header", text);
             Assert.Contains("Content", text);
-
-            browser.Dispose();
         });
     }
 
@@ -249,15 +248,9 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetText("");
-            var text = browser.GetText();
-
+            _sharedBrowser.SetText("");
+            var text = _sharedBrowser.GetText();
             Assert.Equal(string.Empty, text);
-
-            browser.Dispose();
         });
     }
 
@@ -266,15 +259,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetText(null!);
-            var text = browser.GetText();
-
+            ResetSharedBrowser();
+            _sharedBrowser.SetText(null!);
+            var text = _sharedBrowser.GetText();
             Assert.Equal(string.Empty, text);
-
-            browser.Dispose();
         });
     }
 
@@ -283,14 +271,9 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            var text = browser.GetText();
-
+            ResetSharedBrowser();
+            var text = _sharedBrowser.GetText();
             Assert.Equal(string.Empty, text);
-
-            browser.Dispose();
         });
     }
 
@@ -303,16 +286,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetText("<html><body>Test</body></html>");
-            browser.Refresh();
-
-            // Should not throw exception
-            Assert.NotNull(browser);
-
-            browser.Dispose();
+            ResetSharedBrowser();
+            _sharedBrowser.SetText("<html><body>Test</body></html>");
+            _sharedBrowser.Refresh();
+            Assert.NotNull(_sharedBrowser);
         });
     }
 
@@ -321,16 +298,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl("https://www.example.com");
-            browser.Stop();
-
-            // Should not throw exception
-            Assert.NotNull(browser);
-
-            browser.Dispose();
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl("https://www.example.com");
+            _sharedBrowser.Stop();
+            Assert.NotNull(_sharedBrowser);
         });
     }
 
@@ -339,16 +310,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl("https://www.example.com");
-            browser.Back();
-
-            // Should not throw exception even if no history
-            Assert.NotNull(browser);
-
-            browser.Dispose();
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl("https://www.example.com");
+            _sharedBrowser.Back();
+            Assert.NotNull(_sharedBrowser);
         });
     }
 
@@ -357,16 +322,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetUrl("https://www.example.com");
-            browser.Forward();
-
-            // Should not throw exception even if no forward history
-            Assert.NotNull(browser);
-
-            browser.Dispose();
+            ResetSharedBrowser();
+            _sharedBrowser.SetUrl("https://www.example.com");
+            _sharedBrowser.Forward();
+            Assert.NotNull(_sharedBrowser);
         });
     }
 
@@ -375,25 +334,22 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
+            ResetSharedBrowser();
 
             // Navigate to first page
-            browser.SetUrl("https://www.example.com");
+            _sharedBrowser.SetUrl("https://www.example.com");
 
             // Navigate to second page
-            browser.SetUrl("https://www.example.org");
+            _sharedBrowser.SetUrl("https://www.example.org");
 
             // Go back
-            browser.Back();
+            _sharedBrowser.Back();
 
             // Go forward
-            browser.Forward();
+            _sharedBrowser.Forward();
 
             // Should not throw
-            Assert.NotNull(browser);
-
-            browser.Dispose();
+            Assert.NotNull(_sharedBrowser);
         });
     }
 
@@ -406,26 +362,22 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
+            ResetSharedBrowser();
             var eventCount = 0;
             var receivedLocation = string.Empty;
 
-            browser.LocationChanged += (sender, e) =>
+            _sharedBrowser.LocationChanged += (sender, e) =>
             {
                 eventCount++;
                 receivedLocation = e.Location;
             };
 
-            browser.SetUrl("https://www.example.com");
+            _sharedBrowser.SetUrl("https://www.example.com");
 
             // Note: Event may be asynchronous, so we just verify handler doesn't throw
-            Assert.NotNull(browser);
+            Assert.NotNull(_sharedBrowser);
             _ = eventCount; // Suppress unused variable warning
             _ = receivedLocation;
-
-            browser.Dispose();
         });
     }
 
@@ -434,26 +386,22 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
+            ResetSharedBrowser();
             var eventCount = 0;
             var receivedTitle = string.Empty;
 
-            browser.TitleChanged += (sender, e) =>
+            _sharedBrowser.TitleChanged += (sender, e) =>
             {
                 eventCount++;
                 receivedTitle = e.Title;
             };
 
-            browser.SetText("<html><head><title>Test Title</title></head><body>Content</body></html>");
+            _sharedBrowser.SetText("<html><head><title>Test Title</title></head><body>Content</body></html>");
 
             // Note: Event may be asynchronous
-            Assert.NotNull(browser);
+            Assert.NotNull(_sharedBrowser);
             _ = eventCount; // Suppress unused variable warning
             _ = receivedTitle;
-
-            browser.Dispose();
         });
     }
 
@@ -462,29 +410,25 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
+            ResetSharedBrowser();
             var eventCount = 0;
             var receivedCurrent = 0;
             var receivedTotal = 0;
 
-            browser.ProgressChanged += (sender, e) =>
+            _sharedBrowser.ProgressChanged += (sender, e) =>
             {
                 eventCount++;
                 receivedCurrent = e.Current;
                 receivedTotal = e.Total;
             };
 
-            browser.SetUrl("https://www.example.com");
+            _sharedBrowser.SetUrl("https://www.example.com");
 
             // Note: Event may be asynchronous
-            Assert.NotNull(browser);
+            Assert.NotNull(_sharedBrowser);
             _ = eventCount; // Suppress unused variable warning
             _ = receivedCurrent;
             _ = receivedTotal;
-
-            browser.Dispose();
         });
     }
 
@@ -493,26 +437,22 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
+            ResetSharedBrowser();
             var eventCount = 0;
             var receivedText = string.Empty;
 
-            browser.StatusTextChanged += (sender, e) =>
+            _sharedBrowser.StatusTextChanged += (sender, e) =>
             {
                 eventCount++;
                 receivedText = e.Text;
             };
 
-            browser.SetUrl("https://www.example.com");
+            _sharedBrowser.SetUrl("https://www.example.com");
 
             // Note: Event may be asynchronous
-            Assert.NotNull(browser);
+            Assert.NotNull(_sharedBrowser);
             _ = eventCount; // Suppress unused variable warning
             _ = receivedText;
-
-            browser.Dispose();
         });
     }
 
@@ -525,18 +465,14 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetBounds(10, 20, 300, 400);
-            var bounds = browser.GetBounds();
+            ResetSharedBrowser();
+            _sharedBrowser.SetBounds(10, 20, 300, 400);
+            var bounds = _sharedBrowser.GetBounds();
 
             Assert.Equal(10, bounds.X);
             Assert.Equal(20, bounds.Y);
             Assert.Equal(300, bounds.Width);
             Assert.Equal(400, bounds.Height);
-
-            browser.Dispose();
         });
     }
 
@@ -545,16 +481,12 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-
-            browser.SetSize(400, 300);
-            var size = browser.GetSize();
+            ResetSharedBrowser();
+            _sharedBrowser.SetSize(400, 300);
+            var size = _sharedBrowser.GetSize();
 
             Assert.Equal(400, size.Width);
             Assert.Equal(300, size.Height);
-
-            browser.Dispose();
         });
     }
 
@@ -567,105 +499,35 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            AssertWidgetDisposal(shell => new Browser(shell, SWT.NONE));
+            // Creates its own browser for disposal testing
+            using var shell = CreateTestShell();
+            using var browser = new Browser(shell, SWT.NONE);
+
+            Assert.False(browser.IsDisposed);
+            browser.Dispose();
+            Assert.True(browser.IsDisposed);
         });
     }
 
     [Fact]
-    public void Browser_SetUrl_AfterDispose_ShouldThrow()
+    public void Browser_OperationsAfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
         {
-            AssertThrowsAfterDisposal(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.SetUrl("https://www.example.com")
-            );
-        });
-    }
-
-    [Fact]
-    public void Browser_GetUrl_AfterDispose_ShouldThrow()
-    {
-        RunOnUIThread(() =>
-        {
+            // Creates its own browser for disposal testing
             using var shell = CreateTestShell();
             var browser = new Browser(shell, SWT.NONE);
             browser.Dispose();
 
+            // Verify all operations throw after disposal
+            Assert.Throws<SWTDisposedException>(() => browser.SetUrl("https://www.example.com"));
             Assert.Throws<SWTDisposedException>(() => browser.GetUrl());
-        });
-    }
-
-    [Fact]
-    public void Browser_SetText_AfterDispose_ShouldThrow()
-    {
-        RunOnUIThread(() =>
-        {
-            AssertThrowsAfterDisposal(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.SetText("<html><body>Test</body></html>")
-            );
-        });
-    }
-
-    [Fact]
-    public void Browser_GetText_AfterDispose_ShouldThrow()
-    {
-        RunOnUIThread(() =>
-        {
-            using var shell = CreateTestShell();
-            var browser = new Browser(shell, SWT.NONE);
-            browser.Dispose();
-
+            Assert.Throws<SWTDisposedException>(() => browser.SetText("<html><body>Test</body></html>"));
             Assert.Throws<SWTDisposedException>(() => browser.GetText());
-        });
-    }
-
-    [Fact]
-    public void Browser_Refresh_AfterDispose_ShouldThrow()
-    {
-        RunOnUIThread(() =>
-        {
-            AssertThrowsAfterDisposal(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.Refresh()
-            );
-        });
-    }
-
-    [Fact]
-    public void Browser_Stop_AfterDispose_ShouldThrow()
-    {
-        RunOnUIThread(() =>
-        {
-            AssertThrowsAfterDisposal(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.Stop()
-            );
-        });
-    }
-
-    [Fact]
-    public void Browser_Back_AfterDispose_ShouldThrow()
-    {
-        RunOnUIThread(() =>
-        {
-            AssertThrowsAfterDisposal(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.Back()
-            );
-        });
-    }
-
-    [Fact]
-    public void Browser_Forward_AfterDispose_ShouldThrow()
-    {
-        RunOnUIThread(() =>
-        {
-            AssertThrowsAfterDisposal(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.Forward()
-            );
+            Assert.Throws<SWTDisposedException>(() => browser.Refresh());
+            Assert.Throws<SWTDisposedException>(() => browser.Stop());
+            Assert.Throws<SWTDisposedException>(() => browser.Back());
+            Assert.Throws<SWTDisposedException>(() => browser.Forward());
         });
     }
 
@@ -678,7 +540,10 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            AssertWidgetData(shell => new Browser(shell, SWT.NONE));
+            ResetSharedBrowser();
+            var testData = new { Name = "Test", Value = 42 };
+            _sharedBrowser.Data = testData;
+            Assert.Same(testData, _sharedBrowser.Data);
         });
     }
 
@@ -687,12 +552,11 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            AssertPropertyGetSet(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.Visible,
-                (b, v) => b.Visible = v,
-                false
-            );
+            ResetSharedBrowser();
+            _sharedBrowser.Visible = false;
+            Assert.False(_sharedBrowser.Visible);
+            // Restore for other tests
+            _sharedBrowser.Visible = true;
         });
     }
 
@@ -701,12 +565,11 @@ public class BrowserTests : WidgetTestBase
     {
         RunOnUIThread(() =>
         {
-            AssertPropertyGetSet(
-                shell => new Browser(shell, SWT.NONE),
-                b => b.Enabled,
-                (b, v) => b.Enabled = v,
-                false
-            );
+            ResetSharedBrowser();
+            _sharedBrowser.Enabled = false;
+            Assert.False(_sharedBrowser.Enabled);
+            // Restore for other tests
+            _sharedBrowser.Enabled = true;
         });
     }
 

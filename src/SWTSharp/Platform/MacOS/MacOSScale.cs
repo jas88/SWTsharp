@@ -63,7 +63,7 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
             if (_disposed || _nsSliderHandle == IntPtr.Zero) return 0;
 
             IntPtr selector = sel_registerName("doubleValue");
-            double value = objc_msgSend_double_ret(_nsSliderHandle, selector);
+            double value = objc_msgSend_get_double(_nsSliderHandle, selector);
             return (int)value;
         }
         set
@@ -140,6 +140,22 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
 
             _increment = Math.Max(1, value);
             UpdateTickMarks();
+        }
+    }
+
+    private int _pageIncrement = 10;
+
+    public int PageIncrement
+    {
+        get
+        {
+            if (_disposed) return 10;
+            return _pageIncrement;
+        }
+        set
+        {
+            if (_disposed) return;
+            _pageIncrement = Math.Max(1, value);
         }
     }
 
@@ -403,8 +419,10 @@ internal class MacOSScale : MacOSWidget, IPlatformScale
         }
     }
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
-    private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);
+    // objc_msgSend returns double on both ARM64 and x86_64.
+    // objc_msgSend_fpret is only needed for long double on x86_64, not for double.
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern double objc_msgSend_get_double(IntPtr receiver, IntPtr selector);
 
     #endregion
 }

@@ -54,7 +54,29 @@ public class DirectoryDialog : Dialog
     {
         CheckWidget();
 
-        // TODO: Implement directory dialog through platform widget interface
-        return null; // Placeholder
+        // Get parent window handle
+        IntPtr parentHandle = IntPtr.Zero;
+        if (Parent?.PlatformWidget is IPlatformWindow window)
+        {
+            parentHandle = window.GetNativeHandle();
+        }
+
+        // Call platform directory dialog
+        string? selectedPath = PlatformFactory.Instance.ShowDirectoryDialog(
+            parentHandle,
+            Text,
+            _message,
+            _filterPath);
+
+        // User cancelled
+        if (selectedPath == null)
+        {
+            return null;
+        }
+
+        // Update filter path from result
+        _filterPath = selectedPath;
+
+        return selectedPath;
     }
 }

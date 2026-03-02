@@ -145,12 +145,11 @@ public class TabItem : Widget
 
         _control = control;
 
-        // TODO: Update platform via IPlatformWidget interface
-        // Update platform using new interface
-        // if (_handle != IntPtr.Zero)
-        // {
-        //     Platform.PlatformFactory.Instance.SetTabItemControl(PlatformWidget, control?.PlatformWidget ?? IntPtr.Zero);
-        // }
+        // Update platform via IPlatformTabItem interface
+        if (_platformTabItem != null)
+        {
+            _platformTabItem.SetControl(control?.PlatformWidget);
+        }
 
         // Show control if this tab is currently selected
         if (_control != null && _parent.Selection == this)
@@ -242,12 +241,11 @@ public class TabItem : Widget
     /// </summary>
     private void UpdateToolTip()
     {
-        // TODO: Add tooltip support to IPlatformTabItem interface
-        // For now, tooltip text is stored but not implemented in platform widget
-        // if (_platformTabItem != null)
-        // {
-        //     _platformTabItem.SetToolTip(_toolTipText);
-        // }
+        // Update tooltip via IPlatformTabItem interface
+        if (_platformTabItem != null)
+        {
+            _platformTabItem.SetToolTipText(_toolTipText);
+        }
     }
 
     protected override void ReleaseWidget()

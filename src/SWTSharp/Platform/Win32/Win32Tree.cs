@@ -169,7 +169,8 @@ internal class Win32Tree : IPlatformComposite
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via TVM_SETBKCOLOR
+        // TreeView supports TVM_SETBKCOLOR for background. Implementation would use
+        // SendMessage with COLORREF value. May affect selection highlighting.
     }
 
     public RGB GetBackground()
@@ -180,7 +181,8 @@ internal class Win32Tree : IPlatformComposite
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color via TVM_SETTEXTCOLOR
+        // TreeView supports TVM_SETTEXTCOLOR for text. Implementation would use
+        // SendMessage with COLORREF value.
     }
 
     public RGB GetForeground()

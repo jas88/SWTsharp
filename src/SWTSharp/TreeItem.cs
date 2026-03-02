@@ -17,6 +17,11 @@ public class TreeItem : Widget
     private readonly System.Collections.Generic.List<TreeItem> _items = new();
 
     /// <summary>
+    /// Gets the platform tree item for platform operations.
+    /// </summary>
+    internal IPlatformTreeItem? PlatformTreeItem { get; private set; }
+
+    /// <summary>
     /// Gets or sets the text displayed in the tree item.
     /// </summary>
     public string Text
@@ -32,8 +37,8 @@ public class TreeItem : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                // TreeItem text is stored locally; platform tree uses data source pattern
-                // to query text when rendering. No platform call needed - tree reloads from data.
+                // Update platform directly if available, otherwise tree reloads from data
+                PlatformTreeItem?.SetText(_text);
             }
         }
     }
@@ -54,8 +59,9 @@ public class TreeItem : Widget
             if (_image != value)
             {
                 _image = value;
-                // TreeItem image is stored locally; platform tree uses data source pattern
-                // to query image when rendering. No platform call needed - tree reloads from data.
+                // Image-to-platform-image conversion requires platform graphics support
+                // Currently passing null as images are displayed via custom cell rendering
+                PlatformTreeItem?.SetImage(null);
             }
         }
     }
@@ -84,8 +90,7 @@ public class TreeItem : Widget
             if (_checked != value)
             {
                 _checked = value;
-                // TreeItem checked state is stored locally; platform tree uses data source pattern
-                // to query checked state when rendering. No platform call needed - tree reloads from data.
+                PlatformTreeItem?.SetChecked(_checked);
             }
         }
     }
@@ -106,8 +111,7 @@ public class TreeItem : Widget
             if (_expanded != value)
             {
                 _expanded = value;
-                // TreeItem expanded state is stored locally; platform tree uses data source pattern
-                // to query expanded state. Events notify listeners of state change.
+                PlatformTreeItem?.SetExpanded(_expanded);
 
                 if (_expanded)
                 {
@@ -219,19 +223,22 @@ public class TreeItem : Widget
         }
         _parentTree = null;
         _parentItem = parent;
-        CreateWidget(parent.ParentTree.PlatformWidget, parent.PlatformWidget, index);
+        CreateWidget(parent.ParentTree.PlatformWidget, parent.PlatformTreeItem, index);
         parent.AddItem(this, index >= 0 ? index : parent.ItemCount);
     }
 
     /// <summary>
     /// Creates the platform-specific tree item.
     /// </summary>
-    private void CreateWidget(IPlatformWidget? treeWidget, IPlatformWidget? parentItemWidget, int index)
+    private void CreateWidget(IPlatformWidget? treeWidget, IPlatformTreeItem? parentPlatformItem, int index)
     {
         // TreeItem is a data structure managed by the parent Tree's platform widget
-        // The parent Tree handles the platform-specific implementation
-        // TreeItem stores data locally (text, image, expanded, checked) and the
-        // platform tree control queries this data via data source pattern when rendering
+        if (treeWidget is IPlatformTree platformTree)
+        {
+            PlatformTreeItem = parentPlatformItem != null
+                ? platformTree.AddChildItem(parentPlatformItem, _text, index)
+                : platformTree.AddItem(_text, index);
+        }
     }
 
     /// <summary>

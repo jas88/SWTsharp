@@ -17,6 +17,9 @@ internal class LinuxTabFolder : IPlatformTabFolder
     private RGB _background = new RGB(240, 240, 240);
     private RGB _foreground = new RGB(0, 0, 0);
 
+    // Keep delegate alive to prevent GC collection during GTK signal callbacks
+    private readonly SwitchPageCallback _switchPageCallback;
+
     // Events required by IPlatformComposite
     #pragma warning disable CS0067
     public event EventHandler<IPlatformWidget>? ChildAdded;
@@ -31,6 +34,7 @@ internal class LinuxTabFolder : IPlatformTabFolder
     public LinuxTabFolder(IntPtr parentHandle, int style)
     {
         _style = style;
+        _switchPageCallback = OnSwitchPage;
 
         // Create GtkNotebook for tab control
         _gtkNotebook = gtk_notebook_new();
@@ -63,7 +67,7 @@ internal class LinuxTabFolder : IPlatformTabFolder
         }
 
         // Connect switch-page signal for selection changes
-        g_signal_connect_data(_gtkNotebook, "switch-page", OnSwitchPage, IntPtr.Zero, IntPtr.Zero, 0);
+        g_signal_connect_data(_gtkNotebook, "switch-page", _switchPageCallback, IntPtr.Zero, IntPtr.Zero, 0);
 
         // Show the widget
         gtk_widget_show(_gtkNotebook);
@@ -252,6 +256,16 @@ internal class LinuxTabFolder : IPlatformTabFolder
         if (_disposed) return;
         _disposed = true;
 
+        // Detach from parent container to prevent double-destroy
+        if (_handle != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_handle);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _handle);
+            }
+        }
+
         // Dispose all tab items
         foreach (var item in _items.ToArray())
         {
@@ -262,11 +276,7 @@ internal class LinuxTabFolder : IPlatformTabFolder
         // Clear children list
         _children.Clear();
 
-        // Destroy the widget
-        if (_handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_handle);
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
     }
 
     #endregion
@@ -350,6 +360,12 @@ internal class LinuxTabFolder : IPlatformTabFolder
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_destroy(IntPtr widget);
 
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
     [DllImport("libgobject-2.0.so.0", CharSet = CharSet.Ansi)]
     private static extern ulong g_signal_connect_data(IntPtr instance, string detailedSignal, SwitchPageCallback cHandler, IntPtr data, IntPtr destroyData, int connectFlags);
 
@@ -389,9 +405,18 @@ internal class LinuxTabItem : IPlatformTabItem
 
         // Create a GtkBox as content container for the tab page
         _contentContainer = gtk_box_new(GtkOrientation.GTK_ORIENTATION_VERTICAL, 0);
+        if (_contentContainer == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK Box for tab item content");
+        }
 
         // Create a GtkLabel for the tab label
         _tabLabel = gtk_label_new("");
+        if (_tabLabel == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_contentContainer);
+            throw new InvalidOperationException("Failed to create GTK Label for tab item");
+        }
 
         // Insert or append the page to the notebook
         int pageIndex;
@@ -406,6 +431,8 @@ internal class LinuxTabItem : IPlatformTabItem
 
         if (pageIndex < 0)
         {
+            gtk_widget_destroy(_tabLabel);
+            gtk_widget_destroy(_contentContainer);
             throw new InvalidOperationException("Failed to create GTK tab item");
         }
 
@@ -446,9 +473,22 @@ internal class LinuxTabItem : IPlatformTabItem
 
         if (controlHandle != IntPtr.Zero)
         {
+            // Remove widget from any existing parent first (GTK widgets can only have one parent)
+            IntPtr currentParent = gtk_widget_get_parent(controlHandle);
+            if (currentParent != IntPtr.Zero)
+            {
+                g_object_ref(controlHandle);
+                gtk_container_remove(currentParent, controlHandle);
+            }
+
             // Add the control to the content container
             gtk_container_add(_contentContainer, controlHandle);
             gtk_widget_show(controlHandle);
+
+            if (currentParent != IntPtr.Zero)
+            {
+                g_object_unref(controlHandle);
+            }
         }
     }
 
@@ -525,10 +565,25 @@ internal class LinuxTabItem : IPlatformTabItem
     private static extern void gtk_container_add(IntPtr container, IntPtr widget);
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_show(IntPtr widget);
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_set_tooltip_text(IntPtr widget, string text);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgobject-2.0.so.0")]
+    private static extern IntPtr g_object_ref(IntPtr @object);
+
+    [DllImport("libgobject-2.0.so.0")]
+    private static extern void g_object_unref(IntPtr @object);
 
     #endregion
 }

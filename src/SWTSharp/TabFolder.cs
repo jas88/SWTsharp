@@ -75,10 +75,11 @@ public class TabFolder : Composite
         get
         {
             CheckWidget();
-            // Sync from platform if available
+            // Get selection from platform widget if available
             if (PlatformWidget is IPlatformTabFolder tabFolderWidget)
             {
                 _selectionIndex = tabFolderWidget.SelectionIndex;
+                return _selectionIndex;
             }
             return _selectionIndex;
         }

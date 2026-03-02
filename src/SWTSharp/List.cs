@@ -436,9 +436,9 @@ public class List : Control
     public int GetTopIndex()
     {
         CheckWidget();
-        if (PlatformWidget is IPlatformList platformList)
+        if (PlatformWidget is IPlatformList listWidget)
         {
-            return platformList.GetTopIndex();
+            return listWidget.GetTopIndex();
         }
         return 0;
     }
@@ -450,9 +450,9 @@ public class List : Control
     public void SetTopIndex(int index)
     {
         CheckWidget();
-        if (index >= 0 && index < _items.Count && PlatformWidget is IPlatformList platformList)
+        if (index >= 0 && index < _items.Count && PlatformWidget is IPlatformList listWidget)
         {
-            platformList.SetTopIndex(index);
+            listWidget.SetTopIndex(index);
         }
     }
 
@@ -771,8 +771,11 @@ public class List : Control
     private int GetCurrentStateMask()
     {
         int stateMask = 0;
-        // Platform-specific state detection for modifier keys
-        // State mask is typically populated from event data, not queried independently
+        // Query platform for current modifier key state
+        if (Platform.PlatformFactory.Instance is IPlatformModifierState modifierState)
+        {
+            stateMask = modifierState.GetModifierKeyState();
+        }
         return stateMask;
     }
 
@@ -785,7 +788,7 @@ public class List : Control
         if (e.Shift) stateMask |= SWT.SHIFT;
         if (e.Control) stateMask |= SWT.CTRL;
         if (e.Alt) stateMask |= SWT.ALT;
-        // Command key on macOS maps to CTRL in SWT compatibility mode
+        if (e.Command) stateMask |= SWT.COMMAND;
         return stateMask;
     }
 

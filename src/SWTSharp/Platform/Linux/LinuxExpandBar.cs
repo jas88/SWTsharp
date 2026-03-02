@@ -44,6 +44,11 @@ internal class LinuxExpandBar : IPlatformExpandBar
         if ((style & SWT.V_SCROLL) != 0)
         {
             var scrolled = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+            if (scrolled == IntPtr.Zero)
+            {
+                gtk_widget_destroy(_gtkBox);
+                throw new InvalidOperationException("Failed to create GTK ScrolledWindow for ExpandBar");
+            }
             gtk_scrolled_window_set_policy(scrolled, GtkPolicyType.GTK_POLICY_NEVER,
                 GtkPolicyType.GTK_POLICY_AUTOMATIC);
             gtk_container_add(scrolled, _gtkBox);
@@ -237,6 +242,16 @@ internal class LinuxExpandBar : IPlatformExpandBar
         if (_disposed) return;
         _disposed = true;
 
+        // Detach from parent container to prevent double-destroy
+        if (_handle != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_handle);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _handle);
+            }
+        }
+
         foreach (var item in _items.ToArray())
         {
             item.Dispose();
@@ -244,10 +259,7 @@ internal class LinuxExpandBar : IPlatformExpandBar
         _items.Clear();
         _children.Clear();
 
-        if (_handle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_handle);
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
     }
 
     #endregion
@@ -316,6 +328,12 @@ internal class LinuxExpandBar : IPlatformExpandBar
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_destroy(IntPtr widget);
 
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
     #endregion
 }
 
@@ -325,13 +343,16 @@ internal class LinuxExpandBar : IPlatformExpandBar
 internal class LinuxExpandItem : IPlatformExpandItem
 {
     private readonly LinuxExpandBar _expandBar;
-    private readonly IntPtr _expander;
-    private readonly IntPtr _contentBox;
+    private IntPtr _expander;
+    private IntPtr _contentBox;
     private string _text = string.Empty;
     private bool _expanded;
     private int _height = 100;
     private IPlatformWidget? _control;
     private bool _disposed;
+
+    // Keep delegate alive to prevent GC collection during GTK signal callbacks
+    private readonly ActivateCallback _activateCallback;
 
     #pragma warning disable CS0067
     public event EventHandler<int>? Click;
@@ -344,12 +365,23 @@ internal class LinuxExpandItem : IPlatformExpandItem
     public LinuxExpandItem(LinuxExpandBar expandBar, IntPtr parentBox, int style, int index)
     {
         _expandBar = expandBar;
+        _activateCallback = OnActivated;
 
         // Create GtkExpander
         _expander = gtk_expander_new("");
+        if (_expander == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK Expander for ExpandItem");
+        }
 
         // Create content container
         _contentBox = gtk_box_new(GtkOrientation.GTK_ORIENTATION_VERTICAL, 0);
+        if (_contentBox == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_expander);
+            _expander = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK Box for ExpandItem content");
+        }
 
         // Add content box to expander
         gtk_container_add(_expander, _contentBox);
@@ -358,7 +390,7 @@ internal class LinuxExpandItem : IPlatformExpandItem
         gtk_box_pack_start(parentBox, _expander, false, false, 0);
 
         // Connect activate signal for expand/collapse events
-        g_signal_connect_data(_expander, "activate", OnActivated, IntPtr.Zero, IntPtr.Zero, 0);
+        g_signal_connect_data(_expander, "activate", _activateCallback, IntPtr.Zero, IntPtr.Zero, 0);
 
         gtk_widget_show(_expander);
         gtk_widget_show(_contentBox);
@@ -426,6 +458,13 @@ internal class LinuxExpandItem : IPlatformExpandItem
             IntPtr controlHandle = ExtractGtkHandle(_control);
             if (controlHandle != IntPtr.Zero)
             {
+                // Remove widget from any existing parent first (GTK widgets can only have one parent)
+                IntPtr currentParent = gtk_widget_get_parent(controlHandle);
+                if (currentParent != IntPtr.Zero)
+                {
+                    gtk_container_remove(currentParent, controlHandle);
+                }
+
                 gtk_container_add(_contentBox, controlHandle);
                 gtk_widget_show(controlHandle);
             }
@@ -456,8 +495,20 @@ internal class LinuxExpandItem : IPlatformExpandItem
         if (_disposed) return;
         _disposed = true;
 
-        // GtkExpander and children are destroyed with parent
+        if (_expander != IntPtr.Zero)
+        {
+            var parent = gtk_widget_get_parent(_expander);
+            if (parent != IntPtr.Zero)
+            {
+                gtk_container_remove(parent, _expander);
+            }
+            _expander = IntPtr.Zero;
+        }
+        _contentBox = IntPtr.Zero;
     }
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_widget_destroy(IntPtr widget);
 
     #region GTK P/Invoke
 
@@ -487,6 +538,12 @@ internal class LinuxExpandItem : IPlatformExpandItem
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_container_add(IntPtr container, IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
 
     [DllImport("libgtk-3.so.0", CharSet = CharSet.Ansi)]
     private static extern void gtk_widget_show(IntPtr widget);

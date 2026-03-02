@@ -43,21 +43,17 @@ public class DisplayFixture : IAsyncLifetime
     {
         Console.WriteLine($"DisplayFixture: Current thread = {Thread.CurrentThread.ManagedThreadId}");
 
-        // On macOS, tests MUST run through the custom test runner (Program.Main)
-        // which initializes MainThreadDispatcher on Thread 1
-        // If MainThreadDispatcher is not initialized, we're being run by 'dotnet test'
-        // which won't work on macOS - skip all tests by throwing
+        // On macOS, tests MUST run through SWTSharp.TestAdapter which spawns
+        // SWTSharp.TestHost with MainThreadDispatcher on Thread 1.
+        // If MainThreadDispatcher is not initialized, the adapter wasn't used.
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             if (!SWTSharp.TestHost.MainThreadDispatcher.IsInitialized)
             {
                 var message =
-                    "macOS tests must run through custom test runner.\n" +
-                    "Use: dotnet run --project tests/SWTSharp.Tests\n" +
-                    "NOT: dotnet test\n" +
-                    "\n" +
-                    "The MacOSRunnerTests.MacOS_Tests_Should_Run_Through_Custom_Runner test\n" +
-                    "will automatically launch the custom runner when you use 'dotnet test'.";
+                    "macOS tests require SWTSharp.TestAdapter (spawns TestHost with Thread 1 support).\n" +
+                    "Ensure SWTSharp.TestAdapter.dll is in the test output directory\n" +
+                    "and no other VSTest adapter (e.g. xunit.runner.visualstudio) is competing.";
 
                 Console.Error.WriteLine($"ERROR: {message}");
                 throw new InvalidOperationException(message);

@@ -61,6 +61,9 @@ public partial interface IPlatform
     IPlatformDateTime CreateDateTimeWidget(IPlatformWidget? parent, int style);
     IPlatformExpandBar CreateExpandBarWidget(IPlatformWidget? parent, int style);
 
+    // Menu widgets
+    IPlatformMenu CreateMenuWidget(int style);
+
     /// <summary>
     /// Creates a platform-specific image adapter for the given Image.
     /// </summary>
@@ -120,4 +123,62 @@ public partial interface IPlatform
     [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Browser widget may use WebView2 on Windows which uses reflection and COM interop")]
 #endif
     IPlatformBrowser CreateBrowserWidget(IPlatformWidget? parent, int style);
+}
+
+// Dialog methods (Phase 2, Plan 03)
+public partial interface IPlatform
+{
+    /// <summary>
+    /// Shows a message box dialog.
+    /// </summary>
+    /// <param name="parent">Parent window handle</param>
+    /// <param name="message">Message to display</param>
+    /// <param name="title">Dialog title</param>
+    /// <param name="style">Button and icon style flags</param>
+    /// <returns>SWT button constant (SWT.OK, SWT.CANCEL, SWT.YES, SWT.NO, etc.)</returns>
+    int ShowMessageBox(IntPtr parent, string message, string title, int style);
+
+    /// <summary>
+    /// Shows a file dialog (open or save).
+    /// </summary>
+    /// <param name="parentHandle">Parent window handle</param>
+    /// <param name="title">Dialog title</param>
+    /// <param name="filterPath">Initial directory path</param>
+    /// <param name="fileName">Initial file name</param>
+    /// <param name="filterNames">Filter display names</param>
+    /// <param name="filterExtensions">Filter extension patterns</param>
+    /// <param name="style">Dialog style (SWT.OPEN, SWT.SAVE, SWT.MULTI)</param>
+    /// <param name="overwrite">Whether to prompt on overwrite (for save)</param>
+    /// <returns>FileDialogResult with selected files, or null files if cancelled</returns>
+    FileDialogResult ShowFileDialog(IntPtr parentHandle, string title, string filterPath, string fileName, string[] filterNames, string[] filterExtensions, int style, bool overwrite);
+
+    /// <summary>
+    /// Shows a directory selection dialog.
+    /// </summary>
+    /// <param name="parentHandle">Parent window handle</param>
+    /// <param name="title">Dialog title</param>
+    /// <param name="message">Dialog message</param>
+    /// <param name="filterPath">Initial directory path</param>
+    /// <returns>Selected directory path, or null if cancelled</returns>
+    string? ShowDirectoryDialog(IntPtr parentHandle, string title, string message, string filterPath);
+
+    /// <summary>
+    /// Shows a color selection dialog.
+    /// </summary>
+    /// <param name="parentHandle">Parent window handle</param>
+    /// <param name="title">Dialog title</param>
+    /// <param name="initialColor">Initial color selection</param>
+    /// <param name="customColors">Custom color palette (platform-specific)</param>
+    /// <returns>Selected color, or null if cancelled</returns>
+    Graphics.RGB? ShowColorDialog(IntPtr parentHandle, string title, Graphics.RGB initialColor, Graphics.RGB[]? customColors);
+
+    /// <summary>
+    /// Shows a font selection dialog.
+    /// </summary>
+    /// <param name="parentHandle">Parent window handle</param>
+    /// <param name="title">Dialog title</param>
+    /// <param name="initialFont">Initial font selection</param>
+    /// <param name="initialColor">Initial font color</param>
+    /// <returns>FontDialogResult with selected font and color, or null FontData if cancelled</returns>
+    FontDialogResult ShowFontDialog(IntPtr parentHandle, string title, Graphics.FontData? initialFont, Graphics.RGB? initialColor);
 }

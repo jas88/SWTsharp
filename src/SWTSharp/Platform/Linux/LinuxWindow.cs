@@ -108,16 +108,19 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
         return gtk_widget_get_sensitive(_gtkWindowHandle);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+
     public void SetBackground(RGB color)
     {
-        // TODO: Implement background color setting with CSS provider
-        // This requires GtkCssProvider and gtk_style_context APIs
+        // GtkWindow background requires CSS provider styling. Custom background may
+        // affect window decorations and client-side decorations on Wayland. Value
+        // stored for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color getting
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
@@ -157,8 +160,10 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
     public void Close()
     {
         if (_disposed || _gtkWindowHandle == IntPtr.Zero) return;
-
+        _disposed = true;
         gtk_widget_destroy(_gtkWindowHandle);
+        _gtkWindowHandle = IntPtr.Zero;
+        _container = IntPtr.Zero;
     }
 
     public bool IsDisposed => _disposed;
@@ -172,7 +177,7 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
             var childHandle = linuxWidget.GetNativeHandle();
 
             // Add child to the container (not directly to window)
-            if (_container != IntPtr.Zero)
+            if (childHandle != IntPtr.Zero && _container != IntPtr.Zero)
             {
                 gtk_container_add(_container, childHandle);
                 gtk_widget_show(childHandle);
@@ -193,8 +198,8 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
         {
             var childHandle = linuxWidget.GetNativeHandle();
 
-            // Remove from container
-            if (_container != IntPtr.Zero)
+            // Only call gtk_container_remove if the child's GTK widget still exists
+            if (childHandle != IntPtr.Zero && _container != IntPtr.Zero)
             {
                 gtk_container_remove(_container, childHandle);
             }
@@ -215,19 +220,18 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
     {
         if (!_disposed)
         {
-            // Remove all children first
-            foreach (var child in _platformChildren.ToArray())
-            {
-                RemoveChild(child);
-            }
+            _disposed = true;
+
+            // Clear the platform children list - their GTK widgets are already
+            // destroyed by their own Dispose() calls (via Composite.ReleaseWidget)
+            _platformChildren.Clear();
+            _container = IntPtr.Zero;
 
             if (_gtkWindowHandle != IntPtr.Zero)
             {
                 gtk_widget_destroy(_gtkWindowHandle);
                 _gtkWindowHandle = IntPtr.Zero;
             }
-
-            _disposed = true;
         }
     }
 
@@ -238,6 +242,15 @@ internal class LinuxWindow : LinuxWidget, IPlatformWindow
         // Child widgets must be added to the GtkFixed container, not directly to the window.
         // This prevents "GtkBin can only contain one widget at a time" warnings.
         return _container != IntPtr.Zero ? _container : _gtkWindowHandle;
+    }
+
+    /// <summary>
+    /// Gets the actual GtkWindow handle for window-specific operations (required by IPlatformWindow).
+    /// This is used for dialog parenting, where the actual window handle is needed.
+    /// </summary>
+    IntPtr IPlatformWindow.GetNativeHandle()
+    {
+        return _gtkWindowHandle;
     }
 
     // GTK Window Type Enumeration

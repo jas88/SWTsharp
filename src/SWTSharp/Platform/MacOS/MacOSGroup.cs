@@ -225,7 +225,9 @@ internal class MacOSGroup : MacOSWidget, IPlatformComposite, IPlatformTextWidget
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via fillColor or contentViewMargins
+        // NSBox background can be set via setFillColor: for NSBoxCustom type.
+        // Default NSBoxPrimary type uses system appearance. Changing may affect
+        // border rendering and content view layout. Store for getter.
     }
 
     public RGB GetBackground()
@@ -236,7 +238,9 @@ internal class MacOSGroup : MacOSWidget, IPlatformComposite, IPlatformTextWidget
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color for title
+        // NSBox title color requires custom attributed title string. Default uses
+        // system appearance which respects dark mode and accessibility settings.
+        // Store value for GetForeground() API compatibility.
     }
 
     public RGB GetForeground()

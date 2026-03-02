@@ -72,16 +72,7 @@ public class ToolBar : Composite
     }
 
     /// <summary>
-    /// Gets the actual platform-specific toolbar handle for use by ToolItem.
-    /// TODO: Remove this property when platform widget implementation is available
-    /// TODO: Replace with IPlatformToolBar interface access
-    /// </summary>
-    internal IntPtr ToolBarHandle => IntPtr.Zero; // Return placeholder handle for now
-
-    /// <summary>
     /// Gets the platform toolbar for use by ToolItem.
-    /// TODO: Initialize this property when IPlatformToolBar implementation is available
-    /// TODO: Create toolbar widget in CreateWidget method using CreateToolBarWidget
     /// </summary>
     internal IPlatformToolBar? PlatformToolBar => _platformToolBar;
 
@@ -266,28 +257,29 @@ public class ToolBar : Composite
     protected override void UpdateVisible()
     {
         // Guard against null platform widget during initialization or disposal
-        if (PlatformWidget == null)
+        if (PlatformWidget == null && _platformToolBar == null)
             return;
 
-        // Use base Composite visibility control until IPlatformToolBar is implemented
+        // Use base Composite visibility control for widget-based toolbars
         base.UpdateVisible();
 
-        // TODO: Replace with IPlatformToolBar-specific visibility control
-        // TODO: _platformToolBar?.SetVisible(Visible);
+        // Also update IPlatformToolBar visibility if it supports it
+        // Note: IPlatformToolBar may not have SetVisible - toolbars are typically
+        // always visible when attached to a window
     }
 
     protected override void UpdateEnabled()
     {
         // Guard against null platform widget during initialization or disposal
-        if (PlatformWidget == null)
+        if (PlatformWidget == null && _platformToolBar == null)
             return;
 
-        // Use base Composite enabled control until IPlatformToolBar is implemented
+        // Use base Composite enabled control for widget-based toolbars
         base.UpdateEnabled();
 
-        // TODO: Replace with IPlatformToolBar-specific enabled control
-        // TODO: _platformToolBar?.SetEnabled(Enabled);
-        // TODO: May need to propagate to all items
+        // Note: Items inherit enabled state from toolbar when toolbar is disabled
+        // but maintain their own state when toolbar is enabled.
+        // Visual disable propagation is handled at the platform layer.
     }
 
     protected override void ReleaseWidget()

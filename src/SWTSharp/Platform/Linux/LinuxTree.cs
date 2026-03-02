@@ -13,6 +13,7 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
     private const string GObjectLib = "libgobject-2.0.so.0";
 
     private IntPtr _treeView;
+    private IntPtr _scrolledWindow;
     private IntPtr _treeStore;
     private readonly int _style;
     private readonly List<IPlatformWidget> _children = new();
@@ -81,20 +82,28 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
         int selectionMode = _multiSelect ? GTK_SELECTION_MULTIPLE : GTK_SELECTION_SINGLE;
         gtk_tree_selection_set_mode(selection, selectionMode);
 
-        // Create scrolled window
-        IntPtr scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
-        gtk_scrolled_window_set_policy(scrolledWindow, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-        gtk_container_add(scrolledWindow, _treeView);
+        // Create scrolled window and store as field for proper detach/destroy
+        _scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        if (_scrolledWindow == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_treeView);
+            _treeView = IntPtr.Zero;
+            g_object_unref(_treeStore);
+            _treeStore = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK ScrolledWindow for Tree");
+        }
+        gtk_scrolled_window_set_policy(_scrolledWindow, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+        gtk_container_add(_scrolledWindow, _treeView);
 
         // Add to parent
         if (parentHandle != IntPtr.Zero)
         {
-            gtk_container_add(parentHandle, scrolledWindow);
+            gtk_container_add(parentHandle, _scrolledWindow);
         }
 
         // Show widgets
         gtk_widget_show(_treeView);
-        gtk_widget_show(scrolledWindow);
+        gtk_widget_show(_scrolledWindow);
 
         if (enableLogging)
             Console.WriteLine($"[LinuxTree] Tree created successfully. TreeView: 0x{_treeView:X}");
@@ -102,7 +111,8 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
 
     public override IntPtr GetNativeHandle()
     {
-        return _treeView;
+        // Return the scrolled window since that is what gets added to the parent container
+        return _scrolledWindow;
     }
 
     public void AddChild(IPlatformWidget child)
@@ -168,7 +178,8 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via CSS provider
+        // GtkTreeView background via CSS may affect expander arrows, selection
+        // highlighting, and drag-drop visual feedback. Store for getter.
     }
 
     public RGB GetBackground()
@@ -179,7 +190,8 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color via CSS provider
+        // GtkTreeView text color via CSS affects all rows. Custom colors may
+        // conflict with selected row highlighting. Store for getter.
     }
 
     public RGB GetForeground()
@@ -192,17 +204,18 @@ internal class LinuxTree : LinuxWidget, IPlatformComposite
         if (_disposed) return;
         _disposed = true;
 
-        if (_treeView != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_treeView);
-            _treeView = IntPtr.Zero;
-        }
+        // Detach the scrolled window from parent; do NOT call gtk_widget_destroy.
+        // The parent window's destruction will recursively clean up children.
+        DetachFromParent();
 
         if (_treeStore != IntPtr.Zero)
         {
             g_object_unref(_treeStore);
             _treeStore = IntPtr.Zero;
         }
+
+        _treeView = IntPtr.Zero;
+        _scrolledWindow = IntPtr.Zero;
     }
 
     // GTK3 P/Invoke declarations

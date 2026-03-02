@@ -1,3 +1,4 @@
+using System.Linq;
 using SWTSharp.Platform;
 using SWTSharp.Events;
 
@@ -48,6 +49,12 @@ public class Button : Control
         get
         {
             CheckWidget();
+            // Use platform widget if available
+            if (PlatformWidget is IPlatformSelectionWidget selectionWidget)
+            {
+                return selectionWidget.GetSelection();
+            }
+            // Fallback to internal field
             return _selection;
         }
         set
@@ -56,7 +63,11 @@ public class Button : Control
             if (_selection != value)
             {
                 _selection = value;
-                // TODO: Implement selection updates through platform widget interface
+                // Delegate to platform widget if available
+                if (PlatformWidget is IPlatformSelectionWidget selectionWidget)
+                {
+                    selectionWidget.SetSelection(value);
+                }
             }
         }
     }
@@ -135,11 +146,32 @@ public class Button : Control
         if ((Style & SWT.CHECK) != 0 || (Style & SWT.TOGGLE) != 0)
         {
             _selection = !_selection;
+            if (PlatformWidget is IPlatformSelectionWidget selectionWidget)
+            {
+                selectionWidget.SetSelection(_selection);
+            }
         }
         else if ((Style & SWT.RADIO) != 0)
         {
+            // Deselect other radio buttons in the same parent group
+            if (Parent is Composite composite)
+            {
+                foreach (var radioButton in composite.Children
+                    .OfType<Button>()
+                    .Where(b => b != this && (b.Style & SWT.RADIO) != 0))
+                {
+                    radioButton._selection = false;
+                    if (radioButton.PlatformWidget is IPlatformSelectionWidget siblingSelection)
+                    {
+                        siblingSelection.SetSelection(false);
+                    }
+                }
+            }
             _selection = true;
-            // TODO: Unselect other radio buttons in the same group
+            if (PlatformWidget is IPlatformSelectionWidget selectionWidget)
+            {
+                selectionWidget.SetSelection(true);
+            }
         }
 
         // Create SWT Selection event (consistent with other widgets like Combo, List, etc.)
@@ -224,22 +256,25 @@ public class Button : Control
     /// </summary>
     private int GetCurrentStateMask()
     {
-        int stateMask = 0;
-        // TODO: Implement platform-specific state detection
-        // For now, return 0 as placeholder
-        return stateMask;
+        // Query platform for current modifier key state
+        if (PlatformWidget is IPlatformModifierState modifierState)
+        {
+            return modifierState.GetModifierKeyState();
+        }
+        // Fallback: return 0 when platform doesn't support modifier state query
+        return 0;
     }
 
     /// <summary>
     /// Converts platform key event arguments to SWT state mask.
     /// </summary>
-    private int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
+    private static int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
     {
         int stateMask = 0;
         if (e.Shift) stateMask |= SWT.SHIFT;
         if (e.Control) stateMask |= SWT.CTRL;
         if (e.Alt) stateMask |= SWT.ALT;
-        // TODO: Add Command key detection on macOS
+        if (e.Command) stateMask |= SWT.COMMAND;
         return stateMask;
     }
 

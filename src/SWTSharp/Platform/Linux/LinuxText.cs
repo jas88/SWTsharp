@@ -51,7 +51,7 @@ internal class LinuxText : IPlatformTextInput
     private void CreateSingleLineText(IntPtr parentHandle, int style)
     {
         // Create GtkEntry
-        _widget = gtk_entry_new();
+        _widget = GtkHelpers.ThrowOnNull(gtk_entry_new(), "GtkEntry");
 
         // Handle password
         if ((style & SWT.PASSWORD) != 0)
@@ -86,7 +86,7 @@ internal class LinuxText : IPlatformTextInput
     private void CreateMultiLineText(IntPtr parentHandle, int style)
     {
         // Create GtkTextView
-        _widget = gtk_text_view_new();
+        _widget = GtkHelpers.ThrowOnNull(gtk_text_view_new(), "GtkTextView");
 
         // Get the text buffer
         _textBuffer = gtk_text_view_get_buffer(_widget);
@@ -104,7 +104,13 @@ internal class LinuxText : IPlatformTextInput
         }
 
         // Create scrolled window for multi-line text
-        _scrolledWindow = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        IntPtr scrolled = gtk_scrolled_window_new(IntPtr.Zero, IntPtr.Zero);
+        if (scrolled == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_widget);
+            _widget = IntPtr.Zero;
+        }
+        _scrolledWindow = GtkHelpers.ThrowOnNull(scrolled, "GtkScrolledWindow for TextView");
 
         // Set scroll policies
         int hpolicy = GTK_POLICY_AUTOMATIC;
@@ -447,19 +453,23 @@ internal class LinuxText : IPlatformTextInput
     {
         if (!_disposed)
         {
-            if (_scrolledWindow != IntPtr.Zero)
+            _disposed = true;
+
+            // Detach outermost widget from parent container; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
+            IntPtr outermost = _scrolledWindow != IntPtr.Zero ? _scrolledWindow : _widget;
+            if (outermost != IntPtr.Zero)
             {
-                gtk_widget_destroy(_scrolledWindow);
-                _scrolledWindow = IntPtr.Zero;
-            }
-            else if (_widget != IntPtr.Zero)
-            {
-                gtk_widget_destroy(_widget);
+                var parent = gtk_widget_get_parent(outermost);
+                if (parent != IntPtr.Zero)
+                {
+                    gtk_container_remove(parent, outermost);
+                }
             }
 
+            _scrolledWindow = IntPtr.Zero;
             _widget = IntPtr.Zero;
             _textBuffer = IntPtr.Zero;
-            _disposed = true;
         }
     }
 
@@ -606,6 +616,12 @@ internal class LinuxText : IPlatformTextInput
 
     [DllImport("libgtk-3.so.0")]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [DllImport("libglib-2.0.so.0")]
     private static extern void g_free(IntPtr mem);

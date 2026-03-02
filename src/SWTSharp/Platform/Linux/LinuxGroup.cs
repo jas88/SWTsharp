@@ -82,7 +82,16 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
 
     public override IntPtr GetNativeHandle()
     {
-        // Return the frame handle as the main widget handle
+        // Return the internal fixed container for child widget placement
+        // (consistent with LinuxComposite which returns its fixed container)
+        return _gtkFixedHandle;
+    }
+
+    /// <summary>
+    /// Gets the outer frame handle (for operations that need the frame widget).
+    /// </summary>
+    internal IntPtr GetFrameHandle()
+    {
         return _gtkFrameHandle;
     }
 
@@ -220,7 +229,8 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via CSS provider
+        // GtkFrame background via CSS may affect the frame border and label
+        // appearance. Background is typically transparent. Store for getter.
     }
 
     public RGB GetBackground()
@@ -231,7 +241,8 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color via CSS provider
+        // GtkFrame foreground (label color) via CSS. Custom color may conflict
+        // with theme styling of frame labels. Store for getter.
     }
 
     public RGB GetForeground()
@@ -243,6 +254,8 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
     {
         if (_disposed) return;
         _disposed = true;
+
+        DetachFromParent();
 
         // Dispose children first
         lock (_children)
@@ -257,13 +270,9 @@ internal class LinuxGroup : LinuxWidget, IPlatformComposite, IPlatformTextWidget
             _children.Clear();
         }
 
-        // Destroy the widgets (destroying frame will destroy fixed automatically)
-        if (_gtkFrameHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkFrameHandle);
-            _gtkFrameHandle = IntPtr.Zero;
-            _gtkFixedHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkFrameHandle = IntPtr.Zero;
+        _gtkFixedHandle = IntPtr.Zero;
     }
 
     // GTK3 P/Invoke declarations

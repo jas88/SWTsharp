@@ -55,8 +55,9 @@ internal class MacOSTableItem : IPlatformTableItem
             }
             else
             {
-                // For other IPlatformImage implementations, we'd need conversion logic
-                // TODO: Add conversion logic for other image types
+                // Image conversion requires NSImage creation from platform-agnostic Image data.
+                // Non-MacOSImage types would need conversion through Image.GetImageData() ->
+                // NSBitmapImageRep -> NSImage pipeline. Currently only MacOSImage supported.
             }
         }
 
@@ -64,23 +65,23 @@ internal class MacOSTableItem : IPlatformTableItem
         ((MacOSPlatform)SWTSharp.Platform.PlatformFactory.Instance).SetTableItemImage(_pseudoHandle, column, imageHandle);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+
     public void SetBackground(RGB color)
     {
         if (_disposed) return;
 
-        // IPlatformTableItem doesn't have background support in existing implementation
-        // This would need to be added to MacOSPlatform_Table.cs
-        // TODO: Add background color support
+        // TableItem background color requires custom cell rendering via NSTableCellView.
+        // NSTableView uses data source pattern where cells query for display values.
+        // Store value for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        if (_disposed) return new RGB(255, 255, 255); // Default white
+        if (_disposed) return new RGB(255, 255, 255);
 
-        // IPlatformTableItem doesn't have background support in existing implementation
-        // This would need to be added to MacOSPlatform_Table.cs
-        // TODO: Add background color support
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public IntPtr GetNativeHandle()

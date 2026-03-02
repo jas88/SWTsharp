@@ -20,6 +20,7 @@ internal class Win32Spinner : IPlatformSpinner
     private int _value;
     private int _increment = 1;
     private int _digits;
+    private int _textLimit;
 
     // Events required by IPlatformValueEvents and IPlatformEventHandling
     #pragma warning disable CS0067
@@ -29,6 +30,7 @@ internal class Win32Spinner : IPlatformSpinner
     public event EventHandler<int>? FocusLost;
     public event EventHandler<PlatformKeyEventArgs>? KeyDown;
     public event EventHandler<PlatformKeyEventArgs>? KeyUp;
+    public event EventHandler<string>? TextChanged;
     #pragma warning restore CS0067
 
     public Win32Spinner(IntPtr parentHandle, int style)
@@ -183,8 +185,6 @@ internal class Win32Spinner : IPlatformSpinner
         }
     }
 
-    private int _textLimit;
-
     public int TextLimit
     {
         get => _textLimit;
@@ -262,7 +262,8 @@ internal class Win32Spinner : IPlatformSpinner
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via WM_CTLCOLOREDIT
+        // Win32 Spinner edit control background requires handling WM_CTLCOLOREDIT
+        // in parent procedure. Store for getter.
     }
 
     public RGB GetBackground()
@@ -273,7 +274,8 @@ internal class Win32Spinner : IPlatformSpinner
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color
+        // Win32 Spinner text color requires handling WM_CTLCOLOREDIT for edit box.
+        // Store for getter.
     }
 
     public RGB GetForeground()

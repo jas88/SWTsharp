@@ -93,6 +93,12 @@ internal partial class MacOSPlatform : IPlatformGraphics
     [DllImport(CoreGraphicsFramework)]
     private static extern void CGImageRelease(IntPtr image);
 
+    [DllImport(CoreGraphicsFramework)]
+    private static extern nuint CGImageGetWidth(IntPtr image);
+
+    [DllImport(CoreGraphicsFramework)]
+    private static extern nuint CGImageGetHeight(IntPtr image);
+
     // Graphics context state tracking
     private sealed class GraphicsState
     {
@@ -184,10 +190,23 @@ internal partial class MacOSPlatform : IPlatformGraphics
         CGColorSpaceRelease(colorSpace);
 
         // Create CGImage from bitmap context
-        IntPtr image = CGBitmapContextCreateImage(context);
+        IntPtr cgImage = CGBitmapContextCreateImage(context);
         CGContextRelease(context);
 
-        return image;
+        if (cgImage == IntPtr.Zero)
+            return IntPtr.Zero;
+
+        // Wrap CGImage in NSImage so all image handles are consistently NSImage
+        // This ensures DestroyImage (which sends ObjC release) works correctly
+        IntPtr nsImageClass = objc_getClass("NSImage");
+        IntPtr selAlloc = sel_registerName("alloc");
+        IntPtr selInitWithCGImage = sel_registerName("initWithCGImage:size:");
+        IntPtr nsImage = objc_msgSend(nsImageClass, selAlloc);
+        // NSZeroSize (0,0) means use CGImage's intrinsic size
+        nsImage = objc_msgSend_IntPtr_double_double(nsImage, selInitWithCGImage, cgImage, 0.0, 0.0);
+        CGImageRelease(cgImage);
+
+        return nsImage;
     }
 
     public (IntPtr Handle, int Width, int Height) LoadImage(string filename)
@@ -219,7 +238,8 @@ internal partial class MacOSPlatform : IPlatformGraphics
     {
         if (handle != IntPtr.Zero)
         {
-            CGImageRelease(handle);
+            IntPtr selRelease = sel_registerName("release");
+            objc_msgSend_void(handle, selRelease);
         }
     }
 
@@ -389,8 +409,11 @@ internal partial class MacOSPlatform : IPlatformGraphics
         }
     }
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
-    private static extern double objc_msgSend_fpret(IntPtr receiver, IntPtr selector);
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_IntPtr_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1, IntPtr arg2, IntPtr arg3);
+
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static extern IntPtr objc_msgSend_IntPtr_double_double(IntPtr receiver, IntPtr selector, IntPtr arg1, double arg2, double arg3);
 
     // Architecture-specific struct return handling:
     // - ARM64: objc_msgSend_stret doesn't exist, use objc_msgSend with direct return
@@ -415,7 +438,7 @@ internal partial class MacOSPlatform : IPlatformGraphics
 
     private double GetDoubleValue(IntPtr obj, IntPtr selector)
     {
-        return objc_msgSend_fpret(obj, selector);
+        return objc_msgSend_double(obj, selector);
     }
 
     // Drawing operations
@@ -637,9 +660,15 @@ internal partial class MacOSPlatform : IPlatformGraphics
         if (imageHandle == IntPtr.Zero)
             return;
 
-        // Get image size first (simplified)
-        var rect = new CGRect(x, y, 100, 100); // TODO: Get actual image size
-        CGContextDrawImage(gcHandle, rect, imageHandle);
+        // Convert NSImage to CGImage for Core Graphics drawing
+        IntPtr selCGImageForProposedRect = sel_registerName("CGImageForProposedRect:context:hints:");
+        IntPtr cgImage = objc_msgSend_IntPtr_IntPtr_IntPtr(imageHandle, selCGImageForProposedRect, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        if (cgImage == IntPtr.Zero) return;
+
+        var width = CGImageGetWidth(cgImage);
+        var height = CGImageGetHeight(cgImage);
+        var rect = new CGRect(x, y, width, height);
+        CGContextDrawImage(gcHandle, rect, cgImage);
     }
 
     public void DrawImageScaled(IntPtr gcHandle, IntPtr imageHandle,
@@ -649,17 +678,25 @@ internal partial class MacOSPlatform : IPlatformGraphics
         if (imageHandle == IntPtr.Zero)
             return;
 
+        // Convert NSImage to CGImage for Core Graphics drawing
+        IntPtr selCGImageForProposedRect = sel_registerName("CGImageForProposedRect:context:hints:");
+        IntPtr cgImage = objc_msgSend_IntPtr_IntPtr_IntPtr(imageHandle, selCGImageForProposedRect, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        if (cgImage == IntPtr.Zero) return;
+
         // This is simplified - proper implementation would handle source rectangle
         var destRect = new CGRect(destX, destY, destWidth, destHeight);
-        CGContextDrawImage(gcHandle, destRect, imageHandle);
+        CGContextDrawImage(gcHandle, destRect, cgImage);
     }
 
     public void CopyArea(IntPtr gcHandle, int srcX, int srcY, int width, int height, int destX, int destY)
     {
-        // This requires creating a temporary image from the source area
-        // Simplified implementation
+        // Copy area requires CGBitmapContextCreateImage to capture source region,
+        // then CGContextDrawImage to render at destination. Current implementation
+        // is a no-op as it requires knowing the context's pixel format and dimensions.
         CGContextSaveGState(gcHandle);
-        // TODO: Implement actual copy using CGBitmapContextCreateImage
+        // CopyArea implementation requires CGBitmapContextCreateImage which needs
+        // bitmap context. For window/view contexts, would need to render to offscreen
+        // bitmap first. This is a complex operation deferred for future enhancement.
         CGContextRestoreGState(gcHandle);
     }
 }

@@ -134,8 +134,10 @@ public class Combo : Control
             {
                 Text = _text.SliceToString(0, _textLimit);
             }
-            // Text limit is enforced in the Text property setter; platform combos
-            // may have their own text limit APIs but the managed layer handles truncation
+            if (PlatformWidget is IPlatformCombo comboWidget)
+            {
+                comboWidget.SetTextLimit(_textLimit);
+            }
         }
     }
 
@@ -157,8 +159,10 @@ public class Combo : Control
                 throw new ArgumentException("Visible item count must be at least 1");
             }
             _visibleItemCount = value;
-            // Visible item count is a platform-specific hint for dropdown height
-            // Native combo implementations may not support this; value is stored for queries
+            if (PlatformWidget is IPlatformCombo comboWidget)
+            {
+                comboWidget.SetVisibleItemCount(value);
+            }
         }
     }
 
@@ -364,11 +368,10 @@ public class Combo : Control
     public void ClearSelection()
     {
         CheckWidget();
-        // ClearSelection clears the text field highlight (caret selection), not item selection.
-        // Platform combo boxes don't expose text selection clearing as a separate API.
-        // This is a no-op on most platforms where text selection is managed by the native control
-        // and automatically clears on focus changes or user interaction.
-        // Note: Do NOT re-set Text property here as that can trigger item selection events.
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.SetTextSelection(0, 0);
+        }
     }
 
     /// <summary>
@@ -383,8 +386,10 @@ public class Combo : Control
         {
             throw new ArgumentOutOfRangeException("Invalid selection range");
         }
-        // Text selection is a native text field feature; platform implementation
-        // handles selection visually. Managed layer validates range only.
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.SetTextSelection(start, end);
+        }
     }
 
     /// <summary>
@@ -394,9 +399,10 @@ public class Combo : Control
     public (int Start, int End) GetSelection()
     {
         CheckWidget();
-        // Text selection range is a native text field feature
-        // Return (0, 0) as default when no selection; platform implementations
-        // can extend IPlatformCombo to support text selection queries
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            return comboWidget.GetTextSelection();
+        }
         return (0, 0);
     }
 
@@ -422,8 +428,10 @@ public class Combo : Control
     public void Copy()
     {
         CheckWidget();
-        // Clipboard copy is handled natively by platform text field
-        // Standard keyboard shortcuts (Ctrl+C/Cmd+C) work automatically
+        if (PlatformWidget is IPlatformCombo comboWidget)
+        {
+            comboWidget.Copy();
+        }
     }
 
     /// <summary>
@@ -432,10 +440,9 @@ public class Combo : Control
     public void Cut()
     {
         CheckWidget();
-        if (!_readOnly)
+        if (!_readOnly && PlatformWidget is IPlatformCombo comboWidget)
         {
-            // Clipboard cut is handled natively by platform text field
-            // Standard keyboard shortcuts (Ctrl+X/Cmd+X) work automatically
+            comboWidget.Cut();
         }
     }
 
@@ -445,10 +452,9 @@ public class Combo : Control
     public void Paste()
     {
         CheckWidget();
-        if (!_readOnly)
+        if (!_readOnly && PlatformWidget is IPlatformCombo comboWidget)
         {
-            // Clipboard paste is handled natively by platform text field
-            // Standard keyboard shortcuts (Ctrl+V/Cmd+V) work automatically
+            comboWidget.Paste();
         }
     }
 
@@ -614,15 +620,7 @@ public class Combo : Control
         NotifyListeners(SWT.KeyDown, keyEvent);
 
         // Handle keyboard navigation for dropdown
-        if (!_readOnly)
-        {
-            // Handle navigation keys for editable combo
-            if (e.KeyCode == SWT.ARROW_DOWN && _dropDown)
-            {
-                // Dropdown opening is handled by native platform widget
-                // Arrow down in editable combo navigates items naturally
-            }
-        }
+        // Arrow key navigation is handled by the platform combo widget
     }
 
     /// <summary>
@@ -705,7 +703,7 @@ public class Combo : Control
         if (e.Shift) stateMask |= SWT.SHIFT;
         if (e.Control) stateMask |= SWT.CTRL;
         if (e.Alt) stateMask |= SWT.ALT;
-        // Command key on macOS maps to CTRL in SWT compatibility mode
+        if (e.Command) stateMask |= SWT.COMMAND;
         return stateMask;
     }
 

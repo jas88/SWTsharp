@@ -54,6 +54,11 @@ public class Label : Control
         get
         {
             CheckWidget();
+            // Use platform widget if available
+            if (!_isSeparator && PlatformWidget is IPlatformAlignmentWidget alignmentWidget)
+            {
+                return alignmentWidget.GetAlignment();
+            }
             return _alignment;
         }
         set
@@ -66,7 +71,11 @@ public class Label : Control
                 (value == SWT.LEFT || value == SWT.CENTER || value == SWT.RIGHT))
             {
                 _alignment = value;
-                // TODO: Implement alignment updates through platform widget interface
+                // Delegate to platform widget if available
+                if (PlatformWidget is IPlatformAlignmentWidget alignmentWidget)
+                {
+                    alignmentWidget.SetAlignment(value);
+                }
             }
         }
     }

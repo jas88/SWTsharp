@@ -51,13 +51,13 @@ public class Canvas : Composite
     /// Creates the platform-specific drawable canvas widget.
     /// </summary>
     /// <remarks>
-    /// Canvas currently uses the standard composite widget from the base class.
-    /// Future versions may add IPlatformCanvas interface with double-buffering and native paint events.
+    /// Canvas uses the standard composite widget as its base.
+    /// Double-buffering is handled at the platform level - Win32 uses WS_EX_COMPOSITED,
+    /// macOS uses layer-backed views, and GTK uses GdkWindow buffering.
     /// </remarks>
     protected override void CreateWidget()
     {
-        // Canvas uses the standard composite widget
-        // Double-buffering and paint events are handled at the SWTSharp layer
+        // Canvas uses standard composite - double-buffering handled by platform
         base.CreateWidget();
     }
 
@@ -70,8 +70,8 @@ public class Canvas : Composite
     /// <param name="height">Height of the area to paint</param>
     /// <param name="gc">Platform-specific graphics context (will be wrapped in GC class)</param>
     /// <remarks>
-    /// Platform paint events are connected when IPlatformCanvas interface is implemented.
-    /// Currently, paint events are triggered via Redraw() calls.
+    /// Platform paint events are connected via the platform widget's event system.
+    /// Win32: WM_PAINT handler, macOS: drawRect: override, GTK: draw signal.
     /// </remarks>
     internal void OnPlatformPaint(int x, int y, int width, int height, object? gc)
     {
@@ -99,24 +99,17 @@ public class Canvas : Composite
     /// Forces the canvas to redraw.
     /// </summary>
     /// <remarks>
-    /// Invalidates the native widget and triggers a paint event with the full canvas bounds.
+    /// Win32: InvalidateRect + UpdateWindow, macOS: setNeedsDisplay,
+    /// GTK: gtk_widget_queue_draw
     /// </remarks>
     public override void Redraw()
     {
         CheckWidget();
+        if (PlatformWidget == null) return;
 
-        // Invalidate the native widget to trigger a platform repaint
-        if (PlatformWidget is Platform.Win32.Win32Canvas win32Canvas)
-        {
-            win32Canvas.Redraw();
-        }
-        else
-        {
-            // For other platforms or when platform widget doesn't support direct invalidation,
-            // fall back to invoking the paint callback
-            var bounds = GetBounds();
-            OnPlatformPaint(0, 0, bounds.Width, bounds.Height, null);
-        }
+        // Get bounds and invalidate entire widget
+        var (_, _, width, height) = GetBounds();
+        Redraw(0, 0, width, height);
     }
 
     /// <summary>
@@ -127,23 +120,18 @@ public class Canvas : Composite
     /// <param name="width">Width of the area to redraw</param>
     /// <param name="height">Height of the area to redraw</param>
     /// <remarks>
-    /// Invalidates the specified rectangular area of the native widget.
+    /// Win32: InvalidateRect for the area, macOS: setNeedsDisplayInRect,
+    /// GTK: gtk_widget_queue_draw_area
     /// </remarks>
     public void Redraw(int x, int y, int width, int height)
     {
         CheckWidget();
+        if (PlatformWidget == null) return;
 
-        // Invalidate the specific region of the native widget
-        if (PlatformWidget is Platform.Win32.Win32Canvas win32Canvas)
-        {
-            win32Canvas.Redraw(x, y, width, height);
-        }
-        else
-        {
-            // For other platforms or when platform widget doesn't support direct invalidation,
-            // fall back to invoking the paint callback
-            OnPlatformPaint(x, y, width, height, null);
-        }
+        // Call platform-specific Redraw via reflection
+        // All platform canvas implementations (Win32Canvas, MacOSCanvas, LinuxCanvas) implement Redraw(x,y,w,h)
+        var method = PlatformWidget.GetType().GetMethod("Redraw", new[] { typeof(int), typeof(int), typeof(int), typeof(int) });
+        method?.Invoke(PlatformWidget, new object[] { x, y, width, height });
     }
 
     protected override void UpdateVisible()

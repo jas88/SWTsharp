@@ -227,11 +227,10 @@ internal class LinuxScrollBar : LinuxWidget, IPlatformScrollBar
         if (_disposed) return;
         _disposed = true;
 
-        if (_scrollBar != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_scrollBar);
-            _scrollBar = IntPtr.Zero;
-        }
+        DetachFromParent();
+
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _scrollBar = IntPtr.Zero;
     }
 
     // GTK orientation constants

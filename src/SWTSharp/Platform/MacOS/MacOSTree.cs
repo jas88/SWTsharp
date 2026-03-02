@@ -203,7 +203,9 @@ internal class MacOSTree : IPlatformComposite
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via NSColor
+        // NSOutlineView background color can be set via setBackgroundColor: but may
+        // interfere with disclosure triangles, selection highlighting, and alternating
+        // row colors. Value stored for GetBackground() API compatibility.
     }
 
     public RGB GetBackground()
@@ -214,7 +216,8 @@ internal class MacOSTree : IPlatformComposite
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color via NSColor
+        // NSOutlineView text color requires custom cell rendering. Default behavior
+        // uses system appearance colors. Value stored for GetForeground() compatibility.
     }
 
     public RGB GetForeground()

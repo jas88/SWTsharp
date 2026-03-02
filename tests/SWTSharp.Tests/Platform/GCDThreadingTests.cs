@@ -96,11 +96,11 @@ public class GCDThreadingTests
             return;
         }
 
-        // Skip if running under custom test runner - Thread 1 is already running MainThreadDispatcher
+        // Skip if running under TestHost - Thread 1 is already running MainThreadDispatcher
         // which uses BlockingCollection, not CFRunLoop, so GCD dispatch won't work
         if (MainThreadDispatcher.IsInitialized)
         {
-            return; // Skip test - incompatible with custom runner
+            return; // Skip test - incompatible with TestHost dispatcher
         }
 
         // This test documents the FULL requirement:

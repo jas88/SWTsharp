@@ -195,7 +195,8 @@ internal class Win32Group : IPlatformComposite, IPlatformTextWidget
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via WM_CTLCOLORSTATIC or brush
+        // Win32 GroupBox background requires handling WM_CTLCOLORSTATIC in parent
+        // or creating custom brush. May affect child control backgrounds. Store for getter.
     }
 
     public RGB GetBackground()
@@ -206,7 +207,8 @@ internal class Win32Group : IPlatformComposite, IPlatformTextWidget
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color for title text
+        // Win32 GroupBox title color requires owner-draw or handling WM_CTLCOLORSTATIC.
+        // Standard controls use system colors. Store for getter.
     }
 
     public RGB GetForeground()

@@ -944,4 +944,16 @@ internal partial class Win32Platform : IPlatform
     // - Progress bar messages: PBM_SETRANGE, PBM_SETPOS, PBM_DELTAPOS, etc.
     // - Progress bar states: PBST_NORMAL, PBST_ERROR, PBST_PAUSED
     // - Methods: CreateProgressBar, SetProgressBarRange, SetProgressBarSelection, SetProgressBarState
+
+    /// <summary>
+    /// Creates a menu widget.
+    /// </summary>
+    /// <param name="style">Menu style (SWT.BAR, SWT.DROP_DOWN, SWT.POP_UP)</param>
+    /// <returns>Platform menu implementation</returns>
+    public IPlatformMenu CreateMenuWidget(int style)
+    {
+        // Menu widget implementation will be completed in a future phase
+        // For now, return a stub that throws NotImplementedException
+        throw new NotImplementedException("Win32 menu widget will be implemented in Phase 3");
+    }
 }

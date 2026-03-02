@@ -11,7 +11,7 @@ public class MenuItemTests : WidgetTestBase
 {
     public MenuItemTests(DisplayFixture displayFixture) : base(displayFixture) { }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Create_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -28,7 +28,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Create_WithStyles_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -48,7 +48,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Text_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -65,7 +65,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Text_WithEmptyString_ShouldSucceed()
     {
         RunOnUIThread(() =>
@@ -82,7 +82,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Text_WithNull_ShouldSetEmptyString()
     {
         RunOnUIThread(() =>
@@ -99,7 +99,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Selection_Check_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -117,7 +117,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Selection_Radio_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -135,7 +135,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Enabled_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -155,7 +155,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Menu_Cascade_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -175,7 +175,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Dispose_ShouldSetIsDisposed()
     {
         RunOnUIThread(() =>
@@ -192,7 +192,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_SetText_AfterDispose_ShouldThrow()
     {
         RunOnUIThread(() =>
@@ -208,7 +208,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Data_ShouldGetAndSet()
     {
         RunOnUIThread(() =>
@@ -227,7 +227,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_InitiallyEnabled()
     {
         RunOnUIThread(() =>
@@ -243,7 +243,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_InitialText_ShouldBeEmpty()
     {
         RunOnUIThread(() =>
@@ -259,7 +259,7 @@ public class MenuItemTests : WidgetTestBase
         });
     }
 
-    [Fact]
+    [MacOSOnlyFact]
     public void MenuItem_Display_ShouldMatchMenu()
     {
         RunOnUIThread(() =>

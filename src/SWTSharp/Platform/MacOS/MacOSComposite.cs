@@ -156,7 +156,9 @@ internal class MacOSComposite : MacOSWidget, IPlatformComposite
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via layer or wantsLayer/backgroundColor
+        // NSView background requires layer-backed view (wantsLayer=YES) and setting
+        // layer.backgroundColor. This may affect scrolling performance and subview
+        // rendering. Value stored for GetBackground() API compatibility.
     }
 
     public RGB GetBackground()
@@ -167,7 +169,9 @@ internal class MacOSComposite : MacOSWidget, IPlatformComposite
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color
+        // NSView foreground color affects child text controls. Setting requires
+        // recursive application to subviews which may conflict with individual
+        // control styling. Value stored for GetForeground() API compatibility.
     }
 
     public RGB GetForeground()

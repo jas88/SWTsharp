@@ -27,6 +27,11 @@ internal class LinuxLabel : IPlatformTextWidget
     {
         _gtkLabel = CreateGtkLabel(style);
 
+        if (_gtkLabel == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Failed to create GTK label widget");
+        }
+
         if (parentHandle != IntPtr.Zero)
         {
             gtk_container_add(parentHandle, _gtkLabel);
@@ -126,12 +131,20 @@ internal class LinuxLabel : IPlatformTextWidget
     {
         if (!_disposed)
         {
+            _disposed = true;
+
+            // Detach from parent container; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
             if (_gtkLabel != IntPtr.Zero)
             {
-                gtk_widget_destroy(_gtkLabel);
+                var parent = gtk_widget_get_parent(_gtkLabel);
+                if (parent != IntPtr.Zero)
+                {
+                    gtk_container_remove(parent, _gtkLabel);
+                }
+
                 _gtkLabel = IntPtr.Zero;
             }
-            _disposed = true;
         }
     }
 
@@ -242,6 +255,12 @@ internal class LinuxLabel : IPlatformTextWidget
 
     [DllImport("libgtk-3.so.0")]
     private static extern void gtk_widget_destroy(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0")]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct GtkAllocation

@@ -195,8 +195,8 @@ public class Scale : Control
             scaleWidget.Maximum = _maximum;
             scaleWidget.Value = _selection;
             scaleWidget.Increment = _increment;
-            scaleWidget.ShowTicks = false; // Use ShowTicks instead of PageIncrement
-            // TODO: Implement proper PageIncrement support in IPlatformScale interface
+            scaleWidget.PageIncrement = _pageIncrement;
+            scaleWidget.ShowTicks = true;
         }
     }
 
@@ -206,34 +206,161 @@ public class Scale : Control
     private void ConnectEventHandlers()
     {
         // Connect scale change event handler to platform widget
-        // Event handling will be implemented in Phase 5.8
         if (PlatformWidget is IPlatformScale scaleWidget)
         {
-            // TODO: Connect scale change event through platform widget interface in Phase 5.8
-            // scaleWidget.ValueChanged += OnNativeSelectionChanged;
+            scaleWidget.ValueChanged += OnPlatformValueChanged;
+        }
+
+        // Connect standard widget events
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained += OnPlatformFocusGained;
+            eventHandling.FocusLost += OnPlatformFocusLost;
+            eventHandling.KeyDown += OnPlatformKeyDown;
+            eventHandling.KeyUp += OnPlatformKeyUp;
         }
     }
 
     /// <summary>
-    /// Called when the native scale value changes.
+    /// Handles platform widget value changed events.
     /// </summary>
-    private void OnNativeSelectionChanged(int newValue)
+    private void OnPlatformValueChanged(object? sender, int newValue)
     {
+        CheckWidget();
+
         if (_selection != newValue)
         {
             _selection = newValue;
-            var evt = new Event
+
+            var selectionEvent = new Event
             {
-                Widget = this,
-                Detail = SWT.NONE
+                Detail = SWT.NONE,
+                Time = Environment.TickCount,
+                Index = newValue
             };
-            NotifyListeners(SWT.Selection, evt);
+            NotifyListeners(SWT.Selection, selectionEvent);
         }
+    }
+
+    /// <summary>
+    /// Handles platform widget focus gained events.
+    /// </summary>
+    private void OnPlatformFocusGained(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusIn, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget focus lost events.
+    /// </summary>
+    private void OnPlatformFocusLost(object? sender, int detail)
+    {
+        CheckWidget();
+
+        var focusEvent = new Event
+        {
+            Detail = detail,
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.FocusOut, focusEvent);
+    }
+
+    /// <summary>
+    /// Handles platform widget key down events.
+    /// </summary>
+    private void OnPlatformKeyDown(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyDown, keyEvent);
+
+        // Handle arrow keys for scale navigation
+        if (e.KeyCode == SWT.ARROW_LEFT || e.KeyCode == SWT.ARROW_DOWN)
+        {
+            SetSelection(_selection - _increment);
+        }
+        else if (e.KeyCode == SWT.ARROW_RIGHT || e.KeyCode == SWT.ARROW_UP)
+        {
+            SetSelection(_selection + _increment);
+        }
+        else if (e.KeyCode == SWT.PAGE_UP)
+        {
+            SetSelection(_selection + _pageIncrement);
+        }
+        else if (e.KeyCode == SWT.PAGE_DOWN)
+        {
+            SetSelection(_selection - _pageIncrement);
+        }
+        else if (e.KeyCode == SWT.HOME)
+        {
+            SetSelection(_minimum);
+        }
+        else if (e.KeyCode == SWT.END)
+        {
+            SetSelection(_maximum);
+        }
+    }
+
+    /// <summary>
+    /// Handles platform widget key up events.
+    /// </summary>
+    private void OnPlatformKeyUp(object? sender, PlatformKeyEventArgs e)
+    {
+        CheckWidget();
+
+        var keyEvent = new Event
+        {
+            KeyCode = e.KeyCode,
+            Character = e.Character,
+            StateMask = GetStateMaskFromPlatformArgs(e),
+            Time = Environment.TickCount
+        };
+        NotifyListeners(SWT.KeyUp, keyEvent);
+    }
+
+    /// <summary>
+    /// Converts platform key event arguments to SWT state mask.
+    /// </summary>
+    private int GetStateMaskFromPlatformArgs(PlatformKeyEventArgs e)
+    {
+        int stateMask = 0;
+        if (e.Shift) stateMask |= SWT.SHIFT;
+        if (e.Control) stateMask |= SWT.CTRL;
+        if (e.Alt) stateMask |= SWT.ALT;
+        if (e.Command) stateMask |= SWT.COMMAND;
+        return stateMask;
     }
 
     protected override void ReleaseWidget()
     {
-        // TODO: Implement proper widget disposal through platform widget interface
+        // Unsubscribe from platform widget events to prevent memory leaks
+        if (PlatformWidget is IPlatformScale scaleWidget)
+        {
+            scaleWidget.ValueChanged -= OnPlatformValueChanged;
+        }
+
+        if (PlatformWidget is IPlatformEventHandling eventHandling)
+        {
+            eventHandling.FocusGained -= OnPlatformFocusGained;
+            eventHandling.FocusLost -= OnPlatformFocusLost;
+            eventHandling.KeyDown -= OnPlatformKeyDown;
+            eventHandling.KeyUp -= OnPlatformKeyUp;
+        }
+
         // Platform widget cleanup is handled by parent disposal
         base.ReleaseWidget();
     }

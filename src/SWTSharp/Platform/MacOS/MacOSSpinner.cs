@@ -21,6 +21,7 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
     private int _maximum = 100;
     private int _increment = 1;
     private int _digits = 0;
+    private int _textLimit;
 
     // Event handling
     public event EventHandler<int>? ValueChanged;
@@ -30,6 +31,7 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
     public event EventHandler<int>? FocusLost;
     public event EventHandler<PlatformKeyEventArgs>? KeyDown;
     public event EventHandler<PlatformKeyEventArgs>? KeyUp;
+    public event EventHandler<string>? TextChanged;
     #pragma warning restore CS0067
 
     public MacOSSpinner(IntPtr parentHandle, int style)
@@ -191,8 +193,6 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
             UpdateTextField();
         }
     }
-
-    private int _textLimit;
 
     public int TextLimit
     {
@@ -493,9 +493,6 @@ internal class MacOSSpinner : MacOSWidget, IPlatformSpinner
             objc_msgSend_stret_x64(out retval, receiver, selector);
         }
     }
-
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
-    private static extern double objc_msgSend_double_ret(IntPtr receiver, IntPtr selector);
 
     #endregion
 }

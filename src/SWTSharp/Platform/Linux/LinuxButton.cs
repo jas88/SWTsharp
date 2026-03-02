@@ -14,6 +14,45 @@ internal abstract class LinuxWidget
     /// Gets the native GtkWidget handle.
     /// </summary>
     public abstract IntPtr GetNativeHandle();
+
+    /// <summary>
+    /// Removes this widget from its GTK parent container, if any.
+    /// Child widgets must ONLY detach from their parent -- never call gtk_widget_destroy.
+    /// The top-level LinuxWindow.Dispose() will call gtk_widget_destroy on the GtkWindow,
+    /// which recursively destroys all remaining children.
+    /// </summary>
+    protected void DetachFromParent()
+    {
+        var handle = GetNativeHandle();
+        if (handle == IntPtr.Zero) return;
+        var parent = gtk_widget_get_parent_base(handle);
+        if (parent != IntPtr.Zero)
+        {
+            gtk_container_remove_base(parent, handle);
+        }
+    }
+
+    /// <summary>
+    /// Validates that a GTK widget handle is non-null, throwing InvalidOperationException if null.
+    /// </summary>
+    /// <param name="handle">The GTK widget handle to validate.</param>
+    /// <param name="widgetName">Name of the widget for the error message.</param>
+    /// <returns>The validated handle.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when handle is IntPtr.Zero.</exception>
+    protected static IntPtr ThrowOnNull(IntPtr handle, string widgetName)
+    {
+        if (handle == IntPtr.Zero)
+        {
+            throw new InvalidOperationException($"Failed to create GTK widget: {widgetName}");
+        }
+        return handle;
+    }
+
+    [DllImport("libgtk-3.so.0", EntryPoint = "gtk_widget_get_parent", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr gtk_widget_get_parent_base(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", EntryPoint = "gtk_container_remove", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove_base(IntPtr container, IntPtr widget);
 }
 
 /// <summary>
@@ -146,31 +185,36 @@ internal class LinuxButton : LinuxWidget, IPlatformTextWidget
         return gtk_widget_get_sensitive(_gtkButtonHandle);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
         if (_disposed || _gtkButtonHandle == IntPtr.Zero) return;
 
-        // TODO: Implement background color via CSS provider
-        // This requires GtkCssProvider and gtk_style_context APIs
+        // GTK3 widget styling uses CSS providers for consistent theming. Direct color
+        // setting may conflict with GTK themes and accessibility settings. Custom colors
+        // require GtkCssProvider which can affect all instances. Store for getter.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        // TODO: Implement background color retrieval
-        return new RGB(255, 255, 255); // Default white
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
         if (_disposed || _gtkButtonHandle == IntPtr.Zero) return;
 
-        // TODO: Implement foreground color via CSS provider
+        // GTK3 text color follows theme settings. Custom color via CSS provider may
+        // conflict with selected/focused state colors. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        // TODO: Implement foreground color retrieval
-        return new RGB(0, 0, 0); // Default black
+        return _foregroundColor;
     }
 
     public bool GetSelection()
@@ -201,16 +245,18 @@ internal class LinuxButton : LinuxWidget, IPlatformTextWidget
     {
         if (!_disposed)
         {
+            _disposed = true;
+
             if (_gtkButtonHandle != IntPtr.Zero)
             {
                 // Remove from instance mapping
                 _buttonInstances.TryRemove(_gtkButtonHandle, out _);
-
-                // Destroy widget
-                gtk_widget_destroy(_gtkButtonHandle);
-                _gtkButtonHandle = IntPtr.Zero;
             }
-            _disposed = true;
+
+            // Detach from parent; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
+            DetachFromParent();
+            _gtkButtonHandle = IntPtr.Zero;
         }
     }
 

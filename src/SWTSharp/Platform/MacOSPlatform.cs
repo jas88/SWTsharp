@@ -1557,4 +1557,22 @@ internal partial class MacOSPlatform : IPlatform
 
         return browser;
     }
+
+    /// <summary>
+    /// Creates a menu widget.
+    /// </summary>
+    /// <param name="style">Menu style (SWT.BAR, SWT.DROP_DOWN, SWT.POP_UP)</param>
+    /// <returns>Platform menu implementation</returns>
+    public IPlatformMenu CreateMenuWidget(int style)
+    {
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Creating menu widget. Style: 0x{style:X}");
+
+        var menu = new MacOSMenu(style);
+
+        if (_enableLogging)
+            Console.WriteLine($"[macOS] Menu widget created successfully");
+
+        return menu;
+    }
 }

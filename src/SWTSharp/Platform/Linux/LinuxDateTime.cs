@@ -42,32 +42,45 @@ internal class LinuxDateTime : IPlatformDateTime
         {
             // Create GtkCalendar for calendar view
             _calendar = gtk_calendar_new();
+            if (_calendar == IntPtr.Zero)
+            {
+                throw new InvalidOperationException("Failed to create GTK Calendar widget");
+            }
             _widget = _calendar;
         }
         else if ((style & SWT.TIME) != 0)
         {
             // Create horizontal box for time spinners
             _widget = gtk_box_new(0, 5); // GTK_ORIENTATION_HORIZONTAL = 0, spacing = 5
+            if (_widget == IntPtr.Zero)
+            {
+                throw new InvalidOperationException("Failed to create GTK Box for time picker");
+            }
 
-            // TODO: Add hour, minute, second spin buttons
-            // For now, use a simple entry
+            // Time selection requires GtkSpinButton widgets for hour/minute/second.
+            // Current implementation uses single entry. Full time picker deferred.
             var entry = gtk_entry_new();
-            gtk_box_pack_start(_widget, entry, true, true, 0);
+            if (entry != IntPtr.Zero)
+            {
+                gtk_box_pack_start(_widget, entry, true, true, 0);
+            }
         }
         else // DATE
         {
             // Create horizontal box for date spinners or entry
             _widget = gtk_box_new(0, 5);
+            if (_widget == IntPtr.Zero)
+            {
+                throw new InvalidOperationException("Failed to create GTK Box for date picker");
+            }
 
             // For DATE mode, we could use GtkCalendar in a popup or spin buttons
             // For simplicity, use entry with calendar button
             var entry = gtk_entry_new();
-            gtk_box_pack_start(_widget, entry, true, true, 0);
-        }
-
-        if (_widget == IntPtr.Zero)
-        {
-            throw new InvalidOperationException("Failed to create GTK DateTime widget");
+            if (entry != IntPtr.Zero)
+            {
+                gtk_box_pack_start(_widget, entry, true, true, 0);
+            }
         }
 
         gtk_widget_show_all(_widget);
@@ -214,13 +227,21 @@ internal class LinuxDateTime : IPlatformDateTime
     {
         if (!_disposed)
         {
+            _disposed = true;
+
+            // Detach from parent container; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
             if (_widget != IntPtr.Zero)
             {
-                gtk_widget_destroy(_widget);
+                var parent = gtk_widget_get_parent(_widget);
+                if (parent != IntPtr.Zero)
+                {
+                    gtk_container_remove(parent, _widget);
+                }
+
                 _widget = IntPtr.Zero;
             }
             _calendar = IntPtr.Zero;
-            _disposed = true;
         }
     }
 
@@ -276,6 +297,9 @@ internal class LinuxDateTime : IPlatformDateTime
 
     [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr gtk_widget_get_parent(IntPtr widget);
+
+    [DllImport("libgtk-3.so.0", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void gtk_container_remove(IntPtr container, IntPtr widget);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct GtkAllocation

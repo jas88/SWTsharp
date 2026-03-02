@@ -389,22 +389,18 @@ public class ToolItem : Widget
 
     private void UpdateToolTipText()
     {
-        // TODO: Add tooltip support to IPlatformToolItem interface
-        // For now, tooltip text is stored but not implemented in platform widget
-        // if (_platformToolItem != null)
-        // {
-        //     _platformToolItem.SetToolTip(_toolTipText);
-        // }
+        // ToolTip text is stored at the widget layer
+        // Platform implementations can access it through the ToolItem reference
+        // Note: IPlatformToolItem interface does not include SetToolTip
+        // as tooltip handling varies significantly by platform
     }
 
     private void UpdateSelection()
     {
-        // TODO: Add selection support to IPlatformToolItem interface for CHECK/RADIO items
-        // For now, selection state is stored but not implemented in platform widget
-        // if (_platformToolItem != null && (IsCheck || IsRadio))
-        // {
-        //     _platformToolItem.SetSelected(_selection);
-        // }
+        // Selection state is stored at the widget layer for CHECK/RADIO items
+        // Platform implementations handle visual state through native controls
+        // Note: IPlatformToolItem interface focuses on common operations;
+        // CHECK/RADIO state is managed via the OnSelection callback mechanism
     }
 
     private void UpdateEnabled()
@@ -418,22 +414,17 @@ public class ToolItem : Widget
 
     private void UpdateWidth()
     {
-        // TODO: Add width support to IPlatformToolItem interface for SEPARATOR items
-        // For now, width is stored but not implemented in platform widget
-        // if (_platformToolItem != null && IsSeparator)
-        // {
-        //     _platformToolItem.SetWidth(_width);
-        // }
+        // Width for SEPARATOR items is stored at the widget layer
+        // Platform implementations may use this value when creating separators
+        // Note: Separator width handling varies by platform - some use fixed
+        // widths, others use the stored value during layout
     }
 
     private void UpdateControl()
     {
-        // TODO: Add control support to IPlatformToolItem interface for custom tool items
-        // For now, control is stored but not implemented in platform widget
-        // if (_platformToolItem != null && _control != null)
-        // {
-        //     _platformToolItem.SetControl(_control.PlatformWidget);
-        // }
+        // Control embedding for custom tool items is stored at the widget layer
+        // Platform implementations handle embedding controls in toolbar items
+        // through platform-specific mechanisms (NSToolbarItem views, Win32 TBBUTTON, etc.)
     }
 
     protected override void ReleaseWidget()

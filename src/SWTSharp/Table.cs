@@ -381,10 +381,7 @@ public class Table : Composite
             int index = _items.IndexOf(item);
             if (index >= 0 && PlatformWidget is Platform.IPlatformTable platformTable)
             {
-                // Show the item by scrolling to it - selection change triggers scroll visibility
-                var currentSelection = platformTable.GetSelection();
-                platformTable.SetSelection(new[] { index });
-                platformTable.SetSelection(currentSelection); // Restore original selection
+                platformTable.ShowItem(index);
             }
         }
     }

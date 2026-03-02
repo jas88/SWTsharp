@@ -360,9 +360,12 @@ public class Composite : Control
         _layout = null;
         _tabList = null;
 
-        // Destroy platform composite widget
-        // TODO: Implement proper disposal through platform widget interface
-        // Platform widget cleanup is handled by parent disposal
+        // Dispose platform composite widget
+        if (PlatformWidget != null)
+        {
+            PlatformWidget.Dispose();
+            PlatformWidget = null;
+        }
 
         base.ReleaseWidget();
     }

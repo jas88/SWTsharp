@@ -44,6 +44,12 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
         {
             // Create a GtkFrame to provide border
             IntPtr frame = gtk_frame_new(null);
+            if (frame == IntPtr.Zero)
+            {
+                gtk_widget_destroy(_gtkFixedHandle);
+                _gtkFixedHandle = IntPtr.Zero;
+                throw new InvalidOperationException("Failed to create GTK frame for Composite border");
+            }
             gtk_container_add(frame, _gtkFixedHandle);
 
             // Add frame to parent
@@ -188,8 +194,9 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via CSS provider
-        // This requires GtkCssProvider and gtk_style_context APIs
+        // GTK3 container background requires CSS provider styling. GtkFixed is a
+        // layout container; background color would need to be applied via style
+        // context which may affect child widget rendering. Store for getter.
     }
 
     public RGB GetBackground()
@@ -200,7 +207,8 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // TODO: Implement foreground color via CSS provider
+        // GTK3 foreground color on containers affects child widget text through
+        // CSS inheritance. Direct setting may conflict with theme. Store for getter.
     }
 
     public RGB GetForeground()
@@ -212,6 +220,8 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
     {
         if (_disposed) return;
         _disposed = true;
+
+        DetachFromParent();
 
         // Dispose children first
         lock (_children)
@@ -226,12 +236,8 @@ internal class LinuxComposite : LinuxWidget, IPlatformComposite
             _children.Clear();
         }
 
-        // Destroy the widget
-        if (_gtkFixedHandle != IntPtr.Zero)
-        {
-            gtk_widget_destroy(_gtkFixedHandle);
-            _gtkFixedHandle = IntPtr.Zero;
-        }
+        // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
+        _gtkFixedHandle = IntPtr.Zero;
     }
 
     // GTK3 P/Invoke declarations

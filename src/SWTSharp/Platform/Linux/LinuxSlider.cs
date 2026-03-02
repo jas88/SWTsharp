@@ -4,10 +4,10 @@ using SWTSharp.Graphics;
 namespace SWTSharp.Platform.Linux;
 
 /// <summary>
-/// Linux/GTK implementation of a scale platform widget.
-/// Encapsulates GtkScale control with tick marks for visual feedback.
+/// Linux/GTK implementation of a slider platform widget.
+/// Encapsulates GtkScale control without tick marks or value display.
 /// </summary>
-internal class LinuxScale : LinuxWidget, IPlatformScale
+internal class LinuxSlider : LinuxWidget, IPlatformSlider
 {
     private const string GtkLib = "libgtk-3.so.0";
     private const string GObjectLib = "libgobject-2.0.so.0";
@@ -18,14 +18,15 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
     private int _maximum = 100;
     private int _value = 0;
     private int _increment = 1;
-    private bool _showTicks = false;
+    private int _pageIncrement = 10;
     private RGB _background = new RGB(240, 240, 240);
     private RGB _foreground = new RGB(0, 120, 215);
 
-    // GSignal callback delegate
+    // GSignal callback delegate - must be stored to prevent GC
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void GtkValueChangedFunc(IntPtr range, IntPtr data);
     private readonly GtkValueChangedFunc _valueChangedCallback;
+    private GCHandle _callbackHandle;
 
     // Event handling
     public event EventHandler<int>? ValueChanged;
@@ -39,9 +40,11 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
     public event EventHandler<PlatformKeyEventArgs>? KeyUp;
 #pragma warning restore CS0067
 
-    public LinuxScale(IntPtr parentHandle, int style)
+    public LinuxSlider(IntPtr parentHandle, int style)
     {
+        // Create callback and prevent GC collection
         _valueChangedCallback = OnValueChangedCallback;
+        _callbackHandle = GCHandle.Alloc(_valueChangedCallback);
 
         // Determine orientation
         int orientation = ((style & SWT.VERTICAL) != 0)
@@ -53,11 +56,10 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
         if (_scale == IntPtr.Zero)
             throw new InvalidOperationException("Failed to create GTK scale");
 
-        // Configure scale appearance
-        gtk_scale_set_draw_value(_scale, false); // Don't show value label
-        gtk_scale_set_has_origin(_scale, true);  // Show origin point
+        // Configure as slider (no value display)
+        gtk_scale_set_draw_value(_scale, false);
 
-        // For vertical scales, invert so values increase upward
+        // For vertical sliders, invert so values increase upward (SWT convention)
         if ((style & SWT.VERTICAL) != 0)
         {
             gtk_range_set_inverted(_scale, true);
@@ -144,12 +146,9 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
             {
                 _increment = value;
                 gtk_range_set_increments(_scale, _increment, _pageIncrement);
-                UpdateTickMarks();
             }
         }
     }
-
-    private int _pageIncrement = 10;
 
     public int PageIncrement
     {
@@ -161,20 +160,6 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
             {
                 _pageIncrement = value;
                 gtk_range_set_increments(_scale, _increment, _pageIncrement);
-            }
-        }
-    }
-
-    public bool ShowTicks
-    {
-        get => _showTicks;
-        set
-        {
-            if (_disposed || _scale == IntPtr.Zero) return;
-            if (_showTicks != value)
-            {
-                _showTicks = value;
-                UpdateTickMarks();
             }
         }
     }
@@ -227,8 +212,7 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
     public void SetBackground(RGB color)
     {
         _background = color;
-        // GTK3 scales are styled via CSS
-        // Would need CSS provider for custom colors
+        // GTK3 scales are styled via CSS - would need CSS provider for custom colors
     }
 
     public RGB GetBackground()
@@ -239,8 +223,7 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
     public void SetForeground(RGB color)
     {
         _foreground = color;
-        // GTK3 scales are styled via CSS
-        // Would need CSS provider for custom colors
+        // GTK3 scales are styled via CSS - would need CSS provider for custom colors
     }
 
     public RGB GetForeground()
@@ -254,6 +237,12 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
         _disposed = true;
 
         DetachFromParent();
+
+        // Free the GCHandle to allow callback collection
+        if (_callbackHandle.IsAllocated)
+        {
+            _callbackHandle.Free();
+        }
 
         // Do NOT call gtk_widget_destroy -- parent window destruction handles cleanup.
         _scale = IntPtr.Zero;
@@ -278,8 +267,8 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
     {
         if (_disposed || _scale == IntPtr.Zero) return;
 
-        double value = gtk_range_get_value(_scale);
-        int newValue = (int)Math.Round(value);
+        double rawValue = gtk_range_get_value(_scale);
+        int newValue = (int)Math.Round(rawValue);
 
         if (_value != newValue)
         {
@@ -288,30 +277,9 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
         }
     }
 
-    private void UpdateTickMarks()
-    {
-        if (_disposed || _scale == IntPtr.Zero) return;
-
-        // Clear existing marks
-        gtk_scale_clear_marks(_scale);
-
-        if (_showTicks && _increment > 0)
-        {
-            // Add tick marks at each increment
-            for (int i = _minimum; i <= _maximum; i += _increment)
-            {
-                // Add mark with no label (null) at bottom/right position (GTK_POS_BOTTOM = 2)
-                gtk_scale_add_mark(_scale, i, GTK_POS_BOTTOM, IntPtr.Zero);
-            }
-        }
-    }
-
     // GTK3 Orientation constants
     private const int GTK_ORIENTATION_HORIZONTAL = 0;
     private const int GTK_ORIENTATION_VERTICAL = 1;
-
-    // GtkPositionType for tick mark placement
-    private const int GTK_POS_BOTTOM = 2;
 
     // Scale functions
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
@@ -319,15 +287,6 @@ internal class LinuxScale : LinuxWidget, IPlatformScale
 
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void gtk_scale_set_draw_value(IntPtr scale, bool draw_value);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_scale_set_has_origin(IntPtr scale, bool has_origin);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Auto)]
-    private static extern void gtk_scale_add_mark(IntPtr scale, double value, int position, IntPtr markup);
-
-    [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void gtk_scale_clear_marks(IntPtr scale);
 
     // Range functions (GtkScale is a GtkRange)
     [DllImport(GtkLib, CallingConvention = CallingConvention.Cdecl)]

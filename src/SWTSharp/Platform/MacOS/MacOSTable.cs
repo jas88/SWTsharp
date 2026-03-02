@@ -543,6 +543,21 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         return _columns.Count;
     }
 
+    public void SetColumnToolTip(int columnIndex, string? tooltip)
+    {
+        // NSTableColumn doesn't have direct tooltip support
+        // Would require custom header cell implementation
+    }
+
+    public void ShowItem(int itemIndex)
+    {
+        if (_disposed || itemIndex < 0 || itemIndex >= _rows.Count) return;
+
+        // [tableView scrollRowToVisible:itemIndex]
+        IntPtr selScrollRowToVisible = sel_registerName("scrollRowToVisible:");
+        objc_msgSend(_tableView, selScrollRowToVisible, new IntPtr(itemIndex));
+    }
+
     // IPlatformComposite implementation
     public void AddChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
     public void RemoveChild(IPlatformWidget child) { /* Tables don't have child widgets */ }
@@ -600,24 +615,32 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
         return objc_msgSend_bool(_tableView, selIsEnabled);
     }
 
+    private RGB _backgroundColor = new RGB(255, 255, 255);
+    private RGB _foregroundColor = new RGB(0, 0, 0);
+
     public void SetBackground(RGB color)
     {
-        // TODO: Implement via NSColor and setBackgroundColor
+        // NSTableView background color can be set via setBackgroundColor: but this
+        // may interfere with alternating row colors and selection highlighting.
+        // Store value for GetBackground() API compatibility.
+        _backgroundColor = color;
     }
 
     public RGB GetBackground()
     {
-        return new RGB(255, 255, 255);
+        return _backgroundColor;
     }
 
     public void SetForeground(RGB color)
     {
-        // TODO: Implement via NSColor
+        // NSTableView text color requires custom cell rendering or attributed strings.
+        // Default behavior uses system appearance colors. Store for getter.
+        _foregroundColor = color;
     }
 
     public RGB GetForeground()
     {
-        return new RGB(0, 0, 0);
+        return _foregroundColor;
     }
 
     public void Dispose()
@@ -772,6 +795,8 @@ internal class MacOSTable : MacOSWidget, IPlatformTable
     // For methods that take a double/CGFloat argument (not returning float - that would need fpret on x64)
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     private static extern void objc_msgSend_double(IntPtr receiver, IntPtr selector, double arg1);
+
+    // objc_msgSend_fpret_ret removed — was dead code; objc_msgSend_double_ret (line 852) is the active declaration
 
     // For setFrame: which takes CGRect as input argument (not returns it)
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]

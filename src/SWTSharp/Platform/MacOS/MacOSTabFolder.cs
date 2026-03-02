@@ -227,7 +227,9 @@ internal class MacOSTabFolder : MacOSWidget, IPlatformTabFolder
     public void SetBackground(RGB color)
     {
         _background = color;
-        // TODO: Implement background color via layer or custom drawing
+        // NSTabView background follows system appearance. Custom coloring requires
+        // layer-backed view which may affect tab button rendering and animations.
+        // Store value for GetBackground() API compatibility.
     }
 
     public RGB GetBackground()

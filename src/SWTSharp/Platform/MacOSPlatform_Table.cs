@@ -271,7 +271,9 @@ internal partial class MacOSPlatform
         return (int)width;
     }
 
-    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend_fpret")]
+    // objc_msgSend returns double on both ARM64 and x86_64.
+    // objc_msgSend_fpret is only needed for long double on x86_64, not for double.
+    [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static extern double objc_msgSend_ret_double(IntPtr receiver, IntPtr selector);
 
     // TableItem operations

@@ -120,8 +120,8 @@ internal class Win32ToolBar : IPlatformToolBar
         int commandId = _nextCommandId++;
         IntPtr imageHandle = IntPtr.Zero;
 
-        // TODO: Convert IPlatformImage to image handle when image support is added
-        // For now, use -1 for no image
+        // Toolbar image support requires HIMAGELIST via ImageList_Create and
+        // TB_SETIMAGELIST. IPlatformImage to HBITMAP conversion needed. Currently text-only.
         int imageBitmap = -1;
 
         var tbButton = new TBBUTTON

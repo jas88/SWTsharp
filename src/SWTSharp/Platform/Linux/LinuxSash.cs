@@ -75,6 +75,12 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
 
         // Create a drawing area for visual representation
         IntPtr drawingArea = gtk_drawing_area_new();
+        if (drawingArea == IntPtr.Zero)
+        {
+            gtk_widget_destroy(_sashHandle);
+            _sashHandle = IntPtr.Zero;
+            throw new InvalidOperationException("Failed to create GTK drawing area for sash");
+        }
         gtk_container_add(_sashHandle, drawingArea);
 
         // Set default size based on orientation
@@ -196,16 +202,18 @@ internal class LinuxSash : LinuxWidget, IPlatformSash
     {
         if (!_disposed)
         {
+            _disposed = true;
+
             if (_sashHandle != IntPtr.Zero)
             {
                 // Remove from instance mapping
                 _sashInstances.TryRemove(_sashHandle, out _);
-
-                // Destroy widget
-                gtk_widget_destroy(_sashHandle);
-                _sashHandle = IntPtr.Zero;
             }
-            _disposed = true;
+
+            // Detach from parent; do NOT call gtk_widget_destroy.
+            // The parent window's destruction will recursively clean up children.
+            DetachFromParent();
+            _sashHandle = IntPtr.Zero;
         }
     }
 

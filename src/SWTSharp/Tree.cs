@@ -302,17 +302,10 @@ public class Tree : Composite
         {
             throw new ArgumentNullException(nameof(item));
         }
-        // Ensure all parent items are expanded so the item is visible
-        var parent = item.ParentItem;
-        while (parent != null)
+        if (PlatformWidget is Platform.IPlatformTree platformTree && item.PlatformTreeItem != null)
         {
-            if (!parent.Expanded)
-            {
-                parent.SetExpanded(true);
-            }
-            parent = parent.ParentItem;
+            platformTree.ShowItem(item.PlatformTreeItem);
         }
-        // Platform scrolling is handled by the tree control automatically when selection changes
     }
 
     /// <summary>
@@ -327,7 +320,10 @@ public class Tree : Composite
         }
         _items.Clear();
         _selection.Clear();
-        // Platform tree items are disposed with each TreeItem; no separate clear needed
+        if (PlatformWidget is Platform.IPlatformTree platformTree)
+        {
+            platformTree.RemoveAllItems();
+        }
     }
 
     /// <summary>
@@ -404,8 +400,14 @@ public class Tree : Composite
     /// </summary>
     private void UpdateSelection()
     {
-        // Platform tree selection is managed through individual TreeItem selection state
-        // The platform tree control handles visual selection updates
+        if (PlatformWidget is Platform.IPlatformTree platformTree)
+        {
+            var platformItems = _selection
+                .Where(item => item.PlatformTreeItem != null)
+                .Select(item => item.PlatformTreeItem!)
+                .ToArray();
+            platformTree.SetSelection(platformItems);
+        }
         OnSelectionChanged(EventArgs.Empty);
     }
 

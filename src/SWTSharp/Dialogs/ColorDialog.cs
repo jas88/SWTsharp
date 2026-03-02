@@ -56,7 +56,29 @@ public class ColorDialog : Dialog
     {
         CheckWidget();
 
-        // TODO: Implement color dialog through platform widget interface
-        return null; // Placeholder
+        // Get parent window handle
+        IntPtr parentHandle = IntPtr.Zero;
+        if (Parent?.PlatformWidget is IPlatformWindow window)
+        {
+            parentHandle = window.GetNativeHandle();
+        }
+
+        // Call platform color dialog
+        RGB? selectedColor = PlatformFactory.Instance.ShowColorDialog(
+            parentHandle,
+            Text,
+            _rgb,
+            _rgbs);
+
+        // User cancelled
+        if (!selectedColor.HasValue)
+        {
+            return null;
+        }
+
+        // Update RGB from result
+        _rgb = selectedColor.Value;
+
+        return selectedColor;
     }
 }

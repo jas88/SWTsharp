@@ -221,8 +221,8 @@ public class Slider : Control
             sliderWidget.Value = _selection;
             sliderWidget.Increment = _increment;
             sliderWidget.PageIncrement = _pageIncrement;
-            // Note: Thumb property not available in IPlatformSlider interface yet
-            // TODO: Add Thumb property to IPlatformSlider interface when needed
+            // Note: Thumb property is managed locally as it affects the slider's effective range
+            // rather than being passed to the platform widget. Platform sliders handle thumb size internally.
         }
     }
 
@@ -367,7 +367,7 @@ public class Slider : Control
         if (e.Shift) stateMask |= SWT.SHIFT;
         if (e.Control) stateMask |= SWT.CTRL;
         if (e.Alt) stateMask |= SWT.ALT;
-        // TODO: Add Command key detection on macOS
+        if (e.Command) stateMask |= SWT.COMMAND;
         return stateMask;
     }
 

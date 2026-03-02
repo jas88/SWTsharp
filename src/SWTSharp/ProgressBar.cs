@@ -213,8 +213,7 @@ public class ProgressBar : Control
 
     protected override void ReleaseWidget()
     {
-        // TODO: Implement proper widget disposal through platform widget interface
-        // Platform widget cleanup is handled by parent disposal
+        // Platform widget cleanup is handled by parent disposal chain
         base.ReleaseWidget();
     }
 }

@@ -42,12 +42,12 @@ public class TableColumn : Widget
             if (_text != value)
             {
                 _text = value ?? string.Empty;
-                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
                 {
-                    int colIndex = _parent.GetColumnIndex(this);
-                    if (colIndex >= 0)
+                    int columnIndex = _parent.GetColumnIndex(this);
+                    if (columnIndex >= 0)
                     {
-                        platformTable.SetColumnText(colIndex, _text);
+                        platformTable.SetColumnText(columnIndex, _text);
                     }
                 }
             }
@@ -70,12 +70,12 @@ public class TableColumn : Widget
             if (_width != value && value >= 0)
             {
                 _width = value;
-                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
                 {
-                    int colIndex = _parent.GetColumnIndex(this);
-                    if (colIndex >= 0)
+                    int columnIndex = _parent.GetColumnIndex(this);
+                    if (columnIndex >= 0)
                     {
-                        platformTable.SetColumnWidth(colIndex, _width);
+                        platformTable.SetColumnWidth(columnIndex, _width);
                     }
                 }
             }
@@ -98,12 +98,12 @@ public class TableColumn : Widget
             if (_alignment != value)
             {
                 _alignment = value;
-                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
                 {
-                    int colIndex = _parent.GetColumnIndex(this);
-                    if (colIndex >= 0)
+                    int columnIndex = _parent.GetColumnIndex(this);
+                    if (columnIndex >= 0)
                     {
-                        platformTable.SetColumnAlignment(colIndex, _alignment);
+                        platformTable.SetColumnAlignment(columnIndex, _alignment);
                     }
                 }
             }
@@ -126,12 +126,12 @@ public class TableColumn : Widget
             if (_resizable != value)
             {
                 _resizable = value;
-                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
                 {
-                    int colIndex = _parent.GetColumnIndex(this);
-                    if (colIndex >= 0)
+                    int columnIndex = _parent.GetColumnIndex(this);
+                    if (columnIndex >= 0)
                     {
-                        platformTable.SetColumnResizable(colIndex, _resizable);
+                        platformTable.SetColumnResizable(columnIndex, _resizable);
                     }
                 }
             }
@@ -154,12 +154,12 @@ public class TableColumn : Widget
             if (_moveable != value)
             {
                 _moveable = value;
-                if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+                if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
                 {
-                    int colIndex = _parent.GetColumnIndex(this);
-                    if (colIndex >= 0)
+                    int columnIndex = _parent.GetColumnIndex(this);
+                    if (columnIndex >= 0)
                     {
-                        platformTable.SetColumnMoveable(colIndex, _moveable);
+                        platformTable.SetColumnMoveable(columnIndex, _moveable);
                     }
                 }
             }
@@ -182,8 +182,14 @@ public class TableColumn : Widget
             if (_toolTipText != value)
             {
                 _toolTipText = value;
-                // Tooltip text is stored for client-side use; platform implementations
-                // may provide native tooltip support through header cell configuration
+                if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
+                {
+                    int columnIndex = _parent.GetColumnIndex(this);
+                    if (columnIndex >= 0)
+                    {
+                        platformTable.SetColumnToolTip(columnIndex, _toolTipText);
+                    }
+                }
             }
         }
     }
@@ -287,38 +293,24 @@ public class TableColumn : Widget
     public void Pack()
     {
         CheckWidget();
-
-        int colIndex = _parent.GetColumnIndex(this);
-        if (colIndex >= 0 && _parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+        if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
         {
-            // Use platform's native auto-sizing
-            _width = platformTable.PackColumn(colIndex);
-        }
-        else
-        {
-            // Fallback: estimate width from content
-            int maxWidth = Math.Max(50, _text.Length * 8); // Estimate header width
-
-            if (colIndex >= 0 && _parent != null)
+            int columnIndex = _parent.GetColumnIndex(this);
+            if (columnIndex >= 0)
             {
-                foreach (var item in _parent.GetItems())
-                {
-                    string cellText = item.GetText(colIndex);
-                    int cellWidth = cellText.Length * 7 + 10; // Estimate cell width
-                    maxWidth = Math.Max(maxWidth, cellWidth);
-                }
+                _width = platformTable.PackColumn(columnIndex);
             }
-
-            _width = maxWidth;
         }
     }
 
     private void CreateWidget(int index = -1)
     {
-        // TableColumn is logically part of the parent Table's platform widget
-        // The column is added to the platform table during AddColumn
-        if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
+        // TableColumn is a logical component that operates through the parent Table's platform widget.
+        // Column creation in the platform layer is handled via IPlatformTable.AddColumn which is called
+        // when the column is added to the table. We store the index for property updates.
+        if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
         {
+            // Add column to platform layer
             platformTable.AddColumn(_text, _width, _alignment, index);
         }
     }
@@ -338,18 +330,17 @@ public class TableColumn : Widget
 
     protected override void ReleaseWidget()
     {
-        // Remove column from platform table before removing from parent
-        if (_parent?.PlatformWidget is Platform.IPlatformTable platformTable)
-        {
-            int colIndex = _parent.GetColumnIndex(this);
-            if (colIndex >= 0)
-            {
-                platformTable.RemoveColumn(colIndex);
-            }
-        }
-
         if (_parent != null)
         {
+            // Remove column from platform layer before removing from parent's list
+            if (_parent.PlatformWidget is Platform.IPlatformTable platformTable)
+            {
+                int columnIndex = _parent.GetColumnIndex(this);
+                if (columnIndex >= 0)
+                {
+                    platformTable.RemoveColumn(columnIndex);
+                }
+            }
             _parent.RemoveColumn(this);
         }
 

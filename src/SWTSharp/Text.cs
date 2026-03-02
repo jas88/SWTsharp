@@ -55,8 +55,11 @@ public class Text : Control
                 throw new ArgumentException("Text limit cannot be negative");
             }
             _textLimit = value;
-            // TODO: Set text limit via platform widget interface
-            // TODO: Update text limit through platform widget interface
+            // Delegate to platform widget if available
+            if (PlatformWidget is IPlatformTextInput textInput)
+            {
+                textInput.SetTextLimit(value);
+            }
             // Only truncate if limit > 0 (0 means unlimited)
             if (_textLimit > 0 && _text.Length > _textLimit)
             {
@@ -74,6 +77,11 @@ public class Text : Control
         get
         {
             CheckWidget();
+            // Use platform widget if available
+            if (PlatformWidget is IPlatformTextInput textInput)
+            {
+                return textInput.GetReadOnly();
+            }
             return _readOnly;
         }
         set
@@ -82,8 +90,11 @@ public class Text : Control
             if (_readOnly != value)
             {
                 _readOnly = value;
-                // TODO: Set read-only state via platform widget interface
-                // TODO: Update read-only state through platform widget interface
+                // Delegate to platform widget if available
+                if (PlatformWidget is IPlatformTextInput textInput)
+                {
+                    textInput.SetReadOnly(value);
+                }
             }
         }
     }
@@ -217,8 +228,11 @@ public class Text : Control
     public string GetText()
     {
         CheckWidget();
-        // TODO: Get text content via platform widget interface
-        // TODO: Update text content through platform widget interface
+        // Use platform widget if available
+        if (PlatformWidget is IPlatformTextInput textInput)
+        {
+            _text = textInput.GetText();
+        }
         return _text;
     }
 
@@ -240,8 +254,11 @@ public class Text : Control
         if (start < 0 || end < 0 || start > end)
             throw new ArgumentException("Invalid selection range");
 
-        // TODO: Set text selection via platform widget interface
-        // TODO: Update text selection through platform widget interface
+        // Delegate to platform widget if available
+        if (PlatformWidget is IPlatformTextInput textInput)
+        {
+            textInput.SetSelection(start, end);
+        }
     }
 
     /// <summary>
@@ -250,8 +267,12 @@ public class Text : Control
     public (int Start, int End) GetSelection()
     {
         CheckWidget();
-        // TODO: Get text selection via platform widget interface
-        // TODO: Update text selection through platform widget interface
+        // Use platform widget if available
+        if (PlatformWidget is IPlatformTextInput textInput)
+        {
+            return textInput.GetSelection();
+        }
+        // Fallback: no selection (cursor at start)
         return (0, 0);
     }
 
@@ -296,8 +317,12 @@ public class Text : Control
     public void Copy()
     {
         CheckWidget();
-        // Platform will handle clipboard operations
-        // This is a placeholder for when clipboard support is implemented
+        // Delegate to platform widget if available
+        if (PlatformWidget is IPlatformClipboard clipboard)
+        {
+            clipboard.Copy();
+        }
+        // Note: Copy is allowed even for read-only controls
     }
 
     /// <summary>
@@ -309,8 +334,11 @@ public class Text : Control
         if (_readOnly)
             return;
 
-        // Platform will handle clipboard operations
-        // This is a placeholder for when clipboard support is implemented
+        // Delegate to platform widget if available
+        if (PlatformWidget is IPlatformClipboard clipboard)
+        {
+            clipboard.Cut();
+        }
     }
 
     /// <summary>
@@ -322,8 +350,11 @@ public class Text : Control
         if (_readOnly)
             return;
 
-        // Platform will handle clipboard operations
-        // This is a placeholder for when clipboard support is implemented
+        // Delegate to platform widget if available
+        if (PlatformWidget is IPlatformClipboard clipboard)
+        {
+            clipboard.Paste();
+        }
     }
 
     /// <summary>
@@ -352,8 +383,11 @@ public class Text : Control
 
     private void UpdateText()
     {
-        // TODO: Set text content via platform widget interface
-        // TODO: Update text content through platform widget interface
+        // Delegate to platform widget if available
+        if (PlatformWidget is IPlatformTextInput textInput)
+        {
+            textInput.SetText(_text);
+        }
         OnTextChanged(EventArgs.Empty);
     }
 
